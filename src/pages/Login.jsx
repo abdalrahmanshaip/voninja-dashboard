@@ -16,13 +16,13 @@ const Login = () => {
     return null;
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
-      const success = login(email, password);
+      const success = await login(email, password);
       
       if (success) {
         navigate('/');

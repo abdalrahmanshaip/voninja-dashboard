@@ -1,458 +1,357 @@
-import { createContext, useContext, useState } from 'react';
-import { generateMockData } from '../data/mockData';
+import { createContext, useContext, useEffect, useState } from 'react'
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  getDoc,
+  query,
+  where,
+} from 'firebase/firestore'
+import { db } from '../utils/firebase'
 
-const DataContext = createContext();
-
-export const useData = () => useContext(DataContext);
+const DataContext = createContext()
+export const useData = () => useContext(DataContext)
 
 export const DataProvider = ({ children }) => {
-  const [data, setData] = useState(() => {
-    // Try to load data from localStorage, or generate new mock data
-    const savedData = localStorage.getItem('voninja_data');
-    return savedData ? JSON.parse(savedData) : generateMockData();
-  });
+  const [data, setData] = useState({
+    lessons: [],
+    levels: [],
+    challenges: [],
+    tasks: [],
+    coupons: [],
+  })
 
-  // Save data to localStorage whenever it changes
-  const updateData = (newData) => {
-    setData(newData);
-    localStorage.setItem('voninja_data', JSON.stringify(newData));
-  };
+  useEffect(() => {
+    fetchInitialData()
+  }, [])
 
-  // Lessons CRUD operations
-  const getLessons = (level) => {
-    return data.lessons.filter(lesson => lesson.level === level);
-  };
+  const fetchInitialData = async () => {
+    const [levelsSnap, challengesSnap, couponsSnap] = await Promise.all([
+      getDocs(collection(db, 'levels')),
+      getDocs(collection(db, 'challenges')),
+      getDocs(collection(db, 'coupons')),
+    ])
 
-  const getLesson = (id) => {
-    return data.lessons.find(lesson => lesson.id === id);
-  };
+    setData((prev) => ({
+      ...prev,
+      levels: levelsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+      challenges: challengesSnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })),
+      coupons: couponsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+    }))
+  }
 
-  const addLesson = (lesson) => {
-    const newData = {
-      ...data,
-      lessons: [...data.lessons, { 
-        ...lesson, 
-        id: Math.random().toString(36).substr(2, 9),
-        vocabularies: [],
-        questions: []
-      }]
-    };
-    updateData(newData);
-  };
+  // === Lessons by Level ===
+  const getLessons = async (levelId) => {
+    const levelRef = doc(db, 'levels', levelId)
+    const lessonsCol = collection(levelRef, 'lessons')
+    const snapshot = await getDocs(lessonsCol)
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+  }
 
-  const updateLesson = (id, updatedLesson) => {
-    const newData = {
-      ...data,
-      lessons: data.lessons.map(lesson => 
-        lesson.id === id ? { ...lesson, ...updatedLesson } : lesson
+  const addLesson = async (levelId, lesson) => {
+    const levelRef = doc(db, 'levels', levelId)
+    const newLesson = await addDoc(collection(levelRef, 'lessons'), lesson)
+    setData((prev) => ({
+      ...prev,
+      lessons: [...prev.lessons, { id: newLesson.id, ...lesson }],
+    }))
+  }
+
+  const updateLesson = async (levelId, lessonId, updated) => {
+    const lessonRef = doc(db, 'levels', levelId, 'lessons', lessonId)
+    await updateDoc(lessonRef, updated)
+    setData((prev) => ({
+      ...prev,
+      lessons: prev.lessons.map((lesson) =>
+        lesson.id === lessonId ? { ...lesson, ...updated } : lesson
+      ),
+    }))
+  }
+
+  const deleteLesson = async (levelId, lessonId) => {
+    const lessonRef = doc(db, 'levels', levelId, 'lessons', lessonId)
+    await deleteDoc(lessonRef)
+    setData((prev) => ({
+      ...prev,
+      lessons: prev.lessons.filter((lesson) => lesson.id !== lessonId),
+    }))
+  }
+
+  // === Vocabulary inside Lessons ===
+  const getVocabularies = async (levelId, lessonId) => {
+    const vocabCol = collection(
+      doc(db, 'levels', levelId, 'lessons', lessonId),
+      'vocabulary'
+    )
+    const snapshot = await getDocs(vocabCol)
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+  }
+
+  const addVocabulary = async (levelId, lessonId, vocab) => {
+    try {
+      await addDoc(
+        collection(
+          doc(db, 'levels', levelId, 'lessons', lessonId),
+          'vocabulary'
+        ),
+        vocab
       )
-    };
-    updateData(newData);
-  };
+      const updatedVocabs = await getVocabularies(levelId, lessonId)
+      setData((prev) => ({
+        ...prev,
+        vocabularies: updatedVocabs,
+      }))
+      return updatedVocabs
+    } catch (error) {
+      console.error('Error adding vocabulary:', error)
+      throw error
+    }
+  }
 
-  const deleteLesson = (id) => {
-    const newData = {
-      ...data,
-      lessons: data.lessons.filter(lesson => lesson.id !== id)
-    };
-    updateData(newData);
-  };
-
-  // Vocabulary CRUD operations
-  const getVocabularies = (lessonId) => {
-    const lesson = data.lessons.find(l => l.id === lessonId);
-    return lesson ? lesson.vocabularies : [];
-  };
-
-  const addVocabulary = (lessonId, vocabulary) => {
-    const newData = {
-      ...data,
-      lessons: data.lessons.map(lesson => {
-        if (lesson.id === lessonId) {
-          return {
-            ...lesson,
-            vocabularies: [
-              ...lesson.vocabularies,
-              { ...vocabulary, id: Math.random().toString(36).substr(2, 9) }
-            ]
-          };
-        }
-        return lesson;
-      })
-    };
-    updateData(newData);
-  };
-
-  const updateVocabulary = (lessonId, id, updatedVocabulary) => {
-    const newData = {
-      ...data,
-      lessons: data.lessons.map(lesson => {
-        if (lesson.id === lessonId) {
-          return {
-            ...lesson,
-            vocabularies: lesson.vocabularies.map(vocabulary =>
-              vocabulary.id === id ? { ...vocabulary, ...updatedVocabulary } : vocabulary
-            )
-          };
-        }
-        return lesson;
-      })
-    };
-    updateData(newData);
-  };
-
-  const deleteVocabulary = (lessonId, id) => {
-    const newData = {
-      ...data,
-      lessons: data.lessons.map(lesson => {
-        if (lesson.id === lessonId) {
-          return {
-            ...lesson,
-            vocabularies: lesson.vocabularies.filter(vocabulary => vocabulary.id !== id)
-          };
-        }
-        return lesson;
-      })
-    };
-    updateData(newData);
-  };
-
-  // Question CRUD operations
-  const getQuestions = (lessonId) => {
-    const lesson = data.lessons.find(l => l.id === lessonId);
-    return lesson ? lesson.questions : [];
-  };
-
-  const addQuestion = (lessonId, question) => {
-    const newData = {
-      ...data,
-      lessons: data.lessons.map(lesson => {
-        if (lesson.id === lessonId) {
-          return {
-            ...lesson,
-            questions: [
-              ...lesson.questions,
-              { ...question, id: Math.random().toString(36).substr(2, 9) }
-            ]
-          };
-        }
-        return lesson;
-      })
-    };
-    updateData(newData);
-  };
-
-  const updateQuestion = (lessonId, id, updatedQuestion) => {
-    const newData = {
-      ...data,
-      lessons: data.lessons.map(lesson => {
-        if (lesson.id === lessonId) {
-          return {
-            ...lesson,
-            questions: lesson.questions.map(question =>
-              question.id === id ? { ...question, ...updatedQuestion } : question
-            )
-          };
-        }
-        return lesson;
-      })
-    };
-    updateData(newData);
-  };
-
-  const deleteQuestion = (lessonId, id) => {
-    const newData = {
-      ...data,
-      lessons: data.lessons.map(lesson => {
-        if (lesson.id === lessonId) {
-          return {
-            ...lesson,
-            questions: lesson.questions.filter(question => question.id !== id)
-          };
-        }
-        return lesson;
-      })
-    };
-    updateData(newData);
-  };
-
-  // Challenges CRUD operations
-  const getChallenges = () => {
-    return data.challenges;
-  };
-
-  const getChallenge = (id) => {
-    return data.challenges.find(challenge => challenge.id === id);
-  };
-
-  const addChallenge = (challenge) => {
-    const newData = {
-      ...data,
-      challenges: [...data.challenges, { 
-        ...challenge, 
-        id: Math.random().toString(36).substr(2, 9),
-        tasks: []
-      }]
-    };
-    updateData(newData);
-  };
-
-  const updateChallenge = (id, updatedChallenge) => {
-    const newData = {
-      ...data,
-      challenges: data.challenges.map(challenge => 
-        challenge.id === id ? { ...challenge, ...updatedChallenge } : challenge
+  const updateVocabulary = async (levelId, lessonId, vocabId, updated) => {
+    try {
+      const ref = doc(
+        db,
+        'levels',
+        levelId,
+        'lessons',
+        lessonId,
+        'vocabulary',
+        vocabId
       )
-    };
-    updateData(newData);
-  };
+      await updateDoc(ref, updated)
+      const updatedVocabs = await getVocabularies(levelId, lessonId)
+      setData((prev) => ({
+        ...prev,
+        vocabularies: updatedVocabs,
+      }))
+      return updatedVocabs
+    } catch (error) {
+      console.error('Error updating vocabulary:', error)
+      throw error
+    }
+  }
 
-  const deleteChallenge = (id) => {
-    const newData = {
-      ...data,
-      challenges: data.challenges.filter(challenge => challenge.id !== id)
-    };
-    updateData(newData);
-  };
-
-  // Tasks CRUD operations
-  const getTasks = (challengeId) => {
-    const challenge = data.challenges.find(c => c.id === challengeId);
-    return challenge ? challenge.tasks : [];
-  };
-
-  const addTask = (challengeId, task) => {
-    const newData = {
-      ...data,
-      challenges: data.challenges.map(challenge => {
-        if (challenge.id === challengeId) {
-          return {
-            ...challenge,
-            tasks: [
-              ...challenge.tasks,
-              { ...task, id: Math.random().toString(36).substr(2, 9), questions: [] }
-            ]
-          };
-        }
-        return challenge;
-      })
-    };
-    updateData(newData);
-  };
-
-  const updateTask = (challengeId, id, updatedTask) => {
-    const newData = {
-      ...data,
-      challenges: data.challenges.map(challenge => {
-        if (challenge.id === challengeId) {
-          return {
-            ...challenge,
-            tasks: challenge.tasks.map(task =>
-              task.id === id ? { ...task, ...updatedTask } : task
-            )
-          };
-        }
-        return challenge;
-      })
-    };
-    updateData(newData);
-  };
-
-  const deleteTask = (challengeId, id) => {
-    const newData = {
-      ...data,
-      challenges: data.challenges.map(challenge => {
-        if (challenge.id === challengeId) {
-          return {
-            ...challenge,
-            tasks: challenge.tasks.filter(task => task.id !== id)
-          };
-        }
-        return challenge;
-      })
-    };
-    updateData(newData);
-  };
-
-  // Task Questions CRUD operations
-  const getTaskQuestions = (challengeId, taskId) => {
-    const challenge = data.challenges.find(c => c.id === challengeId);
-    if (!challenge) return [];
-    const task = challenge.tasks.find(t => t.id === taskId);
-    return task ? task.questions : [];
-  };
-
-  const addTaskQuestion = (challengeId, taskId, question) => {
-    const newData = {
-      ...data,
-      challenges: data.challenges.map(challenge => {
-        if (challenge.id === challengeId) {
-          return {
-            ...challenge,
-            tasks: challenge.tasks.map(task => {
-              if (task.id === taskId) {
-                return {
-                  ...task,
-                  questions: [
-                    ...task.questions,
-                    { ...question, id: Math.random().toString(36).substr(2, 9) }
-                  ]
-                };
-              }
-              return task;
-            })
-          };
-        }
-        return challenge;
-      })
-    };
-    updateData(newData);
-  };
-
-  const updateTaskQuestion = (challengeId, taskId, id, updatedQuestion) => {
-    const newData = {
-      ...data,
-      challenges: data.challenges.map(challenge => {
-        if (challenge.id === challengeId) {
-          return {
-            ...challenge,
-            tasks: challenge.tasks.map(task => {
-              if (task.id === taskId) {
-                return {
-                  ...task,
-                  questions: task.questions.map(question =>
-                    question.id === id ? { ...question, ...updatedQuestion } : question
-                  )
-                };
-              }
-              return task;
-            })
-          };
-        }
-        return challenge;
-      })
-    };
-    updateData(newData);
-  };
-
-  const deleteTaskQuestion = (challengeId, taskId, id) => {
-    const newData = {
-      ...data,
-      challenges: data.challenges.map(challenge => {
-        if (challenge.id === challengeId) {
-          return {
-            ...challenge,
-            tasks: challenge.tasks.map(task => {
-              if (task.id === taskId) {
-                return {
-                  ...task,
-                  questions: task.questions.filter(question => question.id !== id)
-                };
-              }
-              return task;
-            })
-          };
-        }
-        return challenge;
-      })
-    };
-    updateData(newData);
-  };
-
-  // Transactions operations
-  const getTransactions = () => {
-    return data.transactions;
-  };
-
-  const updateTransactionStatus = (id, status) => {
-    const newData = {
-      ...data,
-      transactions: data.transactions.map(transaction => 
-        transaction.id === id ? { ...transaction, status } : transaction
+  const deleteVocabulary = async (levelId, lessonId, vocabId) => {
+    try {
+      const ref = doc(
+        db,
+        'levels',
+        levelId,
+        'lessons',
+        lessonId,
+        'vocabulary',
+        vocabId
       )
-    };
-    updateData(newData);
-  };
+      await deleteDoc(ref)
+      const updatedVocabs = await getVocabularies(levelId, lessonId)
+      setData((prev) => ({
+        ...prev,
+        vocabularies: updatedVocabs,
+      }))
+      return updatedVocabs
+    } catch (error) {
+      console.error('Error deleting vocabulary:', error)
+      throw error
+    }
+  }
 
-  // Coupons CRUD operations
-  const getCoupons = () => {
-    return data.coupons;
-  };
+  // === Questions inside Lessons ===
+  const getQuestions = async (levelId, lessonId) => {
+    const qCol = collection(
+      doc(db, 'levels', levelId, 'lessons', lessonId),
+      'questions'
+    )
+    const snapshot = await getDocs(qCol)
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+  }
 
-  const addCoupon = (coupon) => {
-    const newData = {
-      ...data,
-      coupons: [...data.coupons, { 
-        ...coupon, 
-        id: Math.random().toString(36).substr(2, 9) 
-      }]
-    };
-    updateData(newData);
-  };
-
-  const updateCoupon = (id, updatedCoupon) => {
-    const newData = {
-      ...data,
-      coupons: data.coupons.map(coupon => 
-        coupon.id === id ? { ...coupon, ...updatedCoupon } : coupon
+  const addQuestion = async (levelId, lessonId, question) => {
+    try {
+      await addDoc(
+        collection(
+          doc(db, 'levels', levelId, 'lessons', lessonId),
+          'questions'
+        ),
+        question
       )
-    };
-    updateData(newData);
-  };
+      const updatedQuestions = await getQuestions(levelId, lessonId)
+      setData((prev) => ({
+        ...prev,
+        questions: updatedQuestions,
+      }))
+      return updatedQuestions
+    } catch (error) {
+      console.error('Error adding question:', error)
+      throw error
+    }
+  }
 
-  const deleteCoupon = (id) => {
-    const newData = {
-      ...data,
-      coupons: data.coupons.filter(coupon => coupon.id !== id)
-    };
-    updateData(newData);
-  };
+  const updateQuestion = async (levelId, lessonId, qId, updated) => {
+    try {
+      const ref = doc(
+        db,
+        'levels',
+        levelId,
+        'lessons',
+        lessonId,
+        'questions',
+        qId
+      )
+      await updateDoc(ref, updated)
+      const updatedQuestions = await getQuestions(levelId, lessonId)
+      setData((prev) => ({
+        ...prev,
+        questions: updatedQuestions,
+      }))
+      return updatedQuestions
+    } catch (error) {
+      console.error('Error updating question:', error)
+      throw error
+    }
+  }
+
+  const deleteQuestion = async (levelId, lessonId, qId) => {
+    try {
+      const ref = doc(
+        db,
+        'levels',
+        levelId,
+        'lessons',
+        lessonId,
+        'questions',
+        qId
+      )
+      await deleteDoc(ref)
+      const updatedQuestions = await getQuestions(levelId, lessonId)
+      setData((prev) => ({
+        ...prev,
+        questions: updatedQuestions,
+      }))
+      return updatedQuestions
+    } catch (error) {
+      console.error('Error deleting question:', error)
+      throw error
+    }
+  }
+
+  // === Tasks inside Challenges ===
+  // const getTasks = async (challengeId) => {
+  //   const taskCol = collection(doc(db, 'challenges', challengeId), 'tasks')
+  //   const snapshot = await getDocs(taskCol)
+  //   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+  // }
+
+  // const addTask = async (challengeId, task) => {
+  //   await addDoc(collection(doc(db, 'challenges', challengeId), 'tasks'), task)
+  // }
+
+  // const updateTask = async (challengeId, taskId, updated) => {
+  //   const ref = doc(db, 'challenges', challengeId, 'tasks', taskId)
+  //   await updateDoc(ref, updated)
+  // }
+
+  // const deleteTask = async (challengeId, taskId) => {
+  //   const ref = doc(db, 'challenges', challengeId, 'tasks', taskId)
+  //   await deleteDoc(ref)
+  // }
+
+  // // === Questions inside Tasks ===
+  // const getTaskQuestions = async (challengeId, taskId) => {
+  //   const qCol = collection(
+  //     doc(db, 'challenges', challengeId, 'tasks', taskId),
+  //     'questions'
+  //   )
+  //   const snapshot = await getDocs(qCol)
+  //   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+  // }
+
+  // const addTaskQuestion = async (challengeId, taskId, question) => {
+  //   await addDoc(
+  //     collection(
+  //       doc(db, 'challenges', challengeId, 'tasks', taskId),
+  //       'questions'
+  //     ),
+  //     question
+  //   )
+  // }
+
+  // const updateTaskQuestion = async (challengeId, taskId, qId, updated) => {
+  //   const ref = doc(
+  //     db,
+  //     'challenges',
+  //     challengeId,
+  //     'tasks',
+  //     taskId,
+  //     'questions',
+  //     qId
+  //   )
+  //   await updateDoc(ref, updated)
+  // }
+
+  // const deleteTaskQuestion = async (challengeId, taskId, qId) => {
+  //   const ref = doc(
+  //     db,
+  //     'challenges',
+  //     challengeId,
+  //     'tasks',
+  //     taskId,
+  //     'questions',
+  //     qId
+  //   )
+  //   await deleteDoc(ref)
+  // }
+
+  // // === Coupons ===
+  // const getCoupons = () => data.coupons
+  // const addCoupon = async (coupon) => {
+  //   await addDoc(collection(db, 'coupons'), coupon)
+  //   fetchInitialData()
+  // }
+  // const updateCoupon = async (id, updated) => {
+  //   await updateDoc(doc(db, 'coupons', id), updated)
+  //   fetchInitialData()
+  // }
+  // const deleteCoupon = async (id) => {
+  //   await deleteDoc(doc(db, 'coupons', id))
+  //   fetchInitialData()
+  // }
 
   const value = {
     data,
-    // Lessons
     getLessons,
-    getLesson,
     addLesson,
     updateLesson,
     deleteLesson,
-    // Vocabularies
     getVocabularies,
     addVocabulary,
     updateVocabulary,
     deleteVocabulary,
-    // Questions
     getQuestions,
     addQuestion,
     updateQuestion,
     deleteQuestion,
-    // Challenges
-    getChallenges,
-    getChallenge,
-    addChallenge,
-    updateChallenge,
-    deleteChallenge,
-    // Tasks
-    getTasks,
-    addTask,
-    updateTask,
-    deleteTask,
-    // Task Questions
-    getTaskQuestions,
-    addTaskQuestion,
-    updateTaskQuestion,
-    deleteTaskQuestion,
-    // Transactions
-    getTransactions,
-    updateTransactionStatus,
-    // Coupons
-    getCoupons,
-    addCoupon,
-    updateCoupon,
-    deleteCoupon
-  };
+    // getTasks,
+    // addTask,
+    // updateTask,
+    // deleteTask,
+    // getTaskQuestions,
+    // addTaskQuestion,
+    // updateTaskQuestion,
+    // deleteTaskQuestion,
+    // getCoupons,
+    // addCoupon,
+    // updateCoupon,
+    // deleteCoupon,
+  }
 
-  return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
-};
+  return <DataContext.Provider value={value}>{children}</DataContext.Provider>
+}
 
-export default DataContext;
+export default DataContext

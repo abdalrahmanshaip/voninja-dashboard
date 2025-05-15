@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useData } from '../../context/DataContext';
+import { toast } from 'sonner'
 
-const VocabularyForm = ({ lessonId, vocabulary, onClose }) => {
+const VocabularyForm = ({ lessonId, vocabulary, onClose, levelId }) => {
+  console.log(vocabulary)
   const { addVocabulary, updateVocabulary } = useData();
   const [formData, setFormData] = useState({
     word: '',
-    translatedWord: '',
-    englishStatement: '',
-    arabicStatement: '',
-    image: ''
+    translated_word: '',
+    statement_example: '',
+    translated_statement_example: '',
+    image_url: ''
   });
   const [errors, setErrors] = useState({});
 
@@ -17,18 +19,18 @@ const VocabularyForm = ({ lessonId, vocabulary, onClose }) => {
     if (vocabulary) {
       setFormData({
         word: vocabulary.word || '',
-        translatedWord: vocabulary.translatedWord || '',
-        englishStatement: vocabulary.englishStatement || '',
-        arabicStatement: vocabulary.arabicStatement || '',
-        image: vocabulary.image || ''
+        translated_word: vocabulary.translated_word || '',
+        statement_example: vocabulary.statement_example || '',
+        translated_statement_example: vocabulary.translated_statement_example || '',
+        image_url: vocabulary.image_url || ''
       });
     } else {
       setFormData({
         word: '',
-        translatedWord: '',
-        englishStatement: '',
-        arabicStatement: '',
-        image: ''
+        translated_word: '',
+        statement_example: '',
+        translated_statement_example: '',
+        image_url: ''
       });
     }
   }, [vocabulary]);
@@ -56,20 +58,20 @@ const VocabularyForm = ({ lessonId, vocabulary, onClose }) => {
       newErrors.word = 'Word is required';
     }
     
-    if (!formData.translatedWord.trim()) {
-      newErrors.translatedWord = 'Translated word is required';
+    if (!formData.translated_word.trim()) {
+      newErrors.translated_word = 'Translated word is required';
     }
     
-    if (!formData.englishStatement.trim()) {
-      newErrors.englishStatement = 'English statement is required';
+    if (!formData.statement_example.trim()) {
+      newErrors.statement_example = 'English statement is required';
     }
     
-    if (!formData.arabicStatement.trim()) {
-      newErrors.arabicStatement = 'Arabic statement is required';
+    if (!formData.translated_statement_example.trim()) {
+      newErrors.translated_statement_example = 'Arabic statement is required';
     }
     
-    if (formData.image && !isValidUrl(formData.image)) {
-      newErrors.image = 'Image must be a valid URL';
+    if (formData.image_url && !isValidUrl(formData.image)) {
+      newErrors.image_url = 'Image must be a valid URL';
     }
     
     setErrors(newErrors);
@@ -80,25 +82,31 @@ const VocabularyForm = ({ lessonId, vocabulary, onClose }) => {
     try {
       new URL(string);
       return true;
-    } catch (_) {
+    } catch  {
       return false;
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validate()) return;
     
-    if (vocabulary) {
-      updateVocabulary(lessonId, vocabulary.id, formData);
-    } else {
-      addVocabulary(lessonId, formData);
+    try {
+      if (vocabulary) {
+        await updateVocabulary(levelId, lessonId, vocabulary.id, formData);
+        toast.success('Vocabulary updated successfully');
+      } else {
+        await addVocabulary(levelId, lessonId, formData);
+        toast.success('Vocabulary added successfully');
+      }
+      onClose();
+    } catch (error) {
+      console.error('Error submitting vocabulary:', error);
+      toast.error(error.message || 'Failed to save vocabulary');
     }
-    
-    onClose();
   };
-
+console.log(errors)
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -110,7 +118,7 @@ const VocabularyForm = ({ lessonId, vocabulary, onClose }) => {
             type="text"
             id="word"
             name="word"
-            value={formData.word}
+            defaultValue={formData.word}
             onChange={handleChange}
             className={`mt-1 input ${errors.word ? 'border-red-500' : ''}`}
           />
@@ -118,49 +126,49 @@ const VocabularyForm = ({ lessonId, vocabulary, onClose }) => {
         </div>
         
         <div>
-          <label htmlFor="translatedWord" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="translated_word" className="block text-sm font-medium text-gray-700">
             Translated Word
           </label>
           <input
             type="text"
-            id="translatedWord"
-            name="translatedWord"
-            value={formData.translatedWord}
+            id="translated_word"
+            name="translated_word"
+            defaultValue={formData.translated_word}
             onChange={handleChange}
-            className={`mt-1 input ${errors.translatedWord ? 'border-red-500' : ''}`}
+            className={`mt-1 input ${errors.translated_word ? 'border-red-500' : ''}`}
           />
-          {errors.translatedWord && <p className="mt-1 text-sm text-red-500">{errors.translatedWord}</p>}
+          {errors.translated_word && <p className="mt-1 text-sm text-red-500">{errors.translated_word}</p>}
         </div>
       </div>
       
       <div>
-        <label htmlFor="englishStatement" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="statement_example" className="block text-sm font-medium text-gray-700">
           English Statement
         </label>
         <input
           type="text"
-          id="englishStatement"
-          name="englishStatement"
-          value={formData.englishStatement}
+          id="statement_example"
+          name="statement_example"
+          defaultValue={formData.statement_example}
           onChange={handleChange}
-          className={`mt-1 input ${errors.englishStatement ? 'border-red-500' : ''}`}
+          className={`mt-1 input ${errors.statement_example ? 'border-red-500' : ''}`}
         />
-        {errors.englishStatement && <p className="mt-1 text-sm text-red-500">{errors.englishStatement}</p>}
+        {errors.statement_example && <p className="mt-1 text-sm text-red-500">{errors.statement_example}</p>}
       </div>
       
       <div>
-        <label htmlFor="arabicStatement" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="translated_statement_example" className="block text-sm font-medium text-gray-700">
           Arabic Statement
         </label>
         <input
           type="text"
-          id="arabicStatement"
-          name="arabicStatement"
-          value={formData.arabicStatement}
+          id="translated_statement_example"
+          name="translated_statement_example"
+          defaultValue={formData.translated_statement_example}
           onChange={handleChange}
-          className={`mt-1 input ${errors.arabicStatement ? 'border-red-500' : ''}`}
+          className={`mt-1 input ${errors.translated_statement_example ? 'border-red-500' : ''}`}
         />
-        {errors.arabicStatement && <p className="mt-1 text-sm text-red-500">{errors.arabicStatement}</p>}
+        {errors.translated_statement_example && <p className="mt-1 text-sm text-red-500">{errors.translated_statement_example}</p>}
       </div>
       
       <div>
@@ -171,18 +179,18 @@ const VocabularyForm = ({ lessonId, vocabulary, onClose }) => {
           type="text"
           id="image"
           name="image"
-          value={formData.image}
+          defaultValue={formData.image_url}
           onChange={handleChange}
           placeholder="https://example.com/image.jpg"
-          className={`mt-1 input ${errors.image ? 'border-red-500' : ''}`}
+          className={`mt-1 input ${errors.image_url ? 'border-red-500' : ''}`}
         />
-        {errors.image && <p className="mt-1 text-sm text-red-500">{errors.image}</p>}
+        {errors.image_url && <p className="mt-1 text-sm text-red-500">{errors.image_url}</p>}
         
-        {formData.image && isValidUrl(formData.image) && (
+        {formData.image_url && isValidUrl(formData.image_url) && (
           <div className="mt-2">
             <p className="text-sm text-gray-500 mb-1">Image Preview:</p>
             <img 
-              src={formData.image} 
+              src={formData.image_url} 
               alt="Preview" 
               className="h-20 w-20 object-cover rounded border border-gray-300" 
             />

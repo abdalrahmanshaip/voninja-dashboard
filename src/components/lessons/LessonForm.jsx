@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useData } from '../../context/DataContext';
+import { toast } from 'sonner'
 
-const LessonForm = ({ lesson, level, onClose }) => {
+const LessonForm = ({ lesson, level, onClose, levelId }) => {
+  console.log(levelId)
   const { addLesson, updateLesson } = useData();
   const [formData, setFormData] = useState({
     title: '',
     level: level,
-    order: 1
+    lesson_order: 1
   });
   const [errors, setErrors] = useState({});
 
@@ -16,16 +18,16 @@ const LessonForm = ({ lesson, level, onClose }) => {
       setFormData({
         title: lesson.title || '',
         level: lesson.level || level,
-        order: lesson.order || 1
+        lesson_order: lesson.lesson_order || 1
       });
     } else {
       setFormData({
         title: '',
         level: level,
-        order: 1
+        lesson_order: 1
       });
     }
-  }, [lesson, level]);
+  }, [lesson, level, levelId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -50,28 +52,33 @@ const LessonForm = ({ lesson, level, onClose }) => {
       newErrors.title = 'Title is required';
     }
     
-    if (!formData.order || formData.order < 1) {
-      newErrors.order = 'Order must be a positive number';
+    if (!formData.lesson_order || formData.lesson_order < 1) {
+      newErrors.lesson_order = 'Order must be a positive number';
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     
     if (!validate()) return;
     
-    if (lesson) {
-      updateLesson(lesson.id, formData);
-    } else {
-      addLesson(formData);
+    try {
+      if (lesson) {
+        await updateLesson(levelId,lesson.id, formData);
+        toast.success('Lesson updated successfully!');
+      } else {
+        await addLesson(levelId, formData);
+        toast.success('Lesson added successfully!');
+      }
+      onClose();
+    } catch (error) {
+      console.error('Error submitting lesson:', error);
+      toast.error('Failed to save lesson. Please try again.');
     }
-    
-    onClose();
   };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
@@ -93,13 +100,14 @@ const LessonForm = ({ lesson, level, onClose }) => {
         <label htmlFor="level" className="block text-sm font-medium text-gray-700">
           Level
         </label>
+        
         <select
           id="level"
           name="level"
           value={formData.level}
           onChange={handleChange}
           className="mt-1 select"
-          disabled={level ? true : false}
+          disabled={level  ? true : false}
         >
           <option value="Basic">Basic</option>
           <option value="Intermediate">Intermediate</option>
@@ -108,15 +116,15 @@ const LessonForm = ({ lesson, level, onClose }) => {
       </div>
       
       <div>
-        <label htmlFor="order" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="lesson_order" className="block text-sm font-medium text-gray-700">
           Order
         </label>
         <input
           type="number"
-          id="order"
-          name="order"
+          id="lesson_order"
+          name="lesson_order"
           min="1"
-          value={formData.order}
+          value={formData.lesson_order}
           onChange={handleChange}
           className={`mt-1 input ${errors.order ? 'border-red-500' : ''}`}
         />

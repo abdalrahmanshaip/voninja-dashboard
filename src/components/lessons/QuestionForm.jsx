@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useData } from '../../context/DataContext';
+import { toast } from 'sonner'
 
-const QuestionForm = ({ lessonId, question, onClose }) => {
+const QuestionForm = ({ lessonId, question, onClose, levelId={levelId} }) => {
+  console.log(question)
   const { addQuestion, updateQuestion } = useData();
   const [formData, setFormData] = useState({
     content: '',
@@ -112,23 +114,29 @@ const QuestionForm = ({ lessonId, question, onClose }) => {
     try {
       new URL(string);
       return true;
-    } catch (_) {
+    } catch  {
       return false;
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validate()) return;
     
-    if (question) {
-      updateQuestion(lessonId, question.id, formData);
-    } else {
-      addQuestion(lessonId, formData);
+    try {
+      if (question) {
+        await updateQuestion(levelId, lessonId, question.id, formData);
+        toast.success('Question updated successfully');
+      } else {
+        await addQuestion(levelId, lessonId, formData);
+        toast.success('Question added successfully');
+      }
+      onClose();
+    } catch (error) {
+      console.error('Error submitting question:', error);
+      toast.error(error.message || 'Failed to save question');
     }
-    
-    onClose();
   };
 
   return (

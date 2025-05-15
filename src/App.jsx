@@ -25,9 +25,9 @@ function App() {
               }>
               <Route index element={<Lessons />} />
               <Route path="lessons" element={<Lessons />} />
-              <Route path="challenges" element={<Challenges />} />
-              <Route path="transactions" element={<Transactions />} />
-              <Route path="coupons" element={<Coupons />} />
+              {/* <Route path="challenges" element={<Challenges />} /> */}
+              {/* <Route path="transactions" element={<Transactions />} /> */}
+              {/* <Route path="coupons" element={<Coupons />} /> */}
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

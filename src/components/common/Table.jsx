@@ -113,12 +113,12 @@ const Table = ({
           ) : (
             sortedData.map((row, rowIndex) => (
               <tr
-                key={row.id || rowIndex}
+                key={rowIndex}
                 className={`data-table-row ${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
               >
-                {columns.map((column) => (
-                  <td key={`${row.id}-${column.field}`} className="data-table-cell">
+                {columns.map((column, index) => (
+                  <td key={index} className="data-table-cell">
                     {column.render ? column.render(row) : row[column.field]}
                   </td>
                 ))}

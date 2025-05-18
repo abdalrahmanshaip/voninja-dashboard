@@ -1,135 +1,149 @@
-import { useState } from 'react';
-import { useData } from '../context/DataContext';
-import Table from '../components/common/Table';
-import Modal from '../components/common/Modal';
-import ConfirmDialog from '../components/common/ConfirmDialog';
-import CouponForm from '../components/coupons/CouponForm';
+import { useState } from 'react'
+import { useCoupon } from '../context/CouponContext'
+import Table from '../components/common/Table'
+import Modal from '../components/common/Modal'
+import ConfirmDialog from '../components/common/ConfirmDialog'
+import CouponForm from '../components/coupons/CouponForm'
 
 const Coupons = () => {
-  const { getCoupons, deleteCoupon } = useData();
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedCoupon, setSelectedCoupon] = useState(null);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [couponToDelete, setCouponToDelete] = useState(null);
-
-  const coupons = getCoupons();
+  const { coupons, addCoupon, updateCoupon, deleteCoupon } = useCoupon()
+  console.log(coupons)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [selectedCoupon, setSelectedCoupon] = useState(null)
+  console.log(selectedCoupon)
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+  const [couponToDelete, setCouponToDelete] = useState(null)
 
   const handleAddCoupon = () => {
-    setIsAddModalOpen(true);
-  };
+    setIsAddModalOpen(true)
+  }
 
   const handleEditCoupon = (coupon) => {
-    setSelectedCoupon(coupon);
-    setIsEditModalOpen(true);
-  };
+    setSelectedCoupon(coupon)
+    setIsEditModalOpen(true)
+  }
 
   const handleDeleteClick = (coupon) => {
-    setCouponToDelete(coupon);
-    setIsDeleteConfirmOpen(true);
-  };
+    console.log(coupon)
+    setCouponToDelete(coupon)
+    setIsDeleteConfirmOpen(true)
+  }
 
   const confirmDelete = () => {
     if (couponToDelete) {
-      deleteCoupon(couponToDelete.id);
-      setCouponToDelete(null);
+      console.log(couponToDelete)
+      deleteCoupon(couponToDelete.id)
+      setCouponToDelete(null)
     }
-  };
+  }
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
-  };
 
   const getExpirationStatus = (expirationDate) => {
-    const now = new Date();
-    const expiry = new Date(expirationDate);
-    return now > expiry;
-  };
+    const now = new Date()
+    const expiry = new Date(expirationDate)
+    return now > expiry
+  }
 
   const columns = [
     { field: 'id', header: 'ID', sortable: true },
-    { field: 'content', header: 'Coupon Code', sortable: true },
-    { 
-      field: 'pointValue', 
-      header: 'Point Value', 
+    { field: 'id', header: 'Coupon Code', sortable: true },
+    {
+      field: 'points',
+      header: 'Point Value',
       sortable: true,
-      render: (row) => (
-        <span className="font-medium">{row.pointValue}</span>
-      )
+      render: (row) => <span className='font-medium'>{row.points}</span>,
     },
-    { 
-      field: 'expirationDate', 
-      header: 'Expiration Date', 
+    {
+      field: 'expirationDate',
+      header: 'Expiration Date',
       sortable: true,
-      render: (row) => formatDate(row.expirationDate)
+      render: (row) => {
+
+        const date = new Date(row.expireDate.seconds * 1000)
+        return (
+          <span className='font-medium'>{date.toLocaleDateString()}</span>
+        )
+      }
     },
-    { 
-      field: 'status', 
-      header: 'Status', 
+    {
+      field: 'status',
+      header: 'Status',
       sortable: false,
       render: (row) => {
-        const isExpired = getExpirationStatus(row.expirationDate);
+        const isExpired = getExpirationStatus(row.expirationDate)
         return (
-          <span 
+          <span
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              isExpired ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+              isExpired
+                ? 'bg-red-100 text-red-800'
+                : 'bg-green-100 text-green-800'
             }`}
           >
             {isExpired ? 'Expired' : 'Active'}
           </span>
-        );
-      }
-    }
-  ];
+        )
+      },
+    },
+  ]
 
   const renderActions = (coupon) => (
     <>
       <button
         onClick={(e) => {
-          e.stopPropagation();
-          handleEditCoupon(coupon);
+          e.stopPropagation()
+          handleEditCoupon(coupon)
         }}
-        className="text-green-600 hover:text-green-900 focus:outline-none"
+        className='text-green-600 hover:text-green-900 focus:outline-none'
       >
         Edit
       </button>
       <button
         onClick={(e) => {
-          e.stopPropagation();
-          handleDeleteClick(coupon);
+          e.stopPropagation()
+          handleDeleteClick(coupon)
         }}
-        className="ml-2 text-red-600 hover:text-red-900 focus:outline-none"
+        className='ml-2 text-red-600 hover:text-red-900 focus:outline-none'
       >
         Delete
       </button>
     </>
-  );
+  )
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Coupons</h1>
+    <div className='space-y-6'>
+      <div className='flex justify-between items-center'>
+        <h1 className='text-2xl font-bold text-gray-900'>Coupons</h1>
         <button
           onClick={handleAddCoupon}
-          className="btn btn-primary flex items-center"
+          className='btn btn-primary flex items-center'
         >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          <svg
+            className='w-5 h-5 mr-2'
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth='2'
+              d='M12 6v6m0 0v6m0-6h6m-6 0H6'
+            />
           </svg>
           Add Coupon
         </button>
       </div>
 
       {/* Coupons table */}
-      <div className="card">
+      <div className='card'>
         <Table
           columns={columns}
           data={coupons}
           actions={renderActions}
           emptyMessage="No coupons found. Click 'Add Coupon' to create one."
-          initialSortField="expirationDate"
-          initialSortDirection="asc"
+          initialSortField='expirationDate'
+          initialSortDirection='asc'
         />
       </div>
 
@@ -137,18 +151,16 @@ const Coupons = () => {
       <Modal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        title="Add New Coupon"
+        title='Add New Coupon'
       >
-        <CouponForm
-          onClose={() => setIsAddModalOpen(false)}
-        />
+        <CouponForm onClose={() => setIsAddModalOpen(false)} />
       </Modal>
 
       {/* Edit Coupon Modal */}
       <Modal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        title="Edit Coupon"
+        title='Edit Coupon'
       >
         <CouponForm
           coupon={selectedCoupon}
@@ -161,14 +173,14 @@ const Coupons = () => {
         isOpen={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
         onConfirm={confirmDelete}
-        title="Delete Coupon"
-        message="Are you sure you want to delete this coupon? This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
-        type="danger"
+        title='Delete Coupon'
+        message='Are you sure you want to delete this coupon? This action cannot be undone.'
+        confirmText='Delete'
+        cancelText='Cancel'
+        type='danger'
       />
     </div>
-  );
-};
+  )
+}
 
-export default Coupons;
+export default Coupons

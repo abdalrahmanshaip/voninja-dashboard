@@ -12,6 +12,8 @@ import {
   orderBy,
   limit,
   startAfter,
+  increment,
+  setDoc,
 } from 'firebase/firestore'
 import { db } from '../utils/firebase'
 
@@ -24,7 +26,6 @@ export const DataProvider = ({ children }) => {
     levels: [],
     challenges: [],
     tasks: [],
-    coupons: [],
   })
 
   useEffect(() => {
@@ -32,59 +33,61 @@ export const DataProvider = ({ children }) => {
   }, [])
 
   const fetchInitialData = async () => {
-    const [levelsSnap, challengesSnap, couponsSnap] = await Promise.all([
+    const [levelsSnap, challengesSnap] = await Promise.all([
       getDocs(collection(db, 'levels')),
-      getDocs(collection(db, 'challenges')),
-      getDocs(collection(db, 'coupons')),
+      // getDocs(collection(db, 'challenges')),
     ])
 
     setData((prev) => ({
       ...prev,
       levels: levelsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
-      challenges: challengesSnap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })),
-      coupons: couponsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+      // challenges: challengesSnap.docs.map((doc) => ({
+      //   id: doc.id,
+      //   ...doc.data(),
+      // })),
     }))
   }
 
   // === Lessons by Level ===
   const getLessons = async (levelId, lastVisible = null) => {
-    const levelRef = doc(db, 'levels', levelId);
-    const lessonsCol = collection(levelRef, 'lessons');
-    
-    let queryRef = query(
-      lessonsCol,
-      orderBy('lesson_order'),
-      limit(10)
-    );
-    
+    const levelRef = doc(db, 'levels', levelId)
+    const lessonsCol = collection(levelRef, 'lessons')
+
+    let queryRef = query(lessonsCol, orderBy('lesson_order'), limit(10))
+
     if (lastVisible) {
       queryRef = query(
         lessonsCol,
         orderBy('lesson_order'),
         startAfter(lastVisible),
         limit(10)
-      );
+      )
     }
-  
-    const snapshot = await getDocs(queryRef);
-    const lessons = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  
+
+    const snapshot = await getDocs(queryRef)
+    const lessons = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+
     return {
       lessons,
       lastVisible: snapshot.docs[snapshot.docs.length - 1] || null,
-      hasMore: snapshot.docs.length === 10
-    };
-  };
+      hasMore: snapshot.docs.length === 10,
+    }
+  }
 
   const addLesson = async (levelId, lesson) => {
     const levelRef = doc(db, 'levels', levelId)
-    const newLesson = await addDoc(collection(levelRef, 'lessons'), lesson)
+    await updateDoc(levelRef, {
+      totalLessons: increment(1),
+    })
+
+    const newLessonRef = doc(collection(levelRef, 'lessons')) // توليد ID
+    const lessonWithId = { ...lesson, id: newLessonRef.id }
+
+    await setDoc(newLessonRef, lessonWithId)
+
     setData((prev) => ({
       ...prev,
-      lessons: [...prev.lessons, { id: newLesson.id, ...lesson }],
+      lessons: [...prev.lessons, lessonWithId],
     }))
   }
 
@@ -101,6 +104,10 @@ export const DataProvider = ({ children }) => {
 
   const deleteLesson = async (levelId, lessonId) => {
     const lessonRef = doc(db, 'levels', levelId, 'lessons', lessonId)
+    const levelRef = doc(db, 'levels', levelId)
+    await updateDoc(levelRef, {
+      totalLessons: increment(-1),
+    })
     await deleteDoc(lessonRef)
     setData((prev) => ({
       ...prev,
@@ -120,13 +127,16 @@ export const DataProvider = ({ children }) => {
 
   const addVocabulary = async (levelId, lessonId, vocab) => {
     try {
-      await addDoc(
+      const vocabRef = doc(
         collection(
           doc(db, 'levels', levelId, 'lessons', lessonId),
           'vocabulary'
-        ),
-        vocab
+        )
       )
+      const vocabWithId = { ...vocab, id: vocabRef.id }
+
+      await setDoc(vocabRef, vocabWithId)
+
       const updatedVocabs = await getVocabularies(levelId, lessonId)
       setData((prev) => ({
         ...prev,
@@ -138,7 +148,6 @@ export const DataProvider = ({ children }) => {
       throw error
     }
   }
-
   const updateVocabulary = async (levelId, lessonId, vocabId, updated) => {
     try {
       const ref = doc(
@@ -199,13 +208,23 @@ export const DataProvider = ({ children }) => {
 
   const addQuestion = async (levelId, lessonId, question) => {
     try {
-      await addDoc(
-        collection(
-          doc(db, 'levels', levelId, 'lessons', lessonId),
-          'questions'
-        ),
-        question
+      const qRef = doc(
+        collection(doc(db, 'levels', levelId, 'lessons', lessonId), 'questions')
       )
+      const questionWithId = { ...question, id: qRef.id }
+
+      await setDoc(qRef, questionWithId)
+
+      const levelRef = doc(db, 'levels', levelId)
+      const lessonRef = doc(db, 'levels', levelId, 'lessons', lessonId)
+
+      await updateDoc(levelRef, {
+        totalQuestions: increment(1),
+      })
+      await updateDoc(lessonRef, {
+        numQuestions: increment(1),
+      })
+
       const updatedQuestions = await getQuestions(levelId, lessonId)
       setData((prev) => ({
         ...prev,
@@ -255,6 +274,14 @@ export const DataProvider = ({ children }) => {
       )
       await deleteDoc(ref)
       const updatedQuestions = await getQuestions(levelId, lessonId)
+      const levelRef = doc(db, 'levels', levelId)
+      const lessonRef = doc(db, 'levels', levelId, 'lessons', lessonId)
+      await updateDoc(levelRef, {
+        totalQuestions: increment(1),
+      })
+      await updateDoc(lessonRef, {
+        numQuestions: increment(1),
+      })
       setData((prev) => ({
         ...prev,
         questions: updatedQuestions,
@@ -333,20 +360,7 @@ export const DataProvider = ({ children }) => {
   //   await deleteDoc(ref)
   // }
 
-  // // === Coupons ===
-  // const getCoupons = () => data.coupons
-  // const addCoupon = async (coupon) => {
-  //   await addDoc(collection(db, 'coupons'), coupon)
-  //   fetchInitialData()
-  // }
-  // const updateCoupon = async (id, updated) => {
-  //   await updateDoc(doc(db, 'coupons', id), updated)
-  //   fetchInitialData()
-  // }
-  // const deleteCoupon = async (id) => {
-  //   await deleteDoc(doc(db, 'coupons', id))
-  //   fetchInitialData()
-  // }
+  //
 
   const value = {
     data,
@@ -370,10 +384,6 @@ export const DataProvider = ({ children }) => {
     // addTaskQuestion,
     // updateTaskQuestion,
     // deleteTaskQuestion,
-    // getCoupons,
-    // addCoupon,
-    // updateCoupon,
-    // deleteCoupon,
   }
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>

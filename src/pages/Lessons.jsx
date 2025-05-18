@@ -8,7 +8,8 @@ import LessonForm from '../components/lessons/LessonForm'
 import { toast } from 'sonner'
 
 const Lessons = () => {
-  const { getLessons, deleteLesson, getVocabularies, getQuestions } = useData()
+  const { getLessons, deleteLesson, getVocabularies, getQuestions, levels } = useData()
+    console.log(levels)
   const levelIds = [
     'FsJrCVNOxFBcOYRigt2X',
     'ZcgxPOIlIWxYqidpCMyB',
@@ -97,6 +98,7 @@ const Lessons = () => {
     if (lessonToDelete) {
       try {
         await deleteLesson(selectedLevelId, lessonToDelete.id)
+        
         toast.success('Lesson deleted successfully')
         setLessonToDelete(null)
         setIsDeleteConfirmOpen(false)

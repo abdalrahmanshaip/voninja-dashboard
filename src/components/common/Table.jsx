@@ -85,9 +85,9 @@ const Table = ({
       <table className="data-table">
         <thead className="data-table-header">
           <tr>
-            {columns.map((column) => (
+            {columns.map((column, index) => (
               <th
-                key={column.field}
+                key={index}
                 className={`data-table-head-cell ${column.sortable === false || !sortable ? '' : 'cursor-pointer'}`}
                 onClick={() => column.sortable !== false && handleSort(column.field)}
               >

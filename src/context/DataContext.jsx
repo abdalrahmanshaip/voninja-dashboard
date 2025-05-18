@@ -9,6 +9,9 @@ import {
   getDoc,
   query,
   where,
+  orderBy,
+  limit,
+  startAfter,
 } from 'firebase/firestore'
 import { db } from '../utils/firebase'
 
@@ -47,12 +50,34 @@ export const DataProvider = ({ children }) => {
   }
 
   // === Lessons by Level ===
-  const getLessons = async (levelId) => {
-    const levelRef = doc(db, 'levels', levelId)
-    const lessonsCol = collection(levelRef, 'lessons')
-    const snapshot = await getDocs(lessonsCol)
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-  }
+  const getLessons = async (levelId, lastVisible = null) => {
+    const levelRef = doc(db, 'levels', levelId);
+    const lessonsCol = collection(levelRef, 'lessons');
+    
+    let queryRef = query(
+      lessonsCol,
+      orderBy('lesson_order'),
+      limit(10)
+    );
+    
+    if (lastVisible) {
+      queryRef = query(
+        lessonsCol,
+        orderBy('lesson_order'),
+        startAfter(lastVisible),
+        limit(10)
+      );
+    }
+  
+    const snapshot = await getDocs(queryRef);
+    const lessons = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  
+    return {
+      lessons,
+      lastVisible: snapshot.docs[snapshot.docs.length - 1] || null,
+      hasMore: snapshot.docs.length === 10
+    };
+  };
 
   const addLesson = async (levelId, lesson) => {
     const levelRef = doc(db, 'levels', levelId)

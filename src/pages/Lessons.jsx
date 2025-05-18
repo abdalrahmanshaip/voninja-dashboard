@@ -15,7 +15,9 @@ const Lessons = () => {
     'igIfRF8vzkSEadAWXTUG',
   ]
 
-  const [selectedLevel, setSelectedLevel] = useState(levelIds[0])
+  const [selectedLevel, setSelectedLevel] = useState('Basic')
+  const [lastVisible, setLastVisible] = useState(null)
+  const [hasMore, setHasMore] = useState(true)
   const [lessons, setLessons] = useState([])
   const [selectedLevelId, setSelectedLevelId] = useState(levelIds[0])
   const [selectedLesson, setSelectedLesson] = useState(null)
@@ -34,8 +36,9 @@ const Lessons = () => {
   useEffect(() => {
     const fetchLessons = async () => {
       const result = await getLessons(selectedLevelId)
+      console.log(result)
       const lessonsWithCounts = await Promise.all(
-        result.map(async (lesson) => {
+        result.lessons.map(async (lesson) => {
           const vocabularies = await getVocabularies(selectedLevelId, lesson.id)
           const questions = await getQuestions(selectedLevelId, lesson.id)
           return {
@@ -50,6 +53,26 @@ const Lessons = () => {
 
     if (selectedLevelId) fetchLessons()
   }, [selectedLevelId, getLessons, getVocabularies, getQuestions])
+
+  const fetchMoreLessons = async () => {
+    if (!hasMore) return
+
+    const result = await getLessons(selectedLevelId, lastVisible)
+    const lessonsWithCounts = await Promise.all(
+      result.lessons.map(async (lesson) => {
+        const vocabularies = await getVocabularies(selectedLevelId, lesson.id)
+        const questions = await getQuestions(selectedLevelId, lesson.id)
+        return {
+          ...lesson,
+          vocabularies,
+          questions,
+        }
+      })
+    )
+    setLessons((prev) => [...prev, ...lessonsWithCounts])
+    setLastVisible(result.lastVisible)
+    setHasMore(result.hasMore)
+  }
 
   const handleAddLesson = () => {
     setIsAddModalOpen(true)
@@ -70,15 +93,15 @@ const Lessons = () => {
     setIsDeleteConfirmOpen(true)
   }
 
-  const confirmDelete = async() => {
+  const confirmDelete = async () => {
     if (lessonToDelete) {
       try {
-        await deleteLesson(selectedLevelId, lessonToDelete.id);
-        toast.success('Lesson deleted successfully');
-        setLessonToDelete(null);
-        setIsDeleteConfirmOpen(false);
+        await deleteLesson(selectedLevelId, lessonToDelete.id)
+        toast.success('Lesson deleted successfully')
+        setLessonToDelete(null)
+        setIsDeleteConfirmOpen(false)
       } catch (error) {
-        toast.error('Failed to delete lesson: ' + error.message);
+        toast.error('Failed to delete lesson: ' + error.message)
       }
     }
   }
@@ -163,7 +186,7 @@ const Lessons = () => {
         <nav className='-mb-px flex space-x-8'>
           {['Basic', 'Intermediate', 'Advanced'].map((level, index) => (
             <button
-              key={level}
+              key={index}
               onClick={() => handleLevelChange(level)}
               className={`${
                 selectedLevel === level
@@ -188,6 +211,13 @@ const Lessons = () => {
           initialSortField='order'
           initialSortDirection='asc'
         />
+        <button
+          onClick={fetchMoreLessons}
+          disabled={!hasMore}
+          className='btn btn-primary mt-4 flex justify-end ms-auto'
+        >
+          Load More
+        </button>
       </div>
 
       {/* Add Lesson Modal */}

@@ -1,17 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useCoupon } from '../../context/CouponContext'
-import firebase from 'firebase/compat/app'
-import { db } from '../../utils/firebase'
-import { collection, doc } from 'firebase/firestore'
 
 const CouponForm = ({ coupon, onClose }) => {
   const { coupons, addCoupon, updateCoupon, deleteCoupon } = useCoupon()
-  const [formData, setFormData] = useState({
-    points: 100,
-    expireDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .slice(0, 10),
-  })
+  const [formData, setFormData] = useState({})
   const [errors, setErrors] = useState({})
   console.log(formData)
 

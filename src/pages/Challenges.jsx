@@ -8,22 +8,22 @@ import ChallengeForm from '../components/challenges/ChallengeForm'
 import { toast } from 'sonner'
 
 const Challenges = () => {
-  const { getChallenges, deleteChallenge } = useChallenge()
+  const {  deleteChallenge , challenges} = useChallenge()
   const [selectedChallenge, setSelectedChallenge] = useState(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [challengeToDelete, setChallengeToDelete] = useState(null)
-  const [challenges, setChallenges] = useState([])
-  console.log(challenges)
-  useEffect(() => {
-    const loadChallenges = async () => {
-      const data = await getChallenges()
-      setChallenges(data)
-    }
-    loadChallenges()
-  }, [getChallenges])
+  // const [challenges, setChallenges] = useState([])
+  // console.log(challenges)
+  // useEffect(() => {
+  //   const loadChallenges = async () => {
+  //     const data = await getChallenges()
+  //     setChallenges(data)
+  //   }
+  //   loadChallenges()
+  // }, [getChallenges])
 
   const handleAddChallenge = () => {
     setIsAddModalOpen(true)

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { db } from '../utils/firebase'
 import {
   collection,
@@ -23,16 +23,15 @@ export const useChallenge = () => {
 export const ChallengeProvider = ({ children }) => {
   const [challenges, setChallenges] = useState([])
 
-  const refreshChallenges = async () => {
-    const data = await getChallenges()
-    setChallenges(data)
+  useEffect(() => {
+    fetchChallenges()
+  }, [])
+
+  const fetchChallenges = async () => {
+    const snapshot = await getDocs(collection(db, 'challenges'))
+    setChallenges(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })))
   }
   // === Challenges ===
-  const getChallenges = async () => {
-    const challengeCol = collection(db, 'challenges')
-    const snapshot = await getDocs(challengeCol)
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-  }
 
   const addChallenge = async (challenge) => {
     const newDocRef = doc(collection(db, 'challenges'))
@@ -41,19 +40,19 @@ export const ChallengeProvider = ({ children }) => {
       challengeId: newDocRef.id,
     }
     await setDoc(newDocRef, challengeWithId)
-    await refreshChallenges()
+    await fetchChallenges()
   }
 
   const updateChallenge = async (challengeId, updated) => {
     const ref = doc(db, 'challenges', challengeId)
     await updateDoc(ref, updated)
-    await refreshChallenges()
+    await fetchChallenges()
   }
 
   const deleteChallenge = async (challengeId) => {
     const ref = doc(db, 'challenges', challengeId)
     await deleteDoc(ref)
-    await refreshChallenges()
+    await fetchChallenges()
   }
 
   // === Tasks inside Challenges ===
@@ -124,7 +123,7 @@ export const ChallengeProvider = ({ children }) => {
   }
 
   const value = {
-    getChallenges,
+    challenges,
     addChallenge,
     updateChallenge,
     deleteChallenge,

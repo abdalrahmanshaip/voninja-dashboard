@@ -9,6 +9,7 @@ import { AuthProvider } from './context/AuthContext'
 import { DataProvider } from './context/DataContext'
 import { CouponProvider } from './context/CouponContext'
 import { ChallengeProvider } from './context/ChallengeContext'
+import { TransactionsProvider } from './context/TransationContext'
 import ProtectedRoute from './components/common/ProtectedRoute'
 
 function App() {
@@ -17,43 +18,48 @@ function App() {
       <AuthProvider>
         <DataProvider>
           <ChallengeProvider>
-            <CouponProvider>
-              <Routes>
-                <Route
-                  path='/login'
-                  element={<Login />}
-                />
-                <Route
-                  path='/'
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route index element={<Lessons />} />
-                  {/* <Route path="lessons" element={<Lessons />} /> */}
-                  {/* <Route
+            <TransactionsProvider>
+              <CouponProvider>
+                <Routes>
+                  <Route
+                    path='/login'
+                    element={<Login />}
+                  />
+                  <Route
+                    path='/'
+                    element={
+                      <ProtectedRoute>
+                        <DashboardLayout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    {/* <Route index element={<Lessons />} /> */}
+                    {/* <Route path="lessons" element={<Lessons />} /> */}
+                    {/* <Route
                     path='challenges'
                     element={<Challenges />}
                   /> */}
-                  {/* <Route path="transactions" element={<Transactions />} /> */}
-                  {/* <Route
+                    <Route
+                      path='transactions'
+                      element={<Transactions />}
+                    />
+                    {/* <Route
                     path='coupons'
                     element={<Coupons />}
                   /> */}
-                </Route>
-                <Route
-                  path='*'
-                  element={
-                    <Navigate
-                      to='/'
-                      replace
-                    />
-                  }
-                />
-              </Routes>
-            </CouponProvider>
+                  </Route>
+                  <Route
+                    path='*'
+                    element={
+                      <Navigate
+                        to='/'
+                        replace
+                      />
+                    }
+                  />
+                </Routes>
+              </CouponProvider>
+            </TransactionsProvider>
           </ChallengeProvider>
         </DataProvider>
       </AuthProvider>

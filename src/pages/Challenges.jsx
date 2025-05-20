@@ -1,29 +1,20 @@
-import { useState, useEffect } from 'react'
-import { useChallenge } from '../context/ChallengeContext'
-import Table from '../components/common/Table'
-import Modal from '../components/common/Modal'
-import ConfirmDialog from '../components/common/ConfirmDialog'
+import { useState } from 'react'
+import { toast } from 'sonner'
 import ChallengeDetails from '../components/challenges/ChallengeDetails'
 import ChallengeForm from '../components/challenges/ChallengeForm'
-import { toast } from 'sonner'
+import ConfirmDialog from '../components/common/ConfirmDialog'
+import Modal from '../components/common/Modal'
+import Table from '../components/common/Table'
+import { useChallenge } from '../context/ChallengeContext'
 
 const Challenges = () => {
-  const {  deleteChallenge , challenges} = useChallenge()
+  const { deleteChallenge, challenges } = useChallenge()
   const [selectedChallenge, setSelectedChallenge] = useState(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [challengeToDelete, setChallengeToDelete] = useState(null)
-  // const [challenges, setChallenges] = useState([])
-  // console.log(challenges)
-  // useEffect(() => {
-  //   const loadChallenges = async () => {
-  //     const data = await getChallenges()
-  //     setChallenges(data)
-  //   }
-  //   loadChallenges()
-  // }, [getChallenges])
 
   const handleAddChallenge = () => {
     setIsAddModalOpen(true)
@@ -66,7 +57,7 @@ const Challenges = () => {
       sortable: true,
       render: (row) => {
         const date = new Date(row.endTime.seconds * 1000)
-         
+
         return (
           <span className='font-medium'>
             {date.toLocaleString('en-US', {

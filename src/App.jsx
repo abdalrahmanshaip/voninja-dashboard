@@ -33,20 +33,20 @@ function App() {
                       </ProtectedRoute>
                     }
                   >
-                    {/* <Route index element={<Lessons />} /> */}
-                    {/* <Route path="lessons" element={<Lessons />} /> */}
-                    {/* <Route
+                    <Route index element={<Lessons />} />
+                    <Route path="lessons" element={<Lessons />} />
+                    <Route
                     path='challenges'
                     element={<Challenges />}
-                  /> */}
+                  />
                     <Route
                       path='transactions'
                       element={<Transactions />}
                     />
-                    {/* <Route
+                    <Route
                     path='coupons'
                     element={<Coupons />}
-                  /> */}
+                  />
                   </Route>
                   <Route
                     path='*'

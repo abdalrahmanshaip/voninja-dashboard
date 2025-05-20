@@ -1,21 +1,18 @@
-import { createContext, useContext, useEffect, useState } from 'react'
 import {
   collection,
-  getDocs,
-  addDoc,
-  updateDoc,
   deleteDoc,
   doc,
-  getDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  startAfter,
+  getDocs,
   increment,
+  limit,
+  orderBy,
+  query,
   setDoc,
-  writeBatch,
+  startAfter,
+  updateDoc,
+  writeBatch
 } from 'firebase/firestore'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { db } from '../utils/firebase'
 
 const DataContext = createContext()

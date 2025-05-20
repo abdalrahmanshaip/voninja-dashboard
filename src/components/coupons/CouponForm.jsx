@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useCoupon } from '../../context/CouponContext'
 
 const CouponForm = ({ coupon, onClose }) => {
-  const { coupons, addCoupon, updateCoupon, deleteCoupon } = useCoupon()
+  const { addCoupon, updateCoupon } = useCoupon()
   const [formData, setFormData] = useState({})
   const [errors, setErrors] = useState({})
   console.log(formData)

@@ -1,14 +1,13 @@
+import { doc, writeBatch } from 'firebase/firestore'
 import { useEffect, useState } from 'react'
-import { writeBatch, doc } from 'firebase/firestore'
-import { db } from '../utils/firebase'
-import { useData } from '../context/DataContext'
-import Table from '../components/common/Table'
-import Modal from '../components/common/Modal'
+import { toast } from 'sonner'
 import ConfirmDialog from '../components/common/ConfirmDialog'
+import Modal from '../components/common/Modal'
 import LessonDetails from '../components/lessons/LessonDetails'
 import LessonForm from '../components/lessons/LessonForm'
-import { toast } from 'sonner'
 import TableLessons from '../components/lessons/TableLessons'
+import { useData } from '../context/DataContext'
+import { db } from '../utils/firebase'
 
 const Lessons = () => {
   const { getLessons, deleteLesson, getVocabularies, getQuestions, levels, updateLesson } =

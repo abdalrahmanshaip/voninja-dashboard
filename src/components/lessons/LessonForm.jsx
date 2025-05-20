@@ -1,8 +1,6 @@
-import { useState, useEffect } from 'react'
-import { useData } from '../../context/DataContext'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { doc, increment, updateDoc } from 'firebase/firestore'
-import { db } from '../../utils/firebase'
+import { useData } from '../../context/DataContext'
 
 const LessonForm = ({ lesson, level, onClose, levelId }) => {
   console.log(levelId)

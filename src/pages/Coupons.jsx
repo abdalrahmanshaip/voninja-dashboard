@@ -6,7 +6,7 @@ import ConfirmDialog from '../components/common/ConfirmDialog'
 import CouponForm from '../components/coupons/CouponForm'
 
 const Coupons = () => {
-  const { coupons, addCoupon, updateCoupon, deleteCoupon } = useCoupon()
+  const { coupons, deleteCoupon } = useCoupon()
   console.log(coupons)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -38,7 +38,6 @@ const Coupons = () => {
     }
   }
 
-
   const getExpirationStatus = (expirationDate) => {
     const now = new Date()
     const expiry = new Date(expirationDate)
@@ -59,12 +58,9 @@ const Coupons = () => {
       header: 'Expiration Date',
       sortable: true,
       render: (row) => {
-
         const date = new Date(row.expireDate.seconds * 1000)
-        return (
-          <span className='font-medium'>{date.toLocaleDateString()}</span>
-        )
-      }
+        return <span className='font-medium'>{date.toLocaleDateString()}</span>
+      },
     },
     {
       field: 'status',

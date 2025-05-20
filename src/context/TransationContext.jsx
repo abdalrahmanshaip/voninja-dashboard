@@ -1,12 +1,10 @@
-import { createContext, useContext, useEffect, useState } from 'react'
 import {
   collection,
-  getDocs,
-  updateDoc,
-  deleteDoc,
   doc,
-  setDoc,
+  getDocs,
+  updateDoc
 } from 'firebase/firestore'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { db } from '../utils/firebase'
 
 const TransactionsContext = createContext()

@@ -70,10 +70,10 @@ const LessonDetails = ({ lesson, onClose, level, levelId }) => {
       header: 'Image',
       sortable: false,
       render: (row) =>
-        row.image ? (
+        row.image_url ? (
           <div className='flex items-center justify-center'>
             <img
-              src={row.image}
+              src={row.image_url}
               alt={row.word}
               className='h-8 w-8 object-cover rounded'
             />

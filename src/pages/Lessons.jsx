@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { writeBatch, doc } from 'firebase/firestore'
+import { db } from '../utils/firebase'
 import { useData } from '../context/DataContext'
 import Table from '../components/common/Table'
 import Modal from '../components/common/Modal'
@@ -6,10 +8,12 @@ import ConfirmDialog from '../components/common/ConfirmDialog'
 import LessonDetails from '../components/lessons/LessonDetails'
 import LessonForm from '../components/lessons/LessonForm'
 import { toast } from 'sonner'
+import TableLessons from '../components/lessons/TableLessons'
 
 const Lessons = () => {
-  const { getLessons, deleteLesson, getVocabularies, getQuestions, levels } = useData()
-    console.log(levels)
+  const { getLessons, deleteLesson, getVocabularies, getQuestions, levels, updateLesson } =
+    useData()
+  console.log(levels)
   const levelIds = [
     'FsJrCVNOxFBcOYRigt2X',
     'ZcgxPOIlIWxYqidpCMyB',
@@ -94,11 +98,69 @@ const Lessons = () => {
     setIsDeleteConfirmOpen(true)
   }
 
+  const handleStatusToggle = async (lesson) => {
+    try {
+      const newStatus =
+        lesson.status === 'PUBLISHED' ? 'UNPUBLISHED' : 'PUBLISHED'
+      await updateLesson(selectedLevelId, lesson.id, { status: newStatus })
+      setLessons((prev) =>
+        prev.map((l) => (l.id === lesson.id ? { ...l, status: newStatus } : l))
+      )
+      toast.success(`Lesson status updated to ${newStatus}`)
+    } catch (error) {
+      console.error('Error updating lesson status:', error)
+      toast.error('Failed to update lesson status')
+    }
+  }
+
+  const handleReorder = async (lesson1, lesson2) => {
+    try {
+      const tempOrder = lesson1.lesson_order
+      lesson1.lesson_order = lesson2.lesson_order
+      lesson2.lesson_order = tempOrder
+
+      const batch = writeBatch(db)
+      const lesson1Ref = doc(
+        db,
+        'levels',
+        selectedLevelId,
+        'lessons',
+        lesson1.id
+      )
+      const lesson2Ref = doc(
+        db,
+        'levels',
+        selectedLevelId,
+        'lessons',
+        lesson2.id
+      )
+      batch.update(lesson1Ref, { lesson_order: lesson1.lesson_order })
+      batch.update(lesson2Ref, { lesson_order: lesson2.lesson_order })
+      await batch.commit()
+      await getLessons(selectedLevelId)
+
+      setLessons((prev) =>
+        prev.map((l) =>
+          l.id === lesson1.id
+            ? { ...l, lesson_order: lesson1.lesson_order }
+            : l.id === lesson2.id
+            ? { ...l, lesson_order: lesson2.lesson_order }
+            : l
+        )
+      )
+      getLessons()
+      toast.success('Lessons reordered successfully')
+    } catch (error) {
+      console.error('Error reordering lessons:', error)
+      toast.error('Failed to reorder lessons. Please try again.')
+    }
+  }
+
   const confirmDelete = async () => {
     if (lessonToDelete) {
       try {
         await deleteLesson(selectedLevelId, lessonToDelete.id)
-        
+
         toast.success('Lesson deleted successfully')
         setLessonToDelete(null)
         setIsDeleteConfirmOpen(false)
@@ -123,6 +185,26 @@ const Lessons = () => {
       header: 'Questions Count',
       sortable: true,
       render: (row) => row.questions.length,
+    },
+    {
+      field: 'status',
+      header: 'Status',
+      sortable: true,
+      render: (row) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            handleStatusToggle(row)
+          }}
+          className={`px-2 py-1 text-sm font-medium rounded-full ${
+            row.status === 'PUBLISHED'
+              ? 'bg-green-100 text-green-800'
+              : 'bg-red-100 text-red-800'
+          }`}
+        >
+          {row.status}
+        </button>
+      ),
     },
   ]
 
@@ -204,7 +286,7 @@ const Lessons = () => {
 
       {/* Lessons table */}
       <div className='card'>
-        <Table
+        <TableLessons
           columns={columns}
           data={Array.isArray(lessons) ? lessons : []}
           actions={renderActions}
@@ -212,6 +294,8 @@ const Lessons = () => {
           emptyMessage={`No ${selectedLevel.toLowerCase()} lessons found. Click "Add Lesson" to create one.`}
           initialSortField='order'
           initialSortDirection='asc'
+          lessons={lessons}
+          onReorder={handleReorder}
         />
         <button
           onClick={fetchMoreLessons}

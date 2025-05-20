@@ -11,6 +11,7 @@ const LessonForm = ({ lesson, level, onClose, levelId }) => {
     title: '',
     level: level,
     lesson_order: 1,
+    status: 'UNPUBLISHED',
   })
   const [errors, setErrors] = useState({})
 
@@ -21,12 +22,14 @@ const LessonForm = ({ lesson, level, onClose, levelId }) => {
         title: lesson.title || '',
         level: lesson.level || level,
         lesson_order: lesson.lesson_order || 1,
+        status: lesson.status || 'UNPUBLISHED',
       })
     } else {
       setFormData({
         title: '',
         level: level,
         lesson_order: 1,
+        status: 'UNPUBLISHED',
       })
     }
   }, [lesson, level, levelId])

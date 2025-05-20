@@ -14,6 +14,7 @@ import {
   startAfter,
   increment,
   setDoc,
+  writeBatch,
 } from 'firebase/firestore'
 import { db } from '../utils/firebase'
 
@@ -33,18 +34,11 @@ export const DataProvider = ({ children }) => {
   }, [])
 
   const fetchInitialData = async () => {
-    const [levelsSnap, challengesSnap] = await Promise.all([
-      getDocs(collection(db, 'levels')),
-      // getDocs(collection(db, 'challenges')),
-    ])
+    const [levelsSnap] = await Promise.all([getDocs(collection(db, 'levels'))])
 
     setData((prev) => ({
       ...prev,
       levels: levelsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
-      // challenges: challengesSnap.docs.map((doc) => ({
-      //   id: doc.id,
-      //   ...doc.data(),
-      // })),
     }))
   }
 
@@ -80,10 +74,26 @@ export const DataProvider = ({ children }) => {
       totalLessons: increment(1),
     })
 
-    const newLessonRef = doc(collection(levelRef, 'lessons')) // توليد ID
-    const lessonWithId = { ...lesson, id: newLessonRef.id }
+    // Get all lessons to update subsequent orders
+    const lessonsCol = collection(levelRef, 'lessons')
+    const snapshot = await getDocs(query(lessonsCol, orderBy('lesson_order')))
+    const lessons = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
 
-    await setDoc(newLessonRef, lessonWithId)
+    // Update orders for lessons after the new lesson's position
+    const batch = writeBatch(db)
+    lessons
+      .filter((l) => l.lesson_order >= lesson.lesson_order)
+      .forEach((l) => {
+        batch.update(doc(lessonsCol, l.id), {
+          lesson_order: l.lesson_order + 1,
+        })
+      })
+
+    const newLessonRef = doc(lessonsCol)
+    const lessonWithId = { ...lesson, id: newLessonRef.id }
+    batch.set(newLessonRef, lessonWithId)
+
+    await batch.commit()
 
     setData((prev) => ({
       ...prev,
@@ -103,12 +113,28 @@ export const DataProvider = ({ children }) => {
   }
 
   const deleteLesson = async (levelId, lessonId) => {
-    const lessonRef = doc(db, 'levels', levelId, 'lessons', lessonId)
     const levelRef = doc(db, 'levels', levelId)
+    const lessonsCol = collection(levelRef, 'lessons')
+    const snapshot = await getDocs(query(lessonsCol, orderBy('lesson_order')))
+    const lessons = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+    const deletedLesson = lessons.find((lesson) => lesson.id === lessonId)
+    const batch = writeBatch(db)
+
+    // Decrement order of subsequent lessons
+    lessons
+      .filter((l) => l.lesson_order > deletedLesson.lesson_order)
+      .forEach((l) => {
+        batch.update(doc(lessonsCol, l.id), {
+          lesson_order: l.lesson_order - 1,
+        })
+      })
+
     await updateDoc(levelRef, {
       totalLessons: increment(-1),
     })
-    await deleteDoc(lessonRef)
+    await deleteDoc(doc(lessonsCol, lessonId))
+    await batch.commit()
+
     setData((prev) => ({
       ...prev,
       lessons: prev.lessons.filter((lesson) => lesson.id !== lessonId),
@@ -293,75 +319,6 @@ export const DataProvider = ({ children }) => {
     }
   }
 
-  // === Tasks inside Challenges ===
-  // const getTasks = async (challengeId) => {
-  //   const taskCol = collection(doc(db, 'challenges', challengeId), 'tasks')
-  //   const snapshot = await getDocs(taskCol)
-  //   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-  // }
-
-  // const addTask = async (challengeId, task) => {
-  //   await addDoc(collection(doc(db, 'challenges', challengeId), 'tasks'), task)
-  // }
-
-  // const updateTask = async (challengeId, taskId, updated) => {
-  //   const ref = doc(db, 'challenges', challengeId, 'tasks', taskId)
-  //   await updateDoc(ref, updated)
-  // }
-
-  // const deleteTask = async (challengeId, taskId) => {
-  //   const ref = doc(db, 'challenges', challengeId, 'tasks', taskId)
-  //   await deleteDoc(ref)
-  // }
-
-  // // === Questions inside Tasks ===
-  // const getTaskQuestions = async (challengeId, taskId) => {
-  //   const qCol = collection(
-  //     doc(db, 'challenges', challengeId, 'tasks', taskId),
-  //     'questions'
-  //   )
-  //   const snapshot = await getDocs(qCol)
-  //   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-  // }
-
-  // const addTaskQuestion = async (challengeId, taskId, question) => {
-  //   await addDoc(
-  //     collection(
-  //       doc(db, 'challenges', challengeId, 'tasks', taskId),
-  //       'questions'
-  //     ),
-  //     question
-  //   )
-  // }
-
-  // const updateTaskQuestion = async (challengeId, taskId, qId, updated) => {
-  //   const ref = doc(
-  //     db,
-  //     'challenges',
-  //     challengeId,
-  //     'tasks',
-  //     taskId,
-  //     'questions',
-  //     qId
-  //   )
-  //   await updateDoc(ref, updated)
-  // }
-
-  // const deleteTaskQuestion = async (challengeId, taskId, qId) => {
-  //   const ref = doc(
-  //     db,
-  //     'challenges',
-  //     challengeId,
-  //     'tasks',
-  //     taskId,
-  //     'questions',
-  //     qId
-  //   )
-  //   await deleteDoc(ref)
-  // }
-
-  //
-
   const value = {
     data,
     getLessons,
@@ -376,14 +333,6 @@ export const DataProvider = ({ children }) => {
     addQuestion,
     updateQuestion,
     deleteQuestion,
-    // getTasks,
-    // addTask,
-    // updateTask,
-    // deleteTask,
-    // getTaskQuestions,
-    // addTaskQuestion,
-    // updateTaskQuestion,
-    // deleteTaskQuestion,
   }
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>

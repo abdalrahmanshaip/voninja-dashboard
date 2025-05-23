@@ -10,9 +10,13 @@ import { useData } from '../context/DataContext'
 import { db } from '../utils/firebase'
 
 const Lessons = () => {
-  const { getLessons, deleteLesson, getVocabularies, getQuestions, levels, updateLesson } =
-    useData()
-  console.log(levels)
+  const {
+    getLessons,
+    deleteLesson,
+    getVocabularies,
+    getQuestions,
+    updateLesson,
+  } = useData()
   const levelIds = [
     'FsJrCVNOxFBcOYRigt2X',
     'ZcgxPOIlIWxYqidpCMyB',
@@ -30,6 +34,7 @@ const Lessons = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [lessonToDelete, setLessonToDelete] = useState(null)
+  const [changeStatus, setChangeStatus] = useState(null)
 
   const handleLevelChange = (level) => {
     setSelectedLevel(level)
@@ -97,18 +102,24 @@ const Lessons = () => {
     setIsDeleteConfirmOpen(true)
   }
 
-  const handleStatusToggle = async (lesson) => {
-    try {
-      const newStatus =
-        lesson.status === 'PUBLISHED' ? 'UNPUBLISHED' : 'PUBLISHED'
-      await updateLesson(selectedLevelId, lesson.id, { status: newStatus })
-      setLessons((prev) =>
-        prev.map((l) => (l.id === lesson.id ? { ...l, status: newStatus } : l))
-      )
-      toast.success(`Lesson status updated to ${newStatus}`)
-    } catch (error) {
-      console.error('Error updating lesson status:', error)
-      toast.error('Failed to update lesson status')
+  const handleStatusToggle = async () => {
+    if (changeStatus) {
+      try {
+        const newStatus =
+          changeStatus.status === 'PUBLISHED' ? 'UNPUBLISHED' : 'PUBLISHED'
+        await updateLesson(selectedLevelId, changeStatus.id, {
+          status: newStatus,
+        })
+        setLessons((prev) =>
+          prev.map((l) =>
+            l.id === changeStatus.id ? { ...l, status: newStatus } : l
+          )
+        )
+        toast.success(`Lesson status updated to ${newStatus}`)
+      } catch (error) {
+        console.error('Error updating lesson status:', error)
+        toast.error('Failed to update lesson status')
+      }
     }
   }
 
@@ -136,18 +147,22 @@ const Lessons = () => {
       batch.update(lesson1Ref, { lesson_order: lesson1.lesson_order })
       batch.update(lesson2Ref, { lesson_order: lesson2.lesson_order })
       await batch.commit()
-      await getLessons(selectedLevelId)
 
-      setLessons((prev) =>
-        prev.map((l) =>
-          l.id === lesson1.id
-            ? { ...l, lesson_order: lesson1.lesson_order }
-            : l.id === lesson2.id
-            ? { ...l, lesson_order: lesson2.lesson_order }
-            : l
-        )
+      const result = await getLessons(selectedLevelId)
+      const lessonsWithCounts = await Promise.all(
+        result.lessons.map(async (lesson) => {
+          const vocabularies = await getVocabularies(selectedLevelId, lesson.id)
+          const questions = await getQuestions(selectedLevelId, lesson.id)
+          return {
+            ...lesson,
+            vocabularies,
+            questions,
+          }
+        })
       )
-      getLessons()
+
+      setLessons(lessonsWithCounts)
+
       toast.success('Lessons reordered successfully')
     } catch (error) {
       console.error('Error reordering lessons:', error)
@@ -193,7 +208,7 @@ const Lessons = () => {
         <button
           onClick={(e) => {
             e.stopPropagation()
-            handleStatusToggle(row)
+            setChangeStatus(row)
           }}
           className={`px-2 py-1 text-sm font-medium rounded-full ${
             row.status === 'PUBLISHED'
@@ -296,13 +311,15 @@ const Lessons = () => {
           lessons={lessons}
           onReorder={handleReorder}
         />
-        <button
-          onClick={fetchMoreLessons}
-          disabled={!hasMore}
-          className='btn btn-primary mt-4 flex justify-end ms-auto'
-        >
-          Load More
-        </button>
+        {hasMore && (
+          <button
+            onClick={fetchMoreLessons}
+            disabled={!hasMore}
+            className='btn btn-primary mt-4 flex justify-end ms-auto'
+          >
+            Load More
+          </button>
+        )}
       </div>
 
       {/* Add Lesson Modal */}
@@ -357,6 +374,18 @@ const Lessons = () => {
         confirmText='Delete'
         cancelText='Cancel'
         type='danger'
+      />
+      <ConfirmDialog
+        isOpen={changeStatus}
+        onClose={() => setChangeStatus(false)}
+        onConfirm={handleStatusToggle}
+        title='lession status'
+        message=' Are you sure you want to update status this lesson?'
+        confirmText={
+          changeStatus?.status === 'PUBLISHED' ? 'UNPUBLISHED' : 'PUBLISHED'
+        }
+        cancelText='Cancel'
+        type='info'
       />
     </div>
   )

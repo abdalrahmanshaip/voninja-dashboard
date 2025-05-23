@@ -5,6 +5,7 @@ import { useTransaction } from '../context/TransationContext'
 
 const Transactions = () => {
   const { transactions, updateTransaction, usersMap } = useTransaction()
+  console.log(transactions)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [selectedTransaction, setSelectedTransaction] = useState(null)
   const [actionType, setActionType] = useState('')

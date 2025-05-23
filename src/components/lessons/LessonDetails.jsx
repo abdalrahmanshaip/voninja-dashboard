@@ -1,16 +1,17 @@
-import { useState } from 'react'
-import { useData } from '../../context/DataContext'
-import Table from '../common/Table'
-import Modal from '../common/Modal'
-import ConfirmDialog from '../common/ConfirmDialog'
-import VocabularyForm from './VocabularyForm'
-import QuestionForm from './QuestionForm'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { useData } from '../../context/DataContext'
+import ConfirmDialog from '../common/ConfirmDialog'
+import Modal from '../common/Modal'
+import Table from '../common/Table'
+import QuestionForm from './QuestionForm'
+import VocabularyForm from './VocabularyForm'
 
-const LessonDetails = ({ lesson, onClose, level, levelId }) => {
-  console.log(lesson)
-  const { deleteVocabulary, deleteQuestion } = useData()
-
+const LessonDetails = ({ lesson, level, levelId }) => {
+  const { deleteVocabulary, deleteQuestion, getVocabularies, getQuestions } =
+    useData()
+  const [questions, setQuestions] = useState([])
+  const [vocabularies, setVocabularies] = useState([])
   const [activeTab, setActiveTab] = useState('vocabulary')
   const [isAddVocabularyOpen, setIsAddVocabularyOpen] = useState(false)
   const [isEditVocabularyOpen, setIsEditVocabularyOpen] = useState(false)
@@ -21,6 +22,30 @@ const LessonDetails = ({ lesson, onClose, level, levelId }) => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [itemToDelete, setItemToDelete] = useState(null)
   const [deleteType, setDeleteType] = useState(null)
+
+
+  useEffect(() => {
+    const fetchVocabularies = async () => {
+      try {
+        const vocabularies = await getVocabularies(levelId, lesson.id)
+        setVocabularies(vocabularies)
+      } catch (error) {
+        console.error('Error fetching vocabularies:', error)
+      }
+    }
+  
+    const fetchQuestions = async () => {
+      try {
+        const questions = await getQuestions(levelId, lesson.id)
+        setQuestions(questions)
+      } catch (error) {
+        console.error('Error fetching vocabularies:', error)
+      }
+    }
+
+    fetchVocabularies()
+    fetchQuestions()
+  }, [getQuestions, getVocabularies, lesson.id, levelId])
 
   if (!lesson) return null
 
@@ -97,7 +122,9 @@ const LessonDetails = ({ lesson, onClose, level, levelId }) => {
       header: 'Correct Answer',
       sortable: true,
       render: (row) => (
-        <div className='truncate max-w-xs'>{row.correct_answer || row.correctAnswer}</div>
+        <div className='truncate max-w-xs'>
+          {row.correct_answer || row.correctAnswer}
+        </div>
       ),
     },
     {
@@ -200,7 +227,7 @@ const LessonDetails = ({ lesson, onClose, level, levelId }) => {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none`}
           >
-            Vocabulary ({lesson.vocabularies.length})
+            Vocabulary ({vocabularies.length})
           </button>
           <button
             onClick={() => setActiveTab('questions')}
@@ -210,7 +237,7 @@ const LessonDetails = ({ lesson, onClose, level, levelId }) => {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none`}
           >
-            Questions ({lesson.questions.length})
+            Questions ({questions.length})
           </button>
         </nav>
       </div>
@@ -243,7 +270,7 @@ const LessonDetails = ({ lesson, onClose, level, levelId }) => {
           </div>
           <Table
             columns={vocabularyColumns}
-            data={lesson.vocabularies}
+            data={vocabularies}
             actions={renderVocabularyActions}
             emptyMessage="No vocabulary words found. Click 'Add Vocabulary' to create one."
           />
@@ -276,7 +303,7 @@ const LessonDetails = ({ lesson, onClose, level, levelId }) => {
           </div>
           <Table
             columns={questionColumns}
-            data={lesson.questions}
+            data={questions}
             actions={renderQuestionActions}
             emptyMessage="No questions found. Click 'Add Question' to create one."
           />

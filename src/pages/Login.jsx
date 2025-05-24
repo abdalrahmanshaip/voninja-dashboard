@@ -95,17 +95,8 @@ const Login = () => {
             </div>
           </div>
 
-          <div className="text-sm text-center">
-            <p className="text-gray-600">
-              Use the following credentials:
-            </p>
-            <p className="font-medium text-gray-800 mt-1">
-              Email: voninja15@gmail.com
-            </p>
-            <p className="font-medium text-gray-800">
-              Password: Voninja123
-            </p>
-          </div>
+         
+         
 
           <div>
             <button

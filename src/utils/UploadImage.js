@@ -2,10 +2,10 @@ export const uploadImage = async (file) => {
   if (!file) return
   const data = new FormData()
   data.append('file', file)
-  data.append('upload_preset', 'voninja_images')
-  data.append('cloud_name', 'dkyi55zkr')
+  data.append('upload_preset', import.meta.env.VITE_UPLOAD_PRESET)
+  data.append('cloud_name', import.meta.env.VITE_CLOUD_NAME)
   const res = await fetch(
-    'https://api.cloudinary.com/v1_1/dkyi55zkr/image/upload',
+    `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUD_NAME}/image/upload`,
     {
       method: 'POST',
       body: data,

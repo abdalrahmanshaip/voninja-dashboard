@@ -148,7 +148,7 @@ const QuestionForm = ({
             Image
           </label>
           <input
-            type='url'
+            type='text'
             placeholder='Enter image URL'
             {...register('image')}
             className={`mb-2 input w-full ${

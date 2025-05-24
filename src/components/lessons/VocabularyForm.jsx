@@ -176,7 +176,7 @@ const VocabularyForm = ({ levelId, lessonId, vocabulary, onClose }) => {
             Image
           </label>
           <input
-            type='url'
+            type='text'
             placeholder='Enter image URL'
             {...register('image_url')}
             className={`mb-2 input w-full ${

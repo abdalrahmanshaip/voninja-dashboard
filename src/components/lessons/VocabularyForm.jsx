@@ -8,18 +8,20 @@ import { uploadImage } from '../../utils/UploadImage'
 
 const VocabularySchema = z.object({
   word: z.string().min(1, {
-    message: 'word must be at least 2 characters.',
+    message: 'word must be at least 1 characters.',
   }),
   translated_word: z.string().min(1, {
-    message: 'translated word must be at least 2 characters.',
+    message: 'translated word must be at least 1 characters.',
   }),
   statement_example: z.string().min(1, {
-    message: 'English statement must be at least 2 characters.',
+    message: 'English statement must be at least 1 characters.',
   }),
   translated_statement_example: z.string().min(1, {
-    message: 'Arabic statement must be at least 2 characters.',
+    message: 'Arabic statement must be at least 1 characters.',
   }),
-  image_url: z.instanceof(File).or(z.string().url()).optional(),
+  image_url: z
+    .union([z.instanceof(File), z.string().url(), z.string().length(0)])
+    .optional(),
 })
 const VocabularyForm = ({ levelId, lessonId, vocabulary, onClose }) => {
   const {
@@ -44,9 +46,13 @@ const VocabularyForm = ({ levelId, lessonId, vocabulary, onClose }) => {
   const { addVocabulary, updateVocabulary } = useData()
   console.log(watchIamge)
   const onSubmit = async (data) => {
-    console.log(data)
+    let url = ''
     try {
-      const url = await uploadImage(data.image_url)
+      if (typeof data.image_url === 'string' && data.image_url.length > 0) {
+        url = data.image_url
+      } else if (data.image_url instanceof File) {
+        url = await uploadImage(data.image_url)
+      }
       const dataWithImageUrl = {
         ...data,
         image_url: url,
@@ -169,6 +175,14 @@ const VocabularyForm = ({ levelId, lessonId, vocabulary, onClose }) => {
           <label className='block text-sm font-medium text-gray-700 mb-2'>
             Image
           </label>
+          <input
+            type='url'
+            placeholder='Enter image URL'
+            {...register('image_url')}
+            className={`mb-2 input w-full ${
+              errors.image_url?.message ? 'border-red-500' : ''
+            }`}
+          />
           <label
             htmlFor={'image_url'}
             className='relative cursor-pointer flex items-center justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md'
@@ -192,7 +206,11 @@ const VocabularyForm = ({ levelId, lessonId, vocabulary, onClose }) => {
               accept='image/*'
               onChange={(e) => {
                 const file = e.target.files?.[0]
-                if (file) {
+                const currentUrl = watch('image_url')
+                if (
+                  file &&
+                  (typeof currentUrl !== 'string' || currentUrl.trim() === '')
+                ) {
                   setValue('image_url', file)
                 }
               }}
@@ -211,9 +229,11 @@ const VocabularyForm = ({ levelId, lessonId, vocabulary, onClose }) => {
             <p className='text-sm text-gray-500 mb-1'>Image Preview:</p>
             <img
               src={
-                typeof watchIamge !== 'string'
+                typeof watchIamge === 'string' && watchIamge.length > 0
+                  ? watchIamge
+                  : watchIamge instanceof File
                   ? URL.createObjectURL(watchIamge)
-                  : watchIamge
+                  : ''
               }
               alt='Preview'
               className='h-40 w-40 object-cover rounded border border-gray-300'

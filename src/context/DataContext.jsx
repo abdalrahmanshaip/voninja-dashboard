@@ -10,7 +10,7 @@ import {
   setDoc,
   startAfter,
   updateDoc,
-  writeBatch
+  writeBatch,
 } from 'firebase/firestore'
 import { createContext, useContext, useEffect, useState } from 'react'
 import { db } from '../utils/firebase'
@@ -71,23 +71,19 @@ export const DataProvider = ({ children }) => {
       totalLessons: increment(1),
     })
 
-    // Get all lessons to update subsequent orders
     const lessonsCol = collection(levelRef, 'lessons')
     const snapshot = await getDocs(query(lessonsCol, orderBy('lesson_order')))
     const lessons = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+    const lastLessonOrder =
+      lessons.length > 0 ? lessons[lessons.length - 1].lesson_order : 0
 
-    // Update orders for lessons after the new lesson's position
     const batch = writeBatch(db)
-    lessons
-      .filter((l) => l.lesson_order >= lesson.lesson_order)
-      .forEach((l) => {
-        batch.update(doc(lessonsCol, l.id), {
-          lesson_order: l.lesson_order + 1,
-        })
-      })
-
     const newLessonRef = doc(lessonsCol)
-    const lessonWithId = { ...lesson, id: newLessonRef.id }
+    const lessonWithId = {
+      ...lesson,
+      id: newLessonRef.id,
+      lesson_order: lastLessonOrder + 1,
+    }
     batch.set(newLessonRef, lessonWithId)
 
     await batch.commit()

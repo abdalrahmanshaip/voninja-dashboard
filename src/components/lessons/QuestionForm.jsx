@@ -21,7 +21,9 @@ const QuestionSchema = z.object({
   correctAnswer: z.string().min(1, {
     message: 'Correct answer is required',
   }),
-  image: z.instanceof(File).or(z.string().url()).optional(),
+  image: z
+    .union([z.instanceof(File), z.string().url(), z.string().length(0)])
+    .optional(),
 })
 
 const QuestionForm = ({
@@ -54,8 +56,13 @@ const QuestionForm = ({
   }
 
   const onSubmit = async (data) => {
+    let url = ''
     try {
-      const url = await uploadImage(data.image)
+      if (typeof data.image === 'string' && data.image.length > 0) {
+        url = data.image
+      } else if (data.image instanceof File) {
+        url = await uploadImage(data.image)
+      }
       const dataWithImageUrl = {
         ...data,
         image: url,
@@ -140,8 +147,16 @@ const QuestionForm = ({
           <label className='block text-sm font-medium text-gray-700 mb-2'>
             Image
           </label>
+          <input
+            type='url'
+            placeholder='Enter image URL'
+            {...register('image')}
+            className={`mb-2 input w-full ${
+              errors.image?.message ? 'border-red-500' : ''
+            }`}
+          />
           <label
-            htmlFor={'image_url'}
+            htmlFor={'image'}
             className='relative cursor-pointer flex items-center justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md'
           >
             <div className='space-y-1 text-center justify-center'>
@@ -158,12 +173,16 @@ const QuestionForm = ({
             </div>
             <input
               type='file'
-              id='image_url'
-              name='image_url'
+              id='image'
+              name='image'
               accept='image/*'
               onChange={(e) => {
                 const file = e.target.files?.[0]
-                if (file) {
+                const currentUrl = watch('image')
+                if (
+                  file &&
+                  (typeof currentUrl !== 'string' || currentUrl.trim() === '')
+                ) {
                   setValue('image', file)
                 }
               }}
@@ -171,9 +190,9 @@ const QuestionForm = ({
             />
           </label>
         </div>
-        {errors.image_url?.message && (
+        {errors.image?.message && (
           <p className='mt-1 text-sm text-red-500'>
-            {errors.image_url?.message}
+            {errors.image?.message}
           </p>
         )}
 
@@ -182,9 +201,11 @@ const QuestionForm = ({
             <p className='text-sm text-gray-500 mb-1'>Image Preview:</p>
             <img
               src={
-                typeof watch('image') !== 'string'
+                typeof watch('image') === 'string' && watch('image').length > 0
+                  ? watch('image')
+                  : watch('image') instanceof File
                   ? URL.createObjectURL(watch('image'))
-                  : watch('image')
+                  : ''
               }
               alt='Preview'
               className='h-40 w-40 object-cover rounded border border-gray-300'
@@ -203,7 +224,6 @@ const QuestionForm = ({
         </button>
         <button
           disabled={isSubmitting}
-          
           type='submit'
           className='btn btn-primary'
         >

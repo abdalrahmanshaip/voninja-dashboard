@@ -19,14 +19,12 @@ const LessonForm = ({ lesson, level, onClose, levelId }) => {
       setFormData({
         title: lesson.title || '',
         level: lesson.level || level,
-        lesson_order: lesson.lesson_order || 1,
         status: lesson.status || 'UNPUBLISHED',
       })
     } else {
       setFormData({
         title: '',
         level: level,
-        lesson_order: 1,
         status: 'UNPUBLISHED',
       })
     }
@@ -55,9 +53,7 @@ const LessonForm = ({ lesson, level, onClose, levelId }) => {
       newErrors.title = 'Title is required'
     }
 
-    if (!formData.lesson_order || formData.lesson_order < 1) {
-      newErrors.lesson_order = 'Order must be a positive number'
-    }
+
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -127,27 +123,6 @@ const LessonForm = ({ lesson, level, onClose, levelId }) => {
           <option value='Intermediate'>Intermediate</option>
           <option value='Advanced'>Advanced</option>
         </select>
-      </div>
-
-      <div>
-        <label
-          htmlFor='lesson_order'
-          className='block text-sm font-medium text-gray-700'
-        >
-          Order
-        </label>
-        <input
-          type='number'
-          id='lesson_order'
-          name='lesson_order'
-          min='1'
-          value={formData.lesson_order}
-          onChange={handleChange}
-          className={`mt-1 input ${errors.order ? 'border-red-500' : ''}`}
-        />
-        {errors.order && (
-          <p className='mt-1 text-sm text-red-500'>{errors.order}</p>
-        )}
       </div>
 
       <div className='flex justify-end mt-6 space-x-3'>

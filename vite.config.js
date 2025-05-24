@@ -4,5 +4,5 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/voninja-admin/',
+  base: import.meta.env.VITE_BASE_PATH || '/voninja-dashboard',
 })

@@ -79,11 +79,11 @@ const Login = () => {
           className='mt-8 space-y-6'
           onSubmit={handleSubmit}
         >
-          <div className='rounded-md shadow-sm -space-y-px'>
+          <div className='rounded-md shadow-sm space-y-3'>
             <div>
               <label
                 htmlFor='email-address'
-                className='sr-only'
+                className='text-black'
               >
                 Email address
               </label>
@@ -102,7 +102,7 @@ const Login = () => {
             <div>
               <label
                 htmlFor='password'
-                className='sr-only'
+                className='text-black'
               >
                 Password
               </label>
@@ -110,7 +110,6 @@ const Login = () => {
                 id='password'
                 name='password'
                 type='password'
-                autoComplete='current-password'
                 required
                 className='appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm'
                 placeholder='Password'

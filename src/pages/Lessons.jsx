@@ -1,4 +1,4 @@
-import { doc, writeBatch } from 'firebase/firestore'
+import { doc, increment, updateDoc, writeBatch } from 'firebase/firestore'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import ConfirmDialog from '../components/common/ConfirmDialog'
@@ -8,6 +8,8 @@ import LessonForm from '../components/lessons/LessonForm'
 import TableLessons from '../components/lessons/TableLessons'
 import { useData } from '../context/DataContext'
 import { db } from '../utils/firebase'
+import { useSearchParams } from 'react-router-dom'
+import { useDebouncedCallback } from 'use-debounce'
 
 const Lessons = () => {
   const {
@@ -22,7 +24,7 @@ const Lessons = () => {
     'ZcgxPOIlIWxYqidpCMyB',
     'igIfRF8vzkSEadAWXTUG',
   ]
-
+  const [searchParams, setSearchParams] = useSearchParams()
   const [selectedLevel, setSelectedLevel] = useState('Basic')
   const [lastVisible, setLastVisible] = useState(null)
   const [hasMore, setHasMore] = useState(true)
@@ -36,6 +38,13 @@ const Lessons = () => {
   const [lessonToDelete, setLessonToDelete] = useState(null)
   const [changeStatus, setChangeStatus] = useState(null)
 
+  const handleSearch = useDebouncedCallback((value) => {
+    setSearchParams(value ? `?lesson=${value}` : {})
+  }, 400)
+
+  const handleResetSearch = () => {
+    setSearchParams({})
+  }
   const handleLevelChange = (level) => {
     setSelectedLevel(level)
     const index = ['Basic', 'Intermediate', 'Advanced'].indexOf(level)
@@ -44,8 +53,11 @@ const Lessons = () => {
 
   useEffect(() => {
     const fetchLessons = async () => {
-      const result = await getLessons(selectedLevelId)
-      console.log(result)
+      const result = await getLessons(
+        selectedLevelId,
+        null,
+        searchParams.get('lesson')
+      )
       const lessonsWithCounts = await Promise.all(
         result.lessons.map(async (lesson) => {
           const vocabularies = await getVocabularies(selectedLevelId, lesson.id)
@@ -61,7 +73,7 @@ const Lessons = () => {
     }
 
     if (selectedLevelId) fetchLessons()
-  }, [selectedLevelId, getLessons, getVocabularies, getQuestions])
+  }, [selectedLevelId, getLessons, getVocabularies, getQuestions, searchParams])
 
   const fetchMoreLessons = async () => {
     if (!hasMore) return
@@ -174,7 +186,9 @@ const Lessons = () => {
     if (lessonToDelete) {
       try {
         await deleteLesson(selectedLevelId, lessonToDelete.id)
-
+        await updateDoc(doc(db, 'levels', selectedLevelId), {
+          totalQuestions: increment(-lessonToDelete.questions?.length),
+        })
         toast.success('Lesson deleted successfully')
         setLessonToDelete(null)
         setIsDeleteConfirmOpen(false)
@@ -297,6 +311,22 @@ const Lessons = () => {
           ))}
         </nav>
       </div>
+      <form className='flex items-center justify-start w-fit'>
+        <input
+          id='search'
+          type='search'
+          placeholder='Search lessons...'
+          className='input bg-white text-black w-60'
+          onChange={(e) => handleSearch(e.target.value)}
+        />
+        <button
+          type='reset'
+          onClick={handleResetSearch}
+          className='bg-black hover:bg-black/90 focus:ring-white text-whitet w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-1.5 text-base font-medium  focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm '
+        >
+          Reset
+        </button>
+      </form>
 
       {/* Lessons table */}
       <div className='card'>

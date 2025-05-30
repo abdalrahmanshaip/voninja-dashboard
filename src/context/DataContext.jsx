@@ -10,6 +10,7 @@ import {
   setDoc,
   startAfter,
   updateDoc,
+  where,
   writeBatch,
 } from 'firebase/firestore'
 import { createContext, useContext, useEffect, useState } from 'react'
@@ -40,11 +41,20 @@ export const DataProvider = ({ children }) => {
   }
 
   // === Lessons by Level ===
-  const getLessons = async (levelId, lastVisible = null) => {
+  const getLessons = async (
+    levelId,
+    lastVisible = null,
+    searchQuery = undefined
+  ) => {
     const levelRef = doc(db, 'levels', levelId)
     const lessonsCol = collection(levelRef, 'lessons')
 
-    let queryRef = query(lessonsCol, orderBy('lesson_order'), limit(10))
+    let queryRef = query(
+      lessonsCol,
+      searchQuery && where('title', '==', searchQuery),
+      orderBy('lesson_order'),
+      limit(10)
+    )
 
     if (lastVisible) {
       queryRef = query(
@@ -60,8 +70,10 @@ export const DataProvider = ({ children }) => {
 
     return {
       lessons,
-      lastVisible: snapshot.docs[snapshot.docs.length - 1] || null,
-      hasMore: snapshot.docs.length === 10,
+      lastVisible: !searchQuery
+        ? snapshot.docs[snapshot.docs.length - 1] || null
+        : null,
+      hasMore: !searchQuery && snapshot.docs.length === 10,
     }
   }
 
@@ -293,13 +305,12 @@ export const DataProvider = ({ children }) => {
       )
       await deleteDoc(ref)
       const updatedQuestions = await getQuestions(levelId, lessonId)
-      const levelRef = doc(db, 'levels', levelId)
       const lessonRef = doc(db, 'levels', levelId, 'lessons', lessonId)
-      await updateDoc(levelRef, {
-        totalQuestions: increment(1),
+      await updateDoc(doc(db, 'levels', levelId), {
+        totalQuestions: increment(-1),
       })
       await updateDoc(lessonRef, {
-        numQuestions: increment(1),
+        numQuestions: increment(-1),
       })
       setData((prev) => ({
         ...prev,

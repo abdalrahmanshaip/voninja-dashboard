@@ -13,7 +13,7 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore'
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useState } from 'react'
 import { db } from '../utils/firebase'
 
 const DataContext = createContext()
@@ -27,54 +27,33 @@ export const DataProvider = ({ children }) => {
     tasks: [],
   })
 
-  useEffect(() => {
-    fetchInitialData()
-  }, [])
-
-  const fetchInitialData = async () => {
-    const [levelsSnap] = await Promise.all([getDocs(collection(db, 'levels'))])
-
-    setData((prev) => ({
-      ...prev,
-      levels: levelsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
-    }))
-  }
-
   // === Lessons by Level ===
-  const getLessons = async (
-    levelId,
-    lastVisible = null,
-    searchQuery = undefined
-  ) => {
+  const getLessons = async (levelId) => {
+    const cacheKey = `${levelId}`
+
+    if (data.lessons[cacheKey]) {
+      return {
+        lessons: data.lessons[cacheKey],
+      }
+    }
+
     const levelRef = doc(db, 'levels', levelId)
     const lessonsCol = collection(levelRef, 'lessons')
 
-    let queryRef = query(
-      lessonsCol,
-      searchQuery && where('title', '==', searchQuery),
-      orderBy('lesson_order'),
-      limit(10)
-    )
+    let queryRef = query(lessonsCol, orderBy('lesson_order'))
 
-    if (lastVisible) {
-      queryRef = query(
-        lessonsCol,
-        orderBy('lesson_order'),
-        startAfter(lastVisible),
-        limit(10)
-      )
-    }
-
+    // Optional filtering logic
     const snapshot = await getDocs(queryRef)
-    const lessons = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-
-    return {
-      lessons,
-      lastVisible: !searchQuery
-        ? snapshot.docs[snapshot.docs.length - 1] || null
-        : null,
-      hasMore: !searchQuery && snapshot.docs.length === 10,
-    }
+    let lessons = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+    // تحديث الكاش
+    setData((prev) => ({
+      ...prev,
+      lessons: {
+        ...prev.lessons,
+        [cacheKey]: lessons,
+      },
+    }))
+    return { lessons }
   }
 
   const addLesson = async (levelId, lesson) => {
@@ -102,7 +81,12 @@ export const DataProvider = ({ children }) => {
 
     setData((prev) => ({
       ...prev,
-      lessons: [...prev.lessons, lessonWithId],
+      lessons: {
+        ...prev.lessons,
+        [levelId]: prev.lessons[levelId]
+          ? [...prev.lessons[levelId], lessonWithId]
+          : [lessonWithId],
+      },
     }))
   }
 
@@ -111,9 +95,12 @@ export const DataProvider = ({ children }) => {
     await updateDoc(lessonRef, updated)
     setData((prev) => ({
       ...prev,
-      lessons: prev.lessons.map((lesson) =>
-        lesson.id === lessonId ? { ...lesson, ...updated } : lesson
-      ),
+      lessons: {
+        ...prev.lessons,
+        [levelId]: prev.lessons[levelId].map((lesson) =>
+          lesson.id === lessonId ? { ...lesson, ...updated } : lesson
+        ),
+      },
     }))
   }
 
@@ -140,9 +127,15 @@ export const DataProvider = ({ children }) => {
     await deleteDoc(doc(lessonsCol, lessonId))
     await batch.commit()
 
+    // Update local cache without fetching again
     setData((prev) => ({
       ...prev,
-      lessons: prev.lessons.filter((lesson) => lesson.id !== lessonId),
+      lessons: {
+        ...prev.lessons,
+        [levelId]: prev.lessons[levelId].filter(
+          (lesson) => lesson.id !== lessonId
+        ),
+      },
     }))
   }
 

@@ -9,13 +9,13 @@ const ChallengeForm = ({ challenge, onClose }) => {
   const [formData, setFormData] = useState({
     title: '',
     endTime: null,
-    deductionPoints: 5,
-    rewardPoints: 20,
-    subscriptionPoints: 100,
+    deductionPoints: 0,
+    rewardPoints: 0,
+    subscriptionPoints: 0,
     rewards: {
-      first: 500,
-      second: 300,
-      third: 150,
+      first: 0,
+      second: 0,
+      third: 0,
     },
   })
   const [errors, setErrors] = useState({})

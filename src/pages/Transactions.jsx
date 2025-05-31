@@ -2,10 +2,10 @@ import { useState } from 'react'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import Table from '../components/common/Table'
 import { useTransaction } from '../context/TransationContext'
+import { toast } from 'sonner'
 
 const Transactions = () => {
   const { transactions, updateTransaction, usersMap } = useTransaction()
-  console.log(transactions)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [selectedTransaction, setSelectedTransaction] = useState(null)
   const [actionType, setActionType] = useState('')
@@ -25,17 +25,26 @@ const Transactions = () => {
     }
     return 'Invalid date'
   }
-
+  console.log(selectedTransaction)
   const handleAction = (transaction, action) => {
     setSelectedTransaction(transaction)
+    console.log(action)
     setActionType(action)
     setIsConfirmOpen(true)
   }
 
-  const confirmAction = () => {
+  const confirmAction = async () => {
     if (selectedTransaction) {
-      updateTransaction(selectedTransaction.id, actionType)
-      setSelectedTransaction(null)
+      try {
+        await updateTransaction(selectedTransaction.id, {
+          status: actionType
+        })
+        toast.success(`Transaction successfully ${actionType.toLowerCase()}`)
+        setSelectedTransaction(null)
+      } catch (error) {
+        console.error('Error updating transaction:', error)
+        toast.error(`Failed to ${actionType.toLowerCase()} transaction: ${error.message}`)
+      }
     }
   }
 
@@ -175,11 +184,11 @@ const Transactions = () => {
             : 'Reject Transaction'
         }
         message={`Are you sure you want to ${
-          actionType === 'approved' ? 'approve' : 'reject'
+          actionType === 'Approved' ? 'approve' : 'reject'
         } this transaction?`}
-        confirmText={actionType === 'approved' ? 'Approve' : 'Reject'}
+        confirmText={actionType === 'Approved' ? 'Approve' : 'Reject'}
         cancelText='Cancel'
-        type={actionType === 'approved' ? 'info' : 'danger'}
+        type={actionType === 'Approved' ? 'info' : 'danger'}
       />
     </div>
   )

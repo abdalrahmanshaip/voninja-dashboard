@@ -10,6 +10,7 @@ import VocabularyForm from './VocabularyForm'
 const LessonDetails = ({ lesson, level, levelId }) => {
   const { deleteVocabulary, deleteQuestion, getVocabularies, getQuestions } =
     useData()
+    
   const [questions, setQuestions] = useState([])
   const [vocabularies, setVocabularies] = useState([])
   const [activeTab, setActiveTab] = useState('vocabulary')

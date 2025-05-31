@@ -1,6 +1,7 @@
-import { doc, writeBatch } from 'firebase/firestore'
+import { doc, increment, updateDoc, writeBatch } from 'firebase/firestore'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { useDebouncedCallback } from 'use-debounce'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import Modal from '../components/common/Modal'
 import LessonDetails from '../components/lessons/LessonDetails'
@@ -10,13 +11,7 @@ import { useData } from '../context/DataContext'
 import { db } from '../utils/firebase'
 
 const Lessons = () => {
-  const {
-    getLessons,
-    deleteLesson,
-    getVocabularies,
-    getQuestions,
-    updateLesson,
-  } = useData()
+  const { getLessons, deleteLesson, updateLesson } = useData()
   const levelIds = [
     'FsJrCVNOxFBcOYRigt2X',
     'ZcgxPOIlIWxYqidpCMyB',
@@ -24,8 +19,6 @@ const Lessons = () => {
   ]
 
   const [selectedLevel, setSelectedLevel] = useState('Basic')
-  const [lastVisible, setLastVisible] = useState(null)
-  const [hasMore, setHasMore] = useState(true)
   const [lessons, setLessons] = useState([])
   const [selectedLevelId, setSelectedLevelId] = useState(levelIds[0])
   const [selectedLesson, setSelectedLesson] = useState(null)
@@ -35,7 +28,25 @@ const Lessons = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [lessonToDelete, setLessonToDelete] = useState(null)
   const [changeStatus, setChangeStatus] = useState(null)
+  const [allLessons, setAllLessons] = useState([])
 
+  const handleSearch = useDebouncedCallback((value) => {
+    const keyword = value.toLowerCase()
+
+    if (!keyword) {
+      setLessons(allLessons)
+      return
+    }
+
+    const filtered = allLessons.filter((lesson) =>
+      lesson.title?.toLowerCase().includes(keyword)
+    )
+    setLessons(filtered)
+  }, 400)
+
+  const handleResetSearch = () => {
+    setLessons(allLessons)
+  }
   const handleLevelChange = (level) => {
     setSelectedLevel(level)
     const index = ['Basic', 'Intermediate', 'Advanced'].indexOf(level)
@@ -45,43 +56,19 @@ const Lessons = () => {
   useEffect(() => {
     const fetchLessons = async () => {
       const result = await getLessons(selectedLevelId)
-      console.log(result)
       const lessonsWithCounts = await Promise.all(
         result.lessons.map(async (lesson) => {
-          const vocabularies = await getVocabularies(selectedLevelId, lesson.id)
-          const questions = await getQuestions(selectedLevelId, lesson.id)
           return {
             ...lesson,
-            vocabularies,
-            questions,
           }
         })
       )
+      setAllLessons(lessonsWithCounts)
       setLessons(lessonsWithCounts)
     }
 
     if (selectedLevelId) fetchLessons()
-  }, [selectedLevelId, getLessons, getVocabularies, getQuestions])
-
-  const fetchMoreLessons = async () => {
-    if (!hasMore) return
-
-    const result = await getLessons(selectedLevelId, lastVisible)
-    const lessonsWithCounts = await Promise.all(
-      result.lessons.map(async (lesson) => {
-        const vocabularies = await getVocabularies(selectedLevelId, lesson.id)
-        const questions = await getQuestions(selectedLevelId, lesson.id)
-        return {
-          ...lesson,
-          vocabularies,
-          questions,
-        }
-      })
-    )
-    setLessons((prev) => [...prev, ...lessonsWithCounts])
-    setLastVisible(result.lastVisible)
-    setHasMore(result.hasMore)
-  }
+  }, [selectedLevelId, getLessons])
 
   const handleAddLesson = () => {
     setIsAddModalOpen(true)
@@ -111,8 +98,10 @@ const Lessons = () => {
           status: newStatus,
         })
         setLessons((prev) =>
-          prev.map((l) =>
-            l.id === changeStatus.id ? { ...l, status: newStatus } : l
+          prev.map((lesson) =>
+            lesson.id === changeStatus.id
+              ? { ...lesson, status: newStatus }
+              : lesson
           )
         )
         toast.success(`Lesson status updated to ${newStatus}`)
@@ -148,20 +137,16 @@ const Lessons = () => {
       batch.update(lesson2Ref, { lesson_order: lesson2.lesson_order })
       await batch.commit()
 
-      const result = await getLessons(selectedLevelId)
-      const lessonsWithCounts = await Promise.all(
-        result.lessons.map(async (lesson) => {
-          const vocabularies = await getVocabularies(selectedLevelId, lesson.id)
-          const questions = await getQuestions(selectedLevelId, lesson.id)
-          return {
-            ...lesson,
-            vocabularies,
-            questions,
-          }
+      setLessons((prevLessons) => {
+        const updatedLessons = prevLessons.map((lesson) => {
+          if (lesson.id === lesson1.id)
+            return { ...lesson, lesson_order: lesson1.lesson_order }
+          if (lesson.id === lesson2.id)
+            return { ...lesson, lesson_order: lesson2.lesson_order }
+          return lesson
         })
-      )
-
-      setLessons(lessonsWithCounts)
+        return updatedLessons.sort((a, b) => a.lesson_order - b.lesson_order)
+      })
 
       toast.success('Lessons reordered successfully')
     } catch (error) {
@@ -174,6 +159,11 @@ const Lessons = () => {
     if (lessonToDelete) {
       try {
         await deleteLesson(selectedLevelId, lessonToDelete.id)
+        await updateDoc(doc(db, 'levels', selectedLevelId), {
+          totalQuestions: increment(-lessonToDelete.questions?.length || 0),
+        })
+        const updatedLessons = lessons.filter((l) => l.id !== lessonToDelete.id)
+        setLessons(updatedLessons)
 
         toast.success('Lesson deleted successfully')
         setLessonToDelete(null)
@@ -189,16 +179,10 @@ const Lessons = () => {
     { field: 'title', header: 'Title', sortable: true },
     { field: 'lesson_order', header: 'Order', sortable: true },
     {
-      field: 'vocabularies',
-      header: 'Vocabulary Count',
-      sortable: true,
-      render: (row) => row.vocabularies.length,
-    },
-    {
       field: 'questions',
       header: 'Questions Count',
       sortable: true,
-      render: (row) => row.questions.length,
+      render: (row) => row.numQuestions,
     },
     {
       field: 'status',
@@ -298,6 +282,23 @@ const Lessons = () => {
         </nav>
       </div>
 
+      <form className='flex items-center justify-start w-fit'>
+        <input
+          id='search'
+          type='search'
+          placeholder='Search lessons...'
+          className='input bg-white text-black w-60'
+          onChange={(e) => handleSearch(e.target.value)}
+        />
+        <button
+          type='reset'
+          onClick={handleResetSearch}
+          className='bg-black hover:bg-black/90 focus:ring-white text-white w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-1.5 text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm '
+        >
+          Reset
+        </button>
+      </form>
+
       {/* Lessons table */}
       <div className='card'>
         <TableLessons
@@ -311,15 +312,6 @@ const Lessons = () => {
           lessons={lessons}
           onReorder={handleReorder}
         />
-        {hasMore && (
-          <button
-            onClick={fetchMoreLessons}
-            disabled={!hasMore}
-            className='btn btn-primary mt-4 flex justify-end ms-auto'
-          >
-            Load More
-          </button>
-        )}
       </div>
 
       {/* Add Lesson Modal */}
@@ -375,12 +367,14 @@ const Lessons = () => {
         cancelText='Cancel'
         type='danger'
       />
+
+      {/* Status Update Dialog */}
       <ConfirmDialog
         isOpen={changeStatus}
         onClose={() => setChangeStatus(false)}
         onConfirm={handleStatusToggle}
-        title='lession status'
-        message=' Are you sure you want to update status this lesson?'
+        title='Lesson Status'
+        message='Are you sure you want to update the status of this lesson?'
         confirmText={
           changeStatus?.status === 'PUBLISHED' ? 'UNPUBLISHED' : 'PUBLISHED'
         }

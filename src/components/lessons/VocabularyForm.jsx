@@ -44,7 +44,6 @@ const VocabularyForm = ({ levelId, lessonId, vocabulary, onClose }) => {
 
   const watchIamge = watch('image_url')
   const { addVocabulary, updateVocabulary } = useData()
-  console.log(watchIamge)
   const onSubmit = async (data) => {
     let url = ''
     try {

@@ -7,11 +7,9 @@ import CouponForm from '../components/coupons/CouponForm'
 
 const Coupons = () => {
   const { coupons, deleteCoupon } = useCoupon()
-  console.log(coupons)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedCoupon, setSelectedCoupon] = useState(null)
-  console.log(selectedCoupon)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [couponToDelete, setCouponToDelete] = useState(null)
 

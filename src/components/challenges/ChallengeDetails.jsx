@@ -5,10 +5,12 @@ import Modal from '../common/Modal'
 import ConfirmDialog from '../common/ConfirmDialog'
 import TaskForm from './TaskForm'
 import TaskQuestions from './TaskQuestions'
+import { toast } from 'sonner'
+import { doc, writeBatch } from 'firebase/firestore'
+import { db } from '../../utils/firebase'
 
 const ChallengeDetails = ({ challenge, onClose }) => {
   const { getTasks, deleteTask } = useChallenge()
-
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false)
   const [isEditTaskOpen, setIsEditTaskOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState(null)
@@ -16,6 +18,8 @@ const ChallengeDetails = ({ challenge, onClose }) => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState(null)
   const [tasks, setTasks] = useState([])
+  const [refreshTrigger, setRefreshTrigger] = useState(false)
+
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -23,25 +27,23 @@ const ChallengeDetails = ({ challenge, onClose }) => {
       setTasks(fetchedTasks)
     }
     fetchTasks()
-  }, [challenge.id, getTasks])
-  if (!challenge) return null
-
-  console.log(tasks)
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    return date.toLocaleString()
-  }
+  }, [challenge.id, getTasks, refreshTrigger])
 
   const handleDeleteTask = (task) => {
     setTaskToDelete(task)
     setIsDeleteConfirmOpen(true)
   }
 
-  const confirmDeleteTask = () => {
+  const confirmDeleteTask = async () => {
     if (taskToDelete) {
-      deleteTask(challenge.id, taskToDelete.id)
-      setTaskToDelete(null)
+      try {
+        await deleteTask(challenge.id, taskToDelete.id)
+        toast.success('Task deleted successfully')
+        setRefreshTrigger((prev) => !prev)
+        setTaskToDelete(null)
+      } catch (error) {
+        toast.error('Failed to delete task: ' + error.message)
+      }
     }
   }
 
@@ -53,6 +55,39 @@ const ChallengeDetails = ({ challenge, onClose }) => {
   const handleViewQuestions = (task) => {
     setSelectedTask(task)
     setIsTaskQuestionsOpen(true)
+  }
+
+
+
+  const handleReorderTasks = async (task1, task2) => {
+    try {
+      const tempOrder = task1.order
+      task1.order = task2.order
+      task2.order = tempOrder
+  
+      const batch = writeBatch(db)
+      const task1Ref = doc(db, 'challenges', challenge.id, 'tasks', task1.id)
+      const task2Ref = doc(db, 'challenges', challenge.id, 'tasks', task2.id)
+      batch.update(task1Ref, { order: task1.order })
+      batch.update(task2Ref, { order: task2.order })
+  
+      await batch.commit()
+  
+      setTasks((prevTasks) => {
+        const updatedTasks = prevTasks.map((task) => {
+          if (task.id === task1.id) return { ...task, order: task1.order }
+          if (task.id === task2.id) return { ...task, order: task2.order }
+          return task
+        })
+        return updatedTasks.sort((a, b) => a.order - b.order)
+      })
+  
+      toast.success('Tasks reordered successfully')
+      setRefreshTrigger((prev) =>!prev)
+    } catch (error) {
+      console.error('Error reordering tasks:', error)
+      toast.error('Failed to reorder tasks. Please try again.')
+    }
   }
 
   const taskColumns = [
@@ -210,6 +245,7 @@ const ChallengeDetails = ({ challenge, onClose }) => {
           emptyMessage="No tasks found. Click 'Add Task' to create one."
           initialSortField='order'
           initialSortDirection='asc'
+          onReorder={handleReorderTasks}
         />
       </div>
 
@@ -222,6 +258,7 @@ const ChallengeDetails = ({ challenge, onClose }) => {
         <TaskForm
           challengeId={challenge.id}
           onClose={() => setIsAddTaskOpen(false)}
+          setRefreshTrigger={setRefreshTrigger}
         />
       </Modal>
 
@@ -235,6 +272,7 @@ const ChallengeDetails = ({ challenge, onClose }) => {
           challengeId={challenge.id}
           task={selectedTask}
           onClose={() => setIsEditTaskOpen(false)}
+          setRefreshTrigger={setRefreshTrigger}
         />
       </Modal>
 
@@ -243,7 +281,7 @@ const ChallengeDetails = ({ challenge, onClose }) => {
         isOpen={isTaskQuestionsOpen}
         onClose={() => setIsTaskQuestionsOpen(false)}
         title={selectedTask ? `Task: ${selectedTask.title}` : 'Task Questions'}
-        size='lg'
+        size='xl'
       >
         <TaskQuestions
           challengeId={challenge.id}

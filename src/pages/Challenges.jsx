@@ -8,14 +8,14 @@ import Table from '../components/common/Table'
 import { useChallenge } from '../context/ChallengeContext'
 
 const Challenges = () => {
-  const { deleteChallenge, challenges } = useChallenge()
+  const { deleteChallenge, challenges, updateChallenge } = useChallenge()
   const [selectedChallenge, setSelectedChallenge] = useState(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [challengeToDelete, setChallengeToDelete] = useState(null)
-
+  const [changeStatus, setChangeStatus] = useState(null)
   const handleAddChallenge = () => {
     setIsAddModalOpen(true)
   }
@@ -48,6 +48,21 @@ const Challenges = () => {
     }
   }
 
+  const handleStatusToggle = async () => {
+    if (changeStatus) {
+      try {
+        const updatedStatus =
+          changeStatus.status === 'PUBLISHED' ? 'UNPUBLISHED' : 'PUBLISHED'
+        await updateChallenge(changeStatus.id, {
+          status: updatedStatus,
+        })
+        toast.success('Status updated successfully')
+      } catch (error) {
+        toast.error('Failed to update status:'+ error.message)
+      }
+    }
+  }
+
   const columns = [
     { field: 'id', header: 'ID', sortable: true },
     { field: 'title', header: 'Title', sortable: true },
@@ -72,27 +87,24 @@ const Challenges = () => {
       },
     },
     {
-      field: 'rewardPoints',
-      header: 'Reward Points',
+      field: 'status',
+      header: 'Status',
       sortable: true,
-      render: (row) => `+${row.rewardPoints}`,
-    },
-    {
-      field: 'deducePoints',
-      header: 'Deduction Points',
-      sortable: true,
-      render: (row) => `-${row.deducePoints}`,
-    },
-    {
-      field: 'subscriptionPoints',
-      header: 'Required Points',
-      sortable: true,
-    },
-    {
-      field: 'tasks',
-      header: 'Tasks Count',
-      sortable: true,
-      render: (row) => row.numberOfTasks,
+      render: (row) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setChangeStatus(row)
+          }}
+          className={`px-2 py-1 text-sm font-medium rounded-full ${
+            row.status === 'PUBLISHED'
+              ? 'bg-green-100 text-green-800'
+              : 'bg-red-100 text-red-800'
+          }`}
+        >
+          {row.status}
+        </button>
+      ),
     },
   ]
 
@@ -194,7 +206,7 @@ const Challenges = () => {
         isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}
         title='Challenge Details'
-        size='lg'
+        size='xl'
       >
         <ChallengeDetails
           challenge={selectedChallenge}
@@ -212,6 +224,18 @@ const Challenges = () => {
         confirmText='Delete'
         cancelText='Cancel'
         type='danger'
+      />
+       <ConfirmDialog
+        isOpen={changeStatus}
+        onClose={() => setChangeStatus(false)}
+        onConfirm={handleStatusToggle}
+        title='Lesson Status'
+        message='Are you sure you want to update the status of this lesson?'
+        confirmText={
+          changeStatus?.status === 'PUBLISHED' ? 'UNPUBLISHED' : 'PUBLISHED'
+        }
+        cancelText='Cancel'
+        type='info'
       />
     </div>
   )

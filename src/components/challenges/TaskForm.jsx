@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react'
 import { useChallenge } from '../../context/ChallengeContext'
 import { toast } from 'sonner'
 
-const TaskForm = ({ challengeId, task, onClose }) => {
+const TaskForm = ({ challengeId, task, onClose, setRefreshTrigger }) => {
   const { addTask, updateTask } = useChallenge()
   const [formData, setFormData] = useState({
     title: '',
-    order: 1,
+    numQuestions: 0,
   })
   const [errors, setErrors] = useState({})
 
@@ -15,12 +15,13 @@ const TaskForm = ({ challengeId, task, onClose }) => {
     if (task) {
       setFormData({
         title: task.title || '',
-        order: task.order || 1,
+        order: task.order,
+        numQuestions: task.numQuestions || 0,
       })
     } else {
       setFormData({
         title: '',
-        order: 1,
+        numQuestions: 0,
       })
     }
   }, [task])
@@ -49,10 +50,6 @@ const TaskForm = ({ challengeId, task, onClose }) => {
       newErrors.title = 'Title is required'
     }
 
-    if (!formData.order || formData.order < 1) {
-      newErrors.order = 'Order must be a positive number'
-    }
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -65,9 +62,11 @@ const TaskForm = ({ challengeId, task, onClose }) => {
     try {
       if (task) {
         await updateTask(challengeId, task.id, formData)
+        setRefreshTrigger((prev) => !prev)
         toast.success('Task updated successfully')
       } else {
         await addTask(challengeId, formData)
+        setRefreshTrigger((prev) => !prev)
         toast.success('Task added successfully')
       }
       onClose()
@@ -98,27 +97,6 @@ const TaskForm = ({ challengeId, task, onClose }) => {
         />
         {errors.title && (
           <p className='mt-1 text-sm text-red-500'>{errors.title}</p>
-        )}
-      </div>
-
-      <div>
-        <label
-          htmlFor='order'
-          className='block text-sm font-medium text-gray-700'
-        >
-          Order
-        </label>
-        <input
-          type='number'
-          id='order'
-          name='order'
-          min='1'
-          value={formData.order}
-          onChange={handleChange}
-          className={`mt-1 input ${errors.order ? 'border-red-500' : ''}`}
-        />
-        {errors.order && (
-          <p className='mt-1 text-sm text-red-500'>{errors.order}</p>
         )}
       </div>
 

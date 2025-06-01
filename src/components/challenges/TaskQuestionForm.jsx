@@ -1,226 +1,244 @@
-import { useState, useEffect } from 'react';
-import { useData } from '../../context/DataContext';
+// { challengeId, taskId, question, onClose }
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Upload } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { z } from 'zod'
+import { uploadImage } from '../../utils/UploadImage'
+import { useChallenge } from '../../context/ChallengeContext'
 
-const TaskQuestionForm = ({ challengeId, taskId, question, onClose }) => {
-  const { addTaskQuestion, updateTaskQuestion } = useData();
-  const [formData, setFormData] = useState({
-    content: '',
-    choices: ['', '', ''],
-    correctAnswer: '',
-    image: ''
-  });
-  const [errors, setErrors] = useState({});
+const QuestionSchema = z.object({
+  content: z.string().min(1, {
+    message: 'Question content is required',
+  }),
+  choices: z
+    .array(
+      z.string().min(1, {
+        message: 'Choice cannot be empty',
+      })
+    )
+    .length(3),
+  correct_answer: z.string().min(1, {
+    message: 'Correct answer is required',
+  }),
+  image: z
+    .union([z.instanceof(File), z.string().url(), z.string().length(0)])
+    .optional(),
+})
 
-  // If editing, populate form with question data
-  useEffect(() => {
-    if (question) {
-      setFormData({
-        content: question.content || '',
-        choices: question.choices || ['', '', ''],
-        correctAnswer: question.correctAnswer || '',
-        image: question.image || ''
-      });
-    } else {
-      setFormData({
-        content: '',
-        choices: ['', '', ''],
-        correctAnswer: '',
-        image: ''
-      });
-    }
-  }, [question]);
+const TaskQuestionForm = ({
+  challengeId,
+  taskId,
+  question,
+  onClose,
+  setRefreshTrigger,
+}) => {
+  const { addTaskQuestion, updateTaskQuestion } = useChallenge()
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-    
-    // Clear error for this field
-    if (errors[name]) {
-      setErrors({
-        ...errors,
-        [name]: null
-      });
-    }
-  };
+  const {
+    handleSubmit,
+    watch,
+    setValue,
+    register,
+    isSubmitting,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(QuestionSchema),
+    defaultValues: {
+      content: question?.content || '',
+      choices: question?.choices || ['', '', ''],
+      correct_answer: question?.correct_answer || '',
+      image: question?.image || '',
+    },
+  })
 
-  const handleChoiceChange = (index, value) => {
-    const newChoices = [...formData.choices];
-    newChoices[index] = value;
-    
-    setFormData({
-      ...formData,
-      choices: newChoices
-    });
-    
-    // Clear error for choices
-    if (errors.choices) {
-      setErrors({
-        ...errors,
-        choices: null
-      });
-    }
-  };
+  const handlecorrectanswerChange = (value) => {
+    setValue('correct_answer', value)
+  }
 
-  const handleCorrectAnswerChange = (value) => {
-    setFormData({
-      ...formData,
-      correctAnswer: value
-    });
-    
-    // Clear error for correctAnswer
-    if (errors.correctAnswer) {
-      setErrors({
-        ...errors,
-        correctAnswer: null
-      });
-    }
-  };
-
-  const validate = () => {
-    const newErrors = {};
-    
-    if (!formData.content.trim()) {
-      newErrors.content = 'Question content is required';
-    }
-    
-    // Check if all choices are filled
-    const emptyChoiceIndex = formData.choices.findIndex(choice => !choice.trim());
-    if (emptyChoiceIndex !== -1) {
-      newErrors.choices = `Choice ${emptyChoiceIndex + 1} cannot be empty`;
-    }
-    
-    // Check if correctAnswer is one of the choices
-    if (!formData.correctAnswer.trim()) {
-      newErrors.correctAnswer = 'Correct answer is required';
-    } else if (!formData.choices.includes(formData.correctAnswer)) {
-      newErrors.correctAnswer = 'Correct answer must be one of the choices';
-    }
-    
-    // Check if image URL is valid
-    if (formData.image && !isValidUrl(formData.image)) {
-      newErrors.image = 'Image must be a valid URL';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const isValidUrl = (string) => {
+  const onSubmit = async (data) => {
+    let url = ''
     try {
-      new URL(string);
-      return true;
-    } catch (_) {
-      return false;
+      if (typeof data.image === 'string' && data.image.length > 0) {
+        url = data.image
+      } else if (data.image instanceof File) {
+        url = await uploadImage(data.image)
+      }
+      const dataWithImageUrl = {
+        ...data,
+        image: url,
+      }
+      if (question) {
+        await updateTaskQuestion(
+          challengeId,
+          taskId,
+          question.id,
+          dataWithImageUrl
+        )
+        toast.success('Task question updated successfully')
+        setRefreshTrigger((prev) => !prev)
+      } else {
+        await addTaskQuestion(challengeId, taskId, dataWithImageUrl)
+        toast.success('Task question added successfully')
+        setRefreshTrigger((prev) => !prev)
+      }
+      onClose()
+    } catch (error) {
+      console.error('Error submitting question:', error)
+      toast.error(error.message || 'Failed to save question')
     }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (!validate()) return;
-    
-    if (question) {
-      updateTaskQuestion(challengeId, taskId, question.id, formData);
-    } else {
-      addTaskQuestion(challengeId, taskId, formData);
-    }
-    
-    onClose();
-  };
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className='space-y-4'
+    >
       <div>
-        <label htmlFor="content" className="block text-sm font-medium text-gray-700">
+        <label
+          htmlFor='content'
+          className='block text-sm font-medium text-gray-700'
+        >
           Question
         </label>
         <textarea
-          id="content"
-          name="content"
-          rows="2"
-          value={formData.content}
-          onChange={handleChange}
+          id='content'
+          name='content'
+          rows='2'
+          {...register('content')}
           className={`mt-1 input ${errors.content ? 'border-red-500' : ''}`}
         />
-        {errors.content && <p className="mt-1 text-sm text-red-500">{errors.content}</p>}
+        {errors.content?.message && (
+          <p className='mt-1 text-sm text-red-500'>{errors.content.message}</p>
+        )}
       </div>
-      
+
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className='block text-sm font-medium text-gray-700 mb-2'>
           Choices
         </label>
-        <div className="space-y-3">
-          {formData.choices.map((choice, index) => (
-            <div key={index} className="flex items-center space-x-2">
+        <div className='space-y-3'>
+          {watch('choices').map((choice, index) => (
+            <div
+              key={index}
+              className='flex items-center space-x-2'
+            >
               <input
-                type="radio"
+                value={0}
+                type='radio'
                 id={`correct-${index}`}
-                name="correctAnswer"
-                checked={formData.correctAnswer === choice}
-                onChange={() => handleCorrectAnswerChange(choice)}
-                className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                name='correct_answer'
+                checked={watch('correct_answer') === choice}
+                onChange={() => handlecorrectanswerChange(choice)}
+                className='h-4 w-4 text-primary focus:ring-primary border-gray-300'
               />
               <input
-                type="text"
-                value={choice}
-                onChange={(e) => handleChoiceChange(index, e.target.value)}
+                type='text'
+                {...register(`choices.${index}`)}
                 placeholder={`Choice ${index + 1}`}
-                className={`input ${errors.choices && !choice.trim() ? 'border-red-500' : ''}`}
+                className={`input ${
+                  errors.choices?.[index] ? 'border-red-500' : ''
+                }`}
               />
             </div>
           ))}
         </div>
-        {errors.choices && <p className="mt-1 text-sm text-red-500">{errors.choices}</p>}
-        {errors.correctAnswer && <p className="mt-1 text-sm text-red-500">{errors.correctAnswer}</p>}
+        {errors.choices && (
+          <p className='mt-1 text-sm text-red-500'>{errors.choices.message}</p>
+        )}
+        {errors.correct_answer && (
+          <p className='mt-1 text-sm text-red-500'>{errors.correct_answer.message}</p>
+        )}
       </div>
-      
+
       <div>
-        <label htmlFor="image" className="block text-sm font-medium text-gray-700">
-          Image URL
-        </label>
-        <input
-          type="text"
-          id="image"
-          name="image"
-          value={formData.image}
-          onChange={handleChange}
-          placeholder="https://example.com/image.jpg"
-          className={`mt-1 input ${errors.image ? 'border-red-500' : ''}`}
-        />
-        {errors.image && <p className="mt-1 text-sm text-red-500">{errors.image}</p>}
-        
-        {formData.image && isValidUrl(formData.image) && (
-          <div className="mt-2">
-            <p className="text-sm text-gray-500 mb-1">Image Preview:</p>
-            <img 
-              src={formData.image} 
-              alt="Preview" 
-              className="h-20 w-20 object-cover rounded border border-gray-300" 
+        <div className='mt-4'>
+          <label className='block text-sm font-medium text-gray-700 mb-2'>
+            Image
+          </label>
+          <input
+            type='text'
+            placeholder='Enter image URL'
+            {...register('image')}
+            className={`mb-2 input w-full ${
+              errors.image?.message ? 'border-red-500' : ''
+            }`}
+          />
+          <label
+            htmlFor={'image'}
+            className='relative cursor-pointer flex items-center justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md'
+          >
+            <div className='space-y-1 text-center justify-center'>
+              <Upload
+                color='black'
+                className='mx-auto'
+              />
+              <div className='flex text-sm text-gray-600'>
+                <p className='mx-auto  cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500'>
+                  <span>Upload a Image</span>
+                </p>
+              </div>
+              <p className='text-xs text-gray-500'>PNG, JPG up to 10MB</p>
+            </div>
+            <input
+              type='file'
+              id='image'
+              name='image'
+              accept='image/*'
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                const currentUrl = watch('image')
+                if (
+                  file &&
+                  (typeof currentUrl !== 'string' || currentUrl.trim() === '')
+                ) {
+                  setValue('image', file)
+                }
+              }}
+              className='sr-only'
+            />
+          </label>
+        </div>
+        {errors.image?.message && (
+          <p className='mt-1 text-sm text-red-500'>{errors.image?.message}</p>
+        )}
+
+        {watch('image') && (
+          <div className='mt-2'>
+            <p className='text-sm text-gray-500 mb-1'>Image Preview:</p>
+            <img
+              src={
+                typeof watch('image') === 'string' && watch('image').length > 0
+                  ? watch('image')
+                  : watch('image') instanceof File
+                  ? URL.createObjectURL(watch('image'))
+                  : ''
+              }
+              alt='Preview'
+              className='h-40 w-40 object-cover rounded border border-gray-300'
             />
           </div>
         )}
       </div>
-      
-      <div className="flex justify-end mt-6 space-x-3">
+
+      <div className='flex justify-end mt-6 space-x-3'>
         <button
-          type="button"
+          type='button'
           onClick={onClose}
-          className="btn btn-ghost"
+          className='btn btn-ghost'
         >
           Cancel
         </button>
         <button
-          type="submit"
-          className="btn btn-primary"
+          disabled={isSubmitting}
+          type='submit'
+          className='btn btn-primary'
         >
           {question ? 'Update Question' : 'Add Question'}
         </button>
       </div>
     </form>
-  );
-};
+  )
+}
 
-export default TaskQuestionForm;
+export default TaskQuestionForm

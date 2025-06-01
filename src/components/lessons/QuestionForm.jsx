@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react'
-import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Upload } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { z } from 'zod'
 import { useData } from '../../context/DataContext'
-import { toast } from 'sonner'
-import { Upload } from 'lucide-react'
 import { uploadImage } from '../../utils/UploadImage'
 
 const QuestionSchema = z.object({
@@ -135,10 +134,10 @@ const QuestionForm = ({
           ))}
         </div>
         {errors.choices && (
-          <p className='mt-1 text-sm text-red-500'>{errors.choices}</p>
+          <p className='mt-1 text-sm text-red-500'>{errors.choices.message}</p>
         )}
         {errors.correctAnswer && (
-          <p className='mt-1 text-sm text-red-500'>{errors.correctAnswer}</p>
+          <p className='mt-1 text-sm text-red-500'>{errors.correctAnswer.message}</p>
         )}
       </div>
 

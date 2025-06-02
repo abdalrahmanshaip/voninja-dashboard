@@ -4,6 +4,7 @@ import { Award, Badge, Crown, Medal, Trophy } from 'lucide-react'
 import ConfirmDialog from '../common/ConfirmDialog'
 import {
   collection,
+  doc,
   getDocs,
   increment,
   query,
@@ -29,24 +30,32 @@ const TopUsers = ({ onClose, challenge }) => {
   const handleGiveUsersPoints = async () => {
     try {
       const topThreeUsers = topUsers.slice(0, 3)
+      const usernames = topThreeUsers.map((user) => user.username)
+
+      const usersRef = collection(db, 'users')
+      const q = query(usersRef, where('username', 'in', usernames))
+      const snapshot = await getDocs(q)
+
+      const userMap = new Map()
+      snapshot.forEach((doc) => {
+        userMap.set(doc.data().username, doc.ref)
+      })
 
       for (const user of topThreeUsers) {
-        const usersRef = collection(db, 'users')
-        const q = query(usersRef, where('username', '==', user.username))
-        const querySnapshot = await getDocs(q)
-
-        if (!querySnapshot.empty) {
-          const userDoc = querySnapshot.docs[0]
-          const userRef = userDoc.ref
-
+        const userRef = userMap.get(user.username)
+        if (userRef) {
           await updateDoc(userRef, {
             pointsNumber: increment(user.userPoints),
           })
+        } else {
+          console.warn(`User not found in Firestore: ${user.username}`)
         }
       }
+
       toast.success('Top 3 users updated with their points!')
     } catch (error) {
-      toast.error('Error updating top 3 users:', error)
+      console.error('Error updating top 3 users:', error)
+      toast.error('Something went wrong while updating user points.')
     }
   }
 

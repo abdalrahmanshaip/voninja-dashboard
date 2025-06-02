@@ -1,19 +1,18 @@
-import { createContext, useContext, useEffect, useState } from 'react'
-import { db } from '../utils/firebase'
 import {
   collection,
-  doc,
-  addDoc,
-  updateDoc,
   deleteDoc,
-  getDocs,
-  setDoc,
-  increment,
-  query,
-  orderBy,
+  doc,
   getDoc,
-  where,
+  getDocs,
+  increment,
+  orderBy,
+  query,
+  setDoc,
+  updateDoc,
+  where
 } from 'firebase/firestore'
+import { createContext, useContext, useEffect, useState } from 'react'
+import { db } from '../utils/firebase'
 
 const ChallengeContext = createContext()
 

@@ -3,7 +3,6 @@ import { toast } from 'sonner'
 import { useData } from '../../context/DataContext'
 
 const LessonForm = ({ lesson, level, onClose, levelId }) => {
-  console.log(levelId)
   const { addLesson, updateLesson } = useData()
   const [formData, setFormData] = useState({
     title: '',

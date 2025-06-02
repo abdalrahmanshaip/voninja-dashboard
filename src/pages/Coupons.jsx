@@ -23,14 +23,12 @@ const Coupons = () => {
   }
 
   const handleDeleteClick = (coupon) => {
-    console.log(coupon)
     setCouponToDelete(coupon)
     setIsDeleteConfirmOpen(true)
   }
 
   const confirmDelete = () => {
     if (couponToDelete) {
-      console.log(couponToDelete)
       deleteCoupon(couponToDelete.id)
       setCouponToDelete(null)
     }

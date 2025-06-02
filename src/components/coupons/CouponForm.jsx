@@ -5,7 +5,6 @@ const CouponForm = ({ coupon, onClose }) => {
   const { addCoupon, updateCoupon } = useCoupon()
   const [formData, setFormData] = useState({})
   const [errors, setErrors] = useState({})
-  console.log(formData)
 
   useEffect(() => {
     if (coupon) {

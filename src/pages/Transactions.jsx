@@ -25,10 +25,8 @@ const Transactions = () => {
     }
     return 'Invalid date'
   }
-  console.log(selectedTransaction)
   const handleAction = (transaction, action) => {
     setSelectedTransaction(transaction)
-    console.log(action)
     setActionType(action)
     setIsConfirmOpen(true)
   }

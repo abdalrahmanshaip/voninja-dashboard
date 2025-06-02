@@ -203,6 +203,12 @@ export const ChallengeProvider = ({ children }) => {
     await deleteDoc(ref)
   }
 
+  const getUsers = async (challengeId) => {
+    const taskCol = collection(doc(db, 'challenges', challengeId), 'users')
+    const q = query(taskCol, orderBy('userPoints', 'desc'))
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+  }
   const value = {
     challenges,
     addChallenge,
@@ -216,6 +222,7 @@ export const ChallengeProvider = ({ children }) => {
     addTaskQuestion,
     updateTaskQuestion,
     deleteTaskQuestion,
+    getUsers,
   }
 
   return (

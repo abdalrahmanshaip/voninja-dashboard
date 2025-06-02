@@ -6,6 +6,7 @@ import ConfirmDialog from '../components/common/ConfirmDialog'
 import Modal from '../components/common/Modal'
 import Table from '../components/common/Table'
 import { useChallenge } from '../context/ChallengeContext'
+import TopUsers from '../components/challenges/TopUsers'
 
 const Challenges = () => {
   const { deleteChallenge, challenges, updateChallenge } = useChallenge()
@@ -13,6 +14,7 @@ const Challenges = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  const [isUsersModalOpen, setIsUsersModalOpen] = useState(false)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [challengeToDelete, setChallengeToDelete] = useState(null)
   const [changeStatus, setChangeStatus] = useState(null)
@@ -28,6 +30,10 @@ const Challenges = () => {
   const handleViewDetails = (challenge) => {
     setSelectedChallenge(challenge)
     setIsDetailsModalOpen(true)
+  }
+  const handleTopUsers = (challenge) => {
+    setSelectedChallenge(challenge)
+    setIsUsersModalOpen(true)
   }
 
   const handleDeleteClick = (challenge) => {
@@ -58,7 +64,7 @@ const Challenges = () => {
         })
         toast.success('Status updated successfully')
       } catch (error) {
-        toast.error('Failed to update status:'+ error.message)
+        toast.error('Failed to update status:' + error.message)
       }
     }
   }
@@ -110,6 +116,15 @@ const Challenges = () => {
 
   const renderActions = (challenge) => (
     <>
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          handleTopUsers(challenge)
+        }}
+        className='text-indigo-600 hover:text-indigo-900 focus:outline-none'
+      >
+        Users
+      </button>
       <button
         onClick={(e) => {
           e.stopPropagation()
@@ -225,18 +240,29 @@ const Challenges = () => {
         cancelText='Cancel'
         type='danger'
       />
-       <ConfirmDialog
+      <ConfirmDialog
         isOpen={changeStatus}
         onClose={() => setChangeStatus(false)}
         onConfirm={handleStatusToggle}
-        title='Lesson Status'
-        message='Are you sure you want to update the status of this lesson?'
+        title='Challenges Status'
+        message='Are you sure you want to update the status of this Challenges?'
         confirmText={
           changeStatus?.status === 'PUBLISHED' ? 'UNPUBLISHED' : 'PUBLISHED'
         }
         cancelText='Cancel'
         type='info'
       />
+      <Modal
+        isOpen={isUsersModalOpen}
+        onClose={() => setIsUsersModalOpen(false)}
+        title='Top 3 users'
+        size='xl'
+      >
+        <TopUsers
+          onClose={() => setIsUsersModalOpen(false)}
+          challenge={selectedChallenge}
+        />
+      </Modal>
     </div>
   )
 }

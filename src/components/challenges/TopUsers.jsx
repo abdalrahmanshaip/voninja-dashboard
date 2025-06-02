@@ -1,18 +1,17 @@
-import { useEffect, useState } from 'react'
-import { useChallenge } from '../../context/ChallengeContext'
-import { Award, Badge, Crown, Medal, Trophy } from 'lucide-react'
-import ConfirmDialog from '../common/ConfirmDialog'
 import {
   collection,
-  doc,
   getDocs,
   increment,
   query,
   updateDoc,
-  where,
+  where
 } from 'firebase/firestore'
-import { db } from '../../utils/firebase'
+import { Award, Crown, Medal, Trophy } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { useChallenge } from '../../context/ChallengeContext'
+import { db } from '../../utils/firebase'
+import ConfirmDialog from '../common/ConfirmDialog'
 
 const TopUsers = ({ onClose, challenge }) => {
   const { getUsers } = useChallenge()

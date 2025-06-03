@@ -10,7 +10,9 @@ import { DataProvider } from './context/DataContext'
 import { CouponProvider } from './context/CouponContext'
 import { ChallengeProvider } from './context/ChallengeContext'
 import { TransactionsProvider } from './context/TransationContext'
+import { UserProvider } from './context/UserContext'
 import ProtectedRoute from './components/common/ProtectedRoute'
+import Users from './pages/Users'
 
 function App() {
   return (
@@ -20,44 +22,56 @@ function App() {
           <ChallengeProvider>
             <TransactionsProvider>
               <CouponProvider>
-                <Routes>
-                  <Route
-                    path='/login'
-                    element={<Login />}
-                  />
-                  <Route
-                    path='/'
-                    element={
-                      <ProtectedRoute>
-                        <DashboardLayout />
-                      </ProtectedRoute>
-                    }
-                  >
-                    <Route index element={<Lessons />} />
-                    <Route path="lessons" element={<Lessons />} />
+                <UserProvider>
+                  <Routes>
                     <Route
-                    path='challenges'
-                    element={<Challenges />}
-                  />
-                    <Route
-                      path='transactions'
-                      element={<Transactions />}
+                      path='/login'
+                      element={<Login />}
                     />
                     <Route
-                    path='coupons'
-                    element={<Coupons />}
-                  />
-                  </Route>
-                  <Route
-                    path='*'
-                    element={
-                      <Navigate
-                        to='/'
-                        replace
+                      path='/'
+                      element={
+                        <ProtectedRoute>
+                          <DashboardLayout />
+                        </ProtectedRoute>
+                      }
+                    >
+                      <Route
+                        index
+                        element={<Lessons />}
                       />
-                    }
-                  />
-                </Routes>
+                      <Route
+                        path='lessons'
+                        element={<Lessons />}
+                      />
+                      <Route
+                        path='users'
+                        element={<Users />}
+                      />
+                      <Route
+                        path='challenges'
+                        element={<Challenges />}
+                      />
+                      <Route
+                        path='transactions'
+                        element={<Transactions />}
+                      />
+                      <Route
+                        path='coupons'
+                        element={<Coupons />}
+                      />
+                    </Route>
+                    <Route
+                      path='*'
+                      element={
+                        <Navigate
+                          to='/'
+                          replace
+                        />
+                      }
+                    />
+                  </Routes>
+                </UserProvider>
               </CouponProvider>
             </TransactionsProvider>
           </ChallengeProvider>

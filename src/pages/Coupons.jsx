@@ -37,6 +37,7 @@ const Coupons = () => {
   const getExpirationStatus = (expirationDate) => {
     const now = new Date()
     const expiry = new Date(expirationDate)
+    console.log(now, expiry)
     return now > expiry
   }
 
@@ -55,7 +56,18 @@ const Coupons = () => {
       sortable: true,
       render: (row) => {
         const date = new Date(row.expireDate.seconds * 1000)
-        return <span className='font-medium'>{date.toLocaleDateString()}</span>
+
+        return (
+          <span className='font-medium'>
+            {date.toLocaleString('en-US', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+        )
       },
     },
     {

@@ -4,7 +4,7 @@ import {
   increment,
   query,
   updateDoc,
-  where
+  where,
 } from 'firebase/firestore'
 import { Award, Crown, Medal, Trophy } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -50,7 +50,7 @@ const TopUsers = ({ onClose, challenge }) => {
           console.warn(`User not found in Firestore: ${user.username}`)
         }
       }
-
+      onClose()
       toast.success('Top 3 users updated with their points!')
     } catch (error) {
       console.error('Error updating top 3 users:', error)
@@ -143,15 +143,17 @@ const TopUsers = ({ onClose, challenge }) => {
         cancelText='Cancel'
         type='info'
       />
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          setIsGivePointsOpen(true)
-        }}
-        className='btn btn-secondary flex items-center ms-auto'
-      >
-        Give Points
-      </button>
+      {topUsers.length >= 3 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setIsGivePointsOpen(true)
+          }}
+          className='btn btn-secondary flex items-center ms-auto'
+        >
+          Give Points
+        </button>
+      )}
     </div>
   )
 }

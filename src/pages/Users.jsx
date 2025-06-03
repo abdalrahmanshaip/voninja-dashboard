@@ -1,22 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Modal from '../components/common/Modal'
 import Table from '../components/common/Table'
-import CouponForm from '../components/coupons/CouponForm'
 import UserForm from '../components/user/UserForm'
 import { useUsers } from '../context/UserContext'
 
 const Users = () => {
   const { users } = useUsers()
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  // const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
-  const [couponToDelete, setCouponToDelete] = useState(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filteredUsers, setFilteredUsers] = useState(users)
+  // const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+  // const [couponToDelete, setCouponToDelete] = useState(null)
+  const [filteredUsers, setFilteredUsers] = useState([])
+
+  useEffect(() => {
+    setFilteredUsers(users)
+  }, [users])
 
   const handleSearch = (value) => {
-    setSearchTerm(value)
+    value.stopPropagation
     const filtered = users.filter((user) =>
       user.email.toLowerCase().includes(value.toLowerCase())
     )
@@ -24,7 +26,6 @@ const Users = () => {
   }
 
   const handleResetSearch = () => {
-    setSearchTerm('')
     setFilteredUsers(users)
   }
 

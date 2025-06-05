@@ -9,6 +9,7 @@ const ChallengeForm = ({ challenge, onClose }) => {
   const [formData, setFormData] = useState({
     title: '',
     endTime: null,
+    createdAt: null,
     deductionPoints: 0,
     rewardPoints: 0,
     subscriptionPoints: 0,
@@ -17,6 +18,8 @@ const ChallengeForm = ({ challenge, onClose }) => {
       second: 0,
       third: 0,
     },
+    status: 'UNPUBLISHED',
+    numberOfTasks: 0,
   })
   const [errors, setErrors] = useState({})
 
@@ -25,6 +28,7 @@ const ChallengeForm = ({ challenge, onClose }) => {
     if (challenge) {
       setFormData({
         title: challenge.title || '',
+        createdAt: challenge.createdAt || new Date(),
         endTime: formatDateLocal(new Date(challenge.endTime.seconds * 1000)),
         deducePoints: challenge.deducePoints || 5,
         rewardPoints: challenge.rewardPoints || 20,
@@ -34,19 +38,26 @@ const ChallengeForm = ({ challenge, onClose }) => {
           additionalProp2: challenge.rewards?.additionalProp2 || 300,
           additionalProp3: challenge.rewards?.additionalProp3 || 150,
         },
+        totalQuestions: challenge.totalQuestions || 0,
+        status: challenge.status || 'UNPUBLISHED',
+        numberOfTasks: challenge.numberOfTasks || 0,
       })
     } else {
       setFormData({
         title: '',
+        createdAt: new Date(),
         endTime: new Date().toISOString().slice(0, 16),
-        deducePoints: 5,
-        rewardPoints: 20,
-        subscriptionPoints: 100,
+        deducePoints: 0,
+        rewardPoints: 0,
+        subscriptionPoints: 0,
         rewards: {
-          additionalProp1: 500,
-          additionalProp2: 300,
-          additionalProp3: 150,
+          additionalProp1: 0,
+          additionalProp2: 0,
+          additionalProp3: 0,
         },
+        totalQuestions: 0,
+        status: 'UNPUBLISHED',
+        numberOfTasks: 0,
       })
     }
   }, [challenge])
@@ -136,16 +147,6 @@ const ChallengeForm = ({ challenge, onClose }) => {
         '3rd place reward must be a positive number'
     }
 
-    // Validate that rewards are in decreasing order
-    if (formData.rewards.additionalProp2 > formData.rewards.additionalProp1) {
-      newErrors['rewards.additionalProp2'] =
-        '2nd place reward must be less than 1st place'
-    }
-
-    if (formData.rewards.additionalProp3 > formData.rewards.additionalProp2) {
-      newErrors['rewards.additionalProp3'] =
-        '3rd place reward must be less than 2nd place'
-    }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0

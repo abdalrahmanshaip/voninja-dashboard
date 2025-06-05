@@ -4,9 +4,9 @@ import { toast } from 'sonner'
 import { useDebouncedCallback } from 'use-debounce'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import Modal from '../components/common/Modal'
+import Table from '../components/common/Table'
 import LessonDetails from '../components/lessons/LessonDetails'
 import LessonForm from '../components/lessons/LessonForm'
-import TableLessons from '../components/lessons/TableLessons'
 import { useData } from '../context/DataContext'
 import { db } from '../utils/firebase'
 
@@ -301,7 +301,7 @@ const Lessons = () => {
 
       {/* Lessons table */}
       <div className='card'>
-        <TableLessons
+        <Table
           columns={columns}
           data={Array.isArray(lessons) ? lessons : []}
           actions={renderActions}

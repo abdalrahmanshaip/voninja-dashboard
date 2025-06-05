@@ -42,10 +42,8 @@ export const DataProvider = ({ children }) => {
 
     let queryRef = query(lessonsCol, orderBy('lesson_order'))
 
-    // Optional filtering logic
     const snapshot = await getDocs(queryRef)
     let lessons = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-    // تحديث الكاش
     setData((prev) => ({
       ...prev,
       lessons: {
@@ -110,9 +108,13 @@ export const DataProvider = ({ children }) => {
     const snapshot = await getDocs(query(lessonsCol, orderBy('lesson_order')))
     const lessons = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
     const deletedLesson = lessons.find((lesson) => lesson.id === lessonId)
+
+    if (!deletedLesson) return
+
     const batch = writeBatch(db)
 
-    // Decrement order of subsequent lessons
+    batch.delete(doc(lessonsCol, lessonId))
+
     lessons
       .filter((l) => l.lesson_order > deletedLesson.lesson_order)
       .forEach((l) => {
@@ -121,13 +123,12 @@ export const DataProvider = ({ children }) => {
         })
       })
 
+    await batch.commit()
+
     await updateDoc(levelRef, {
       totalLessons: increment(-1),
     })
-    await deleteDoc(doc(lessonsCol, lessonId))
-    await batch.commit()
 
-    // Update local cache without fetching again
     setData((prev) => ({
       ...prev,
       lessons: {

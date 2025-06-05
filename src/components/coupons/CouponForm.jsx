@@ -1,32 +1,27 @@
 import { useEffect, useState } from 'react'
 import { useCoupon } from '../../context/CouponContext'
+import { formatDateLocal } from '../../utils/dateFormat'
+import { Firestore } from 'firebase/firestore'
 
 const CouponForm = ({ coupon, onClose }) => {
   const { addCoupon, updateCoupon } = useCoupon()
-  const [formData, setFormData] = useState({})
+  const [formData, setFormData] = useState({
+    points: 0,
+    expireDate: null,
+  })
   const [errors, setErrors] = useState({})
-  console.log(formData)
 
   useEffect(() => {
     if (coupon) {
       setFormData({
         id: coupon.id || '',
         points: coupon.points || 100,
-        expireDate: coupon.expireDate
-          ? new Date(coupon.expireDate.seconds * 1000)
-              .toISOString()
-              .slice(0, 10)
-          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-              .toISOString()
-              .slice(0, 10),
+        expireDate: formatDateLocal(new Date(coupon.expireDate.seconds * 1000)),
       })
     } else {
       setFormData({
-        // id: doc(collection(db, 'coupons')).id,
         points: 100,
-        expireDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-          .toISOString()
-          .slice(0, 10),
+        expireDate: new Date().toISOString().slice(0, 16),
       })
     }
   }, [coupon])
@@ -85,10 +80,12 @@ const CouponForm = ({ coupon, onClose }) => {
     // Prepare data to submit
     const submitData = {
       ...formData,
-      expireDate: {
-        seconds: Math.floor(new Date(formData.expireDate).getTime() / 1000),
-        nanoseconds: 0,
-      },
+      expireDate: formData.expireDate.seconds
+        ? new Firestore.Timestamp(
+            formData.expireDate.seconds,
+            formData.expireDate.nanoseconds
+          )
+        : new Date(formData.expireDate),
     }
 
     if (coupon) {
@@ -127,25 +124,28 @@ const CouponForm = ({ coupon, onClose }) => {
       </div>
 
       <div>
-        <label
-          htmlFor='expireDate'
-          className='block text-sm font-medium text-gray-700'
-        >
-          Expiration Date
-        </label>
-        <input
-          type='date'
-          id='expireDate'
-          name='expireDate'
-          defaultValue={formData.expireDate}
-          onChange={handleChange}
-          className={`mt-1 input ${errors.expireDate ? 'border-red-500' : ''}`}
-        />
-        {errors.expireDate && (
-          <p className='mt-1 text-sm text-red-500'>{errors.expireDate}</p>
-        )}
+        <div>
+          <label
+            htmlFor='endTime'
+            className='block text-sm font-medium text-gray-700'
+          >
+            Expiration Date
+          </label>
+          <input
+            type='datetime-local'
+            id='expireDate'
+            name='expireDate'
+            defaultValue={formData.expireDate}
+            onChange={handleChange}
+            className={`mt-1 input ${
+              errors.expireDate ? 'border-red-500' : ''
+            }`}
+          />
+          {errors.expireDate && (
+            <p className='mt-1 text-sm text-red-500'>{errors.expireDate}</p>
+          )}
+        </div>
       </div>
-
       <div className='flex justify-end mt-6 space-x-3'>
         <button
           type='button'

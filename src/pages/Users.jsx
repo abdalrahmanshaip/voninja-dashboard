@@ -6,11 +6,8 @@ import { useUsers } from '../context/UserContext'
 
 const Users = () => {
   const { users } = useUsers()
-  // const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
-  // const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
-  // const [couponToDelete, setCouponToDelete] = useState(null)
   const [filteredUsers, setFilteredUsers] = useState([])
 
   useEffect(() => {
@@ -34,18 +31,6 @@ const Users = () => {
     setIsEditModalOpen(true)
   }
 
-  // const handleDeleteClick = (coupon) => {
-  //   setCouponToDelete(coupon)
-  //   setIsDeleteConfirmOpen(true)
-  // }
-
-  // const confirmDelete = () => {
-  //   if (couponToDelete) {
-  //     deleteCoupon(couponToDelete.id)
-  //     setCouponToDelete(null)
-  //   }
-  // }
-
   const columns = [
     { field: 'userId', header: 'ID', sortable: true },
     { field: 'email', header: 'Email', sortable: true },
@@ -63,7 +48,7 @@ const Users = () => {
     {
       field: 'pointsNumber',
       header: 'Points Number',
-      sortable: false,
+      sortable: true,
     },
   ]
 
@@ -78,15 +63,6 @@ const Users = () => {
       >
         Edit
       </button>
-      {/* <button
-        onClick={(e) => {
-          e.stopPropagation()
-          handleDeleteClick(user)
-        }}
-        className='ml-2 text-red-600 hover:text-red-900 focus:outline-none'
-      >
-        Block
-      </button> */}
     </>
   )
 
@@ -133,18 +109,6 @@ const Users = () => {
           onClose={() => setIsEditModalOpen(false)}
         />
       </Modal>
-
-      {/* Delete Confirmation Dialog */}
-      {/* <ConfirmDialog
-        isOpen={isDeleteConfirmOpen}
-        onClose={() => setIsDeleteConfirmOpen(false)}
-        onConfirm={confirmDelete}
-        title='Delete Coupon'
-        message='Are you sure you want to delete this coupon? This action cannot be undone.'
-        confirmText='Delete'
-        cancelText='Cancel'
-        type='danger'
-      /> */}
     </div>
   )
 }

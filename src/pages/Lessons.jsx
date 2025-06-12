@@ -346,7 +346,7 @@ const Lessons = () => {
         isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}
         title='Lesson Details'
-        size='xl'
+        size='full'
       >
         <LessonDetails
           lesson={selectedLesson}

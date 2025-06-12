@@ -281,7 +281,7 @@ const ChallengeDetails = ({ challenge, onClose }) => {
         isOpen={isTaskQuestionsOpen}
         onClose={() => setIsTaskQuestionsOpen(false)}
         title={selectedTask ? `Task: ${selectedTask.title}` : 'Task Questions'}
-        size='xl'
+        size='full'
       >
         <TaskQuestions
           challengeId={challenge.id}

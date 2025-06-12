@@ -10,6 +10,7 @@ import TopUsers from '../components/challenges/TopUsers'
 
 const Challenges = () => {
   const { deleteChallenge, challenges, updateChallenge } = useChallenge()
+  console.log(challenges)
   const [selectedChallenge, setSelectedChallenge] = useState(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -221,7 +222,7 @@ const Challenges = () => {
         isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}
         title='Challenge Details'
-        size='xl'
+        size='full'
       >
         <ChallengeDetails
           challenge={selectedChallenge}

@@ -6,7 +6,7 @@ import { Firestore } from 'firebase/firestore'
 const CouponForm = ({ coupon, onClose }) => {
   const { addCoupon, updateCoupon } = useCoupon()
   const [formData, setFormData] = useState({
-    points: 0,
+    points: null,
     expireDate: null,
   })
   const [errors, setErrors] = useState({})
@@ -15,12 +15,12 @@ const CouponForm = ({ coupon, onClose }) => {
     if (coupon) {
       setFormData({
         id: coupon.id || '',
-        points: coupon.points || 100,
+        points: coupon.points || 0,
         expireDate: formatDateLocal(new Date(coupon.expireDate.seconds * 1000)),
       })
     } else {
       setFormData({
-        points: 100,
+        points: 0,
         expireDate: new Date().toISOString().slice(0, 16),
       })
     }

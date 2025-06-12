@@ -20,6 +20,7 @@ const ChallengeForm = ({ challenge, onClose }) => {
     },
     status: 'UNPUBLISHED',
     numberOfTasks: 0,
+    numberOfSubscriptions: 0,
   })
   const [errors, setErrors] = useState({})
 
@@ -41,6 +42,7 @@ const ChallengeForm = ({ challenge, onClose }) => {
         totalQuestions: challenge.totalQuestions || 0,
         status: challenge.status || 'UNPUBLISHED',
         numberOfTasks: challenge.numberOfTasks || 0,
+        numberOfSubscriptions: challenge.numberOfSubscriptions || 0,
       })
     } else {
       setFormData({
@@ -58,6 +60,7 @@ const ChallengeForm = ({ challenge, onClose }) => {
         totalQuestions: 0,
         status: 'UNPUBLISHED',
         numberOfTasks: 0,
+        numberOfSubscriptions: 0,
       })
     }
   }, [challenge])
@@ -105,7 +108,6 @@ const ChallengeForm = ({ challenge, onClose }) => {
       })
     }
   }
-
   const validate = () => {
     const newErrors = {}
 
@@ -115,8 +117,13 @@ const ChallengeForm = ({ challenge, onClose }) => {
 
     if (!formData.endTime) {
       newErrors.endTime = 'End time is required'
-    } else if (new Date(formData.endTime) <= new Date()) {
-      newErrors.endTime = 'End time must be in the future'
+    } else {
+      const endTimeDate = new Date(formData.endTime).getTime()
+      const currentDate = new Date().getTime()
+
+      if (endTimeDate <= currentDate) {
+        newErrors.endTime = 'End time must be in the future'
+      }
     }
 
     if (formData.deducePoints < 0) {
@@ -146,7 +153,6 @@ const ChallengeForm = ({ challenge, onClose }) => {
       newErrors['rewards.additionalProp3'] =
         '3rd place reward must be a positive number'
     }
-
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0

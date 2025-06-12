@@ -115,7 +115,8 @@ const TaskQuestions = ({ challengeId, task, onClose }) => {
   )
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 h-[60vh] overflow-y-auto'>
+      <div className='overflow-auto'>
       <div className='bg-gray-50 p-4 rounded-lg'>
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           <div>
@@ -154,14 +155,13 @@ const TaskQuestions = ({ challengeId, task, onClose }) => {
             Add Question
           </button>
         </div>
-        <div className='h-[50vh] overflow-y-scroll'>
           <Table
             columns={questionColumns}
             data={questions}
             actions={renderQuestionActions}
             emptyMessage="No questions found. Click 'Add Question' to create one."
           />
-        </div>
+      </div>
       </div>
 
       {/* Add Question Modal */}

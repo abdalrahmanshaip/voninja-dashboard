@@ -9,7 +9,8 @@ import {
   query,
   setDoc,
   updateDoc,
-  where
+  where,
+  writeBatch
 } from 'firebase/firestore'
 import { createContext, useContext, useEffect, useState } from 'react'
 import { db } from '../utils/firebase'
@@ -54,8 +55,44 @@ export const ChallengeProvider = ({ children }) => {
   }
 
   const deleteChallenge = async (challengeId) => {
-    const ref = doc(db, 'challenges', challengeId)
-    await deleteDoc(ref)
+    const challengeRef = doc(db, 'challenges', challengeId)
+    const tasksCol = collection(challengeRef, 'tasks')
+    const usersCol = collection(challengeRef, 'users')
+    
+    // Get all tasks, questions, and users in parallel
+    const tasksQuery = query(tasksCol)
+    const usersQuery = query(usersCol)
+    const [tasksSnapshot, allQuestionsSnapshots, usersSnapshot] = await Promise.all([
+      getDocs(tasksQuery),
+      Promise.all(
+        (await getDocs(tasksQuery)).docs.map(async (taskDoc) => {
+          const questionsCol = collection(taskDoc.ref, 'questions')
+          return getDocs(questionsCol)
+        })
+      ),
+      getDocs(usersQuery)
+    ])
+
+    const batch = writeBatch(db)
+
+    // Delete all questions and tasks in parallel
+    allQuestionsSnapshots.forEach((questionsSnapshot, taskIndex) => {
+      questionsSnapshot.docs.forEach((questionDoc) => {
+        batch.delete(questionDoc.ref)
+      })
+      batch.delete(tasksSnapshot.docs[taskIndex].ref)
+    })
+
+    // Delete all users in the challenge
+    usersSnapshot.docs.forEach((userDoc) => {
+      batch.delete(userDoc.ref)
+    })
+
+    // Delete the challenge document itself
+    batch.delete(challengeRef)
+    
+    // Commit all the deletions in one batch
+    await batch.commit()
     await fetchChallenges()
   }
 

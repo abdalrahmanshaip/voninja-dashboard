@@ -6,6 +6,7 @@ import { formatDateLocal } from '../../utils/dateFormat'
 
 const ChallengeForm = ({ challenge, onClose }) => {
   const { addChallenge, updateChallenge } = useChallenge()
+  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     endTime: null,
@@ -20,6 +21,7 @@ const ChallengeForm = ({ challenge, onClose }) => {
     },
     status: 'UNPUBLISHED',
     numberOfTasks: 0,
+    numberOfSubscriptions: 0,
   })
   const [errors, setErrors] = useState({})
 
@@ -41,6 +43,7 @@ const ChallengeForm = ({ challenge, onClose }) => {
         totalQuestions: challenge.totalQuestions || 0,
         status: challenge.status || 'UNPUBLISHED',
         numberOfTasks: challenge.numberOfTasks || 0,
+        numberOfSubscriptions: challenge.numberOfSubscriptions || 0,
       })
     } else {
       setFormData({
@@ -58,6 +61,7 @@ const ChallengeForm = ({ challenge, onClose }) => {
         totalQuestions: 0,
         status: 'UNPUBLISHED',
         numberOfTasks: 0,
+        numberOfSubscriptions: 0,
       })
     }
   }, [challenge])
@@ -105,7 +109,6 @@ const ChallengeForm = ({ challenge, onClose }) => {
       })
     }
   }
-
   const validate = () => {
     const newErrors = {}
 
@@ -115,8 +118,13 @@ const ChallengeForm = ({ challenge, onClose }) => {
 
     if (!formData.endTime) {
       newErrors.endTime = 'End time is required'
-    } else if (new Date(formData.endTime) <= new Date()) {
-      newErrors.endTime = 'End time must be in the future'
+    } else {
+      const endTimeDate = new Date(formData.endTime).getTime()
+      const currentDate = new Date().getTime()
+
+      if (endTimeDate <= currentDate) {
+        newErrors.endTime = 'End time must be in the future'
+      }
     }
 
     if (formData.deducePoints < 0) {
@@ -147,7 +155,6 @@ const ChallengeForm = ({ challenge, onClose }) => {
         '3rd place reward must be a positive number'
     }
 
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -167,7 +174,7 @@ const ChallengeForm = ({ challenge, onClose }) => {
           )
         : new Date(formData.endTime),
     }
-
+    setLoading(true)
     try {
       if (challenge) {
         await updateChallenge(challenge.id, submitData)
@@ -180,6 +187,8 @@ const ChallengeForm = ({ challenge, onClose }) => {
     } catch (error) {
       console.error('Error handling challenge:', error)
       toast.error(error.message || 'Failed to save challenge')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -393,9 +402,40 @@ const ChallengeForm = ({ challenge, onClose }) => {
         </button>
         <button
           type='submit'
-          className='btn btn-primary'
+          className={` ${
+            loading ? ' btn bg-gray-400 pointer-events-auto' : 'btn btn-primary'
+          }  `}
+          disabled={loading}
         >
-          {challenge ? 'Update Challenge' : 'Add Challenge'}
+          {loading ? (
+            <div className='flex'>
+              <svg
+                className='animate-spin h-5 w-5 mr-2'
+                xmlns='http://www.w3.org/2000/svg'
+                fill='none'
+                viewBox='0 0 24 24'
+              >
+                <circle
+                  className='opacity-25'
+                  cx='12'
+                  cy='12'
+                  r='10'
+                  stroke='currentColor'
+                  strokeWidth='4'
+                ></circle>
+                <path
+                  className='opacity-75'
+                  fill='currentColor'
+                  d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                ></path>
+              </svg>
+              {challenge ? 'Updating Challenge...' : 'Adding Challenge...'}
+            </div>
+          ) : challenge ? (
+            'Update Challenge'
+          ) : (
+            'Add Challenge'
+          )}
         </button>
       </div>
     </form>

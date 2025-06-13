@@ -4,14 +4,11 @@ import {
   doc,
   getDocs,
   increment,
-  limit,
   orderBy,
   query,
   setDoc,
-  startAfter,
   updateDoc,
-  where,
-  writeBatch,
+  writeBatch
 } from 'firebase/firestore'
 import { createContext, useContext, useState } from 'react'
 import { db } from '../utils/firebase'

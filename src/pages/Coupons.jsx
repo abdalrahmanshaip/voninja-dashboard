@@ -4,6 +4,7 @@ import Table from '../components/common/Table'
 import Modal from '../components/common/Modal'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import CouponForm from '../components/coupons/CouponForm'
+import { toast } from 'sonner'
 
 const Coupons = () => {
   const { coupons, deleteCoupon } = useCoupon()
@@ -12,6 +13,7 @@ const Coupons = () => {
   const [selectedCoupon, setSelectedCoupon] = useState(null)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [couponToDelete, setCouponToDelete] = useState(null)
+
 
   const handleAddCoupon = () => {
     setIsAddModalOpen(true)
@@ -27,10 +29,16 @@ const Coupons = () => {
     setIsDeleteConfirmOpen(true)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (couponToDelete) {
-      deleteCoupon(couponToDelete.id)
-      setCouponToDelete(null)
+      try {
+        await deleteCoupon(couponToDelete.id)
+        toast.success('Coupon deleted successfully')
+        setCouponToDelete(null)
+        setIsDeleteConfirmOpen(false)
+      } catch (error) {
+        toast.error(error.message || 'Failed to delete coupon')
+      }
     }
   }
 

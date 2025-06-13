@@ -15,6 +15,7 @@ import ConfirmDialog from '../common/ConfirmDialog'
 
 const TopUsers = ({ onClose, challenge }) => {
   const { getUsers } = useChallenge()
+  const [loading, setLoading] = useState(false)
   const [topUsers, setTopUsers] = useState([])
   const [isGivePointsOpen, setIsGivePointsOpen] = useState(false)
 
@@ -27,6 +28,7 @@ const TopUsers = ({ onClose, challenge }) => {
   }, [challenge.id, getUsers])
 
   const handleGiveUsersPoints = async () => {
+    setLoading(true)
     try {
       const topThreeUsers = topUsers.slice(0, 3)
       const usernames = topThreeUsers.map((user) => user.username)
@@ -55,6 +57,8 @@ const TopUsers = ({ onClose, challenge }) => {
     } catch (error) {
       console.error('Error updating top 3 users:', error)
       toast.error('Something went wrong while updating user points.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -149,9 +153,37 @@ const TopUsers = ({ onClose, challenge }) => {
             e.stopPropagation()
             setIsGivePointsOpen(true)
           }}
-          className='btn btn-secondary flex items-center ms-auto'
+          className={`flex items-center ms-auto ${
+            loading
+              ? ' btn bg-gray-400 pointer-events-auto'
+              : 'btn btn-secondary'
+          }  `}
+          disabled={loading}
         >
-          Give Points
+          {loading && (
+            <svg
+              className='animate-spin h-5 w-5 mr-2'
+              xmlns='http://www.w3.org/2000/svg'
+              fill='none'
+              viewBox='0 0 24 24'
+            >
+              <circle
+                className='opacity-25'
+                cx='12'
+                cy='12'
+                r='10'
+                stroke='currentColor'
+                strokeWidth='4'
+              ></circle>
+              <path
+                className='opacity-75'
+                fill='currentColor'
+                d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+              ></path>
+            </svg>
+          )}
+
+          {loading ? 'Giving Points...' : 'Give Points'}
         </button>
       )}
     </div>

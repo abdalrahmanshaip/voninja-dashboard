@@ -5,6 +5,7 @@ import {
   getDoc,
   getDocs,
   increment,
+  limit,
   orderBy,
   query,
   setDoc,
@@ -241,7 +242,7 @@ export const ChallengeProvider = ({ children }) => {
 
   const getUsers = async (challengeId) => {
     const taskCol = collection(doc(db, 'challenges', challengeId), 'users')
-    const q = query(taskCol, orderBy('userPoints', 'desc'))
+    const q = query(taskCol, orderBy('userPoints', 'desc'), limit(3))
     const snapshot = await getDocs(q)
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
   }

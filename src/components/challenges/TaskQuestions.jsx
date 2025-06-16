@@ -73,14 +73,14 @@ const TaskQuestions = ({ challengeId, task, onClose }) => {
       ),
     },
     {
-      field: 'image',
+      field: 'image_url',
       header: 'Image',
       sortable: false,
       render: (row) =>
-        row.image ? (
+        row.image_url ? (
           <div className='flex items-center justify-center'>
             <img
-              src={row.image}
+              src={row.image_url}
               alt='Question'
               className='h-8 w-8 object-cover rounded'
             />
@@ -115,7 +115,7 @@ const TaskQuestions = ({ challengeId, task, onClose }) => {
   )
 
   return (
-    <div className='space-y-6 h-[60vh] overflow-y-auto'>
+    <div className='space-y-6 h-[80vh] overflow-y-auto'>
       <div className='overflow-auto'>
       <div className='bg-gray-50 p-4 rounded-lg'>
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>

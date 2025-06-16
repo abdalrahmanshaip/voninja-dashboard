@@ -21,7 +21,7 @@ const QuestionSchema = z.object({
   correct_answer: z.string().min(1, {
     message: 'Correct answer is required',
   }),
-  image: z
+  image_url: z
     .union([z.instanceof(File), z.string().url(), z.string().length(0)])
     .optional(),
 })
@@ -48,7 +48,7 @@ const TaskQuestionForm = ({
       content: question?.content || '',
       choices: question?.choices || ['', '', ''],
       correct_answer: question?.correct_answer || '',
-      image: question?.image || '',
+      image_url: question?.image_url || '',
     },
   })
 
@@ -59,14 +59,14 @@ const TaskQuestionForm = ({
   const onSubmit = async (data) => {
     let url = ''
     try {
-      if (typeof data.image === 'string' && data.image.length > 0) {
-        url = data.image
-      } else if (data.image instanceof File) {
-        url = await uploadImage(data.image)
+      if (typeof data.image_url === 'string' && data.image_url.length > 0) {
+        url = data.image_url
+      } else if (data.image_url instanceof File) {
+        url = await uploadImage(data.image_url)
       }
       const dataWithImageUrl = {
         ...data,
-        image: url,
+        image_url: url,
       }
       if (question) {
         await updateTaskQuestion(
@@ -161,9 +161,9 @@ const TaskQuestionForm = ({
           <input
             type='text'
             placeholder='Enter image URL'
-            {...register('image')}
+            {...register('image_url')}
             className={`mb-2 input w-full ${
-              errors.image?.message ? 'border-red-500' : ''
+              errors.image_url?.message ? 'border-red-500' : ''
             }`}
           />
           <label
@@ -189,31 +189,34 @@ const TaskQuestionForm = ({
               accept='image/*'
               onChange={(e) => {
                 const file = e.target.files?.[0]
-                const currentUrl = watch('image')
+                const currentUrl = watch('image_url')
                 if (
                   file &&
                   (typeof currentUrl !== 'string' || currentUrl.trim() === '')
                 ) {
-                  setValue('image', file)
+                  setValue('image_url', file)
                 }
               }}
               className='sr-only'
             />
           </label>
         </div>
-        {errors.image?.message && (
-          <p className='mt-1 text-sm text-red-500'>{errors.image?.message}</p>
+        {errors.image_url?.message && (
+          <p className='mt-1 text-sm text-red-500'>
+            {errors.image_url?.message}
+          </p>
         )}
 
-        {watch('image') && (
+        {watch('image_url') && (
           <div className='mt-2'>
             <p className='text-sm text-gray-500 mb-1'>Image Preview:</p>
             <img
               src={
-                typeof watch('image') === 'string' && watch('image').length > 0
-                  ? watch('image')
-                  : watch('image') instanceof File
-                  ? URL.createObjectURL(watch('image'))
+                typeof watch('image_url') === 'string' &&
+                watch('image_url').length > 0
+                  ? watch('image_url')
+                  : watch('image_url') instanceof File
+                  ? URL.createObjectURL(watch('image_url'))
                   : ''
               }
               alt='Preview'

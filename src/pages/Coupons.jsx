@@ -45,7 +45,6 @@ const Coupons = () => {
   const getExpirationStatus = (expirationDate) => {
     const now = new Date()
     const expiry = new Date(expirationDate)
-    console.log(now, expiry)
     return now > expiry
   }
 

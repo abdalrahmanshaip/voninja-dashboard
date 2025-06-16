@@ -10,7 +10,7 @@ import VocabularyForm from './VocabularyForm'
 const LessonDetails = ({ lesson, level, levelId }) => {
   const { deleteVocabulary, deleteQuestion, getVocabularies, getQuestions } =
     useData()
-    
+
   const [questions, setQuestions] = useState([])
   const [vocabularies, setVocabularies] = useState([])
   const [activeTab, setActiveTab] = useState('vocabulary')
@@ -24,7 +24,6 @@ const LessonDetails = ({ lesson, level, levelId }) => {
   const [itemToDelete, setItemToDelete] = useState(null)
   const [deleteType, setDeleteType] = useState(null)
 
-
   useEffect(() => {
     const fetchVocabularies = async () => {
       try {
@@ -34,7 +33,7 @@ const LessonDetails = ({ lesson, level, levelId }) => {
         console.error('Error fetching vocabularies:', error)
       }
     }
-  
+
     const fetchQuestions = async () => {
       try {
         const questions = await getQuestions(levelId, lesson.id)
@@ -141,10 +140,10 @@ const LessonDetails = ({ lesson, level, levelId }) => {
       header: 'Image',
       sortable: false,
       render: (row) =>
-        row.image ? (
+        row.image_url ? (
           <div className='flex items-center justify-center'>
             <img
-              src={row.image}
+              src={row.image_url}
               alt='Question'
               className='h-8 w-8 object-cover rounded'
             />

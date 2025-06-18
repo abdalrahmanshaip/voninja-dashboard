@@ -35,13 +35,15 @@ const Transactions = () => {
     if (selectedTransaction) {
       try {
         await updateTransaction(selectedTransaction.id, {
-          status: actionType
+          status: actionType,
         })
         toast.success(`Transaction successfully ${actionType.toLowerCase()}`)
         setSelectedTransaction(null)
       } catch (error) {
         console.error('Error updating transaction:', error)
-        toast.error(`Failed to ${actionType.toLowerCase()} transaction: ${error.message}`)
+        toast.error(
+          `Failed to ${actionType.toLowerCase()} transaction: ${error.message}`
+        )
       }
     }
   }
@@ -79,7 +81,7 @@ const Transactions = () => {
       header: 'Price',
       sortable: true,
       render: (row) => (
-        <span className='font-medium'>${row.price.toFixed(2)}</span>
+        <span className='font-medium'>EGP {row.price.toFixed(2)}</span>
       ),
     },
     {

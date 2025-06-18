@@ -79,7 +79,7 @@ const Transactions = () => {
       header: 'Price',
       sortable: true,
       render: (row) => (
-        <span className='font-medium'>${row.price.toFixed(2)}</span>
+        <span className='font-medium'>EGP {row.price.toFixed(2)}</span>
       ),
     },
     {

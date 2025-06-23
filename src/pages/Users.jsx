@@ -9,16 +9,25 @@ const Users = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
   const [filteredUsers, setFilteredUsers] = useState([])
-
   useEffect(() => {
-    setFilteredUsers(users)
+    const sortedUsers = [...users].sort(
+      (a, b) => b.pointsNumber - a.pointsNumber
+    )
+    const usersWithRank = sortedUsers.map((user, index) => ({
+      ...user,
+      rank: index + 1,
+    }))
+    setFilteredUsers(usersWithRank)
   }, [users])
 
   const handleSearch = (value) => {
-    value.stopPropagation
-    const filtered = users.filter((user) =>
-      user.email.toLowerCase().includes(value.toLowerCase())
-    )
+    const filtered = users
+      .filter((user) => user.email.toLowerCase().includes(value.toLowerCase()))
+      .sort((a, b) => b.pointsNumber - a.pointsNumber)
+      .map((user, index) => ({
+        ...user,
+        rank: index + 1,
+      }))
     setFilteredUsers(filtered)
   }
 
@@ -32,6 +41,11 @@ const Users = () => {
   }
 
   const columns = [
+    {
+      field: 'rank',
+      header: 'Rank',
+      sortable: false,
+    },
     { field: 'userId', header: 'ID', sortable: true },
     { field: 'email', header: 'Email', sortable: true },
     {

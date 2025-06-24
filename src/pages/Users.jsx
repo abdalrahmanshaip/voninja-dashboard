@@ -9,30 +9,49 @@ const Users = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
   const [filteredUsers, setFilteredUsers] = useState([])
+
+  const getRankedUsers = (list) => {
+    const sorted = [...list].sort((a, b) => b.pointsNumber - a.pointsNumber)
+
+    const ranked = []
+    let currentRank = 1
+    let previousPoints = null
+    let sameRankCount = 0
+    console.log(sorted)
+
+    for (let i = 0; i < sorted.length; i++) {
+      const user = sorted[i]
+
+      if (user.pointsNumber === previousPoints) {
+        sameRankCount
+      } else {
+        currentRank = currentRank + sameRankCount
+        sameRankCount = 1
+      }
+
+      ranked.push({ ...user, rank: currentRank })
+      previousPoints = user.pointsNumber
+    }
+
+    return ranked
+  }
+
   useEffect(() => {
-    const sortedUsers = [...users].sort(
-      (a, b) => b.pointsNumber - a.pointsNumber
-    )
-    const usersWithRank = sortedUsers.map((user, index) => ({
-      ...user,
-      rank: index + 1,
-    }))
-    setFilteredUsers(usersWithRank)
+    const ranked = getRankedUsers(users)
+    setFilteredUsers(ranked)
   }, [users])
 
   const handleSearch = (value) => {
-    const filtered = users
-      .filter((user) => user.email.toLowerCase().includes(value.toLowerCase()))
-      .sort((a, b) => b.pointsNumber - a.pointsNumber)
-      .map((user, index) => ({
-        ...user,
-        rank: index + 1,
-      }))
-    setFilteredUsers(filtered)
+    const filtered = users.filter((user) =>
+      user.email.toLowerCase().includes(value.toLowerCase())
+    )
+    const ranked = getRankedUsers(filtered)
+    setFilteredUsers(ranked)
   }
 
   const handleResetSearch = () => {
-    setFilteredUsers(users)
+    const usersWithRank = getRankedUsers(users)
+    setFilteredUsers(usersWithRank)
   }
 
   const handleEditPoints = (user) => {

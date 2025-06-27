@@ -104,6 +104,12 @@ const Users = () => {
       <div className='flex justify-between items-center'>
         <h1 className='text-2xl font-bold text-gray-900'>Users</h1>
       </div>
+      <div className='flex items-center space-x-2'>
+        <span className='text-gray-700 font-medium'>Total Students:</span>
+        <span className='inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold text-sm shadow'>
+          {users.length}
+        </span>
+      </div>
       <form className='flex items-center justify-start w-fit'>
         <input
           id='search'

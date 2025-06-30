@@ -79,6 +79,26 @@ const Users = () => {
       render: (row) => <span className='font-medium'>{row.phoneNumber}</span>,
     },
     {
+      field: 'createdAt',
+      header: 'Created At',
+      sortable: true,
+      render: (row) => {
+        const date = new Date(row.createdAt?.seconds * 1000)
+
+        return (
+          <span className='font-medium'>
+            {date.toLocaleString('en-US', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+        )
+      },
+    },
+    {
       field: 'pointsNumber',
       header: 'Points Number',
       sortable: true,

@@ -11,6 +11,7 @@ import {
   FaTimes,
 } from 'react-icons/fa'
 import { Users } from 'lucide-react'
+import { IoLibrary } from 'react-icons/io5'
 
 const DashboardLayout = () => {
   const { user, logout } = useAuth()
@@ -49,6 +50,11 @@ const DashboardLayout = () => {
       path: '/coupons',
       name: 'Coupons',
       icon: <FaTicketAlt className='w-5 h-5' />,
+    },
+    {
+      path: '/library',
+      name: 'Library',
+      icon: <IoLibrary className='w-5 h-5' />,
     },
   ]
 

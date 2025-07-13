@@ -8,7 +8,6 @@ import LibraryForm from '../components/library/libraryForm'
 
 const Library = () => {
   const { library, deleteLibraryItem } = useLibrary()
-  console.log(library)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState(null)

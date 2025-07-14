@@ -13,6 +13,8 @@ import { TransactionsProvider } from './context/TransationContext'
 import { UserProvider } from './context/UserContext'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import Users from './pages/Users'
+import { LibraryProvider } from './context/LibraryContext'
+import Library from './pages/Library'
 
 function App() {
   return (
@@ -22,56 +24,62 @@ function App() {
           <ChallengeProvider>
             <TransactionsProvider>
               <CouponProvider>
-                <UserProvider>
-                  <Routes>
-                    <Route
-                      path='/login'
-                      element={<Login />}
-                    />
-                    <Route
-                      path='/'
-                      element={
-                        <ProtectedRoute>
-                          <DashboardLayout />
-                        </ProtectedRoute>
-                      }
-                    >
+                <LibraryProvider>
+                  <UserProvider>
+                    <Routes>
                       <Route
-                        index
-                        element={<Lessons />}
+                        path='/login'
+                        element={<Login />}
                       />
                       <Route
-                        path='lessons'
-                        element={<Lessons />}
-                      />
-                      <Route
-                        path='users'
-                        element={<Users />}
-                      />
-                      <Route
-                        path='challenges'
-                        element={<Challenges />}
-                      />
-                      <Route
-                        path='transactions'
-                        element={<Transactions />}
-                      />
-                      <Route
-                        path='coupons'
-                        element={<Coupons />}
-                      />
-                    </Route>
-                    <Route
-                      path='*'
-                      element={
-                        <Navigate
-                          to='/'
-                          replace
+                        path='/'
+                        element={
+                          <ProtectedRoute>
+                            <DashboardLayout />
+                          </ProtectedRoute>
+                        }
+                      >
+                        <Route
+                          index
+                          element={<Lessons />}
                         />
-                      }
-                    />
-                  </Routes>
-                </UserProvider>
+                        <Route
+                          path='lessons'
+                          element={<Lessons />}
+                        />
+                        <Route
+                          path='users'
+                          element={<Users />}
+                        />
+                        <Route
+                          path='challenges'
+                          element={<Challenges />}
+                        />
+                        <Route
+                          path='transactions'
+                          element={<Transactions />}
+                        />
+                        <Route
+                          path='coupons'
+                          element={<Coupons />}
+                        />
+                        <Route
+                          path='library'
+                          element={<Library />}
+                        />
+                      </Route>
+                      <Route
+                        path='*'
+                        element={
+                          <Navigate
+                            to='/'
+                            replace
+                          />
+                        }
+                      />
+                    </Routes>
+                  </UserProvider>
+                </LibraryProvider>
               </CouponProvider>
             </TransactionsProvider>
           </ChallengeProvider>

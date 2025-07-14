@@ -4,7 +4,7 @@ import ConfirmDialog from '../components/common/ConfirmDialog'
 import Modal from '../components/common/Modal'
 import Table from '../components/common/Table'
 import { useLibrary } from '../context/LibraryContext'
-import LibraryForm from '../components/library/libraryForm'
+import LibraryForm from '../components/library/LibraryForm'
 
 const Library = () => {
   const { library, deleteLibraryItem } = useLibrary()

@@ -11,10 +11,11 @@ import {
   setDoc,
   updateDoc,
   where,
-  writeBatch
+  writeBatch,
 } from 'firebase/firestore'
 import { createContext, useContext, useEffect, useState } from 'react'
 import { db } from '../utils/firebase'
+import { toast } from 'sonner'
 
 const ChallengeContext = createContext()
 
@@ -34,19 +35,38 @@ export const ChallengeProvider = ({ children }) => {
   }, [])
 
   const fetchChallenges = async () => {
-    const snapshot = await getDocs(collection(db, 'challenges'))
+    const challengesQuery = query(
+      collection(db, 'challenges'),
+      orderBy('challenge_order', 'asc')
+    )
+    const snapshot = await getDocs(challengesQuery)
     setChallenges(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })))
   }
   // === Challenges ===
 
   const addChallenge = async (challenge) => {
-    const newDocRef = doc(collection(db, 'challenges'))
-    const challengeWithId = {
-      ...challenge,
-      challengeId: newDocRef.id,
+    try {
+      const lastOrder =
+        challenges.length > 0
+          ? challenges[challenges.length - 1].challenge_order || 0
+          : 0
+
+      const nextOrder = lastOrder + 1
+
+      const newDocRef = doc(collection(db, 'challenges'))
+      const challengeWithOrder = {
+        ...challenge,
+        challengeId: newDocRef.id,
+        challenge_order: nextOrder,
+      }
+
+      await setDoc(newDocRef, challengeWithOrder)
+      await fetchChallenges()
+      toast.success('Challenge added successfully')
+    } catch (error) {
+      console.error('Error adding challenge:', error)
+      toast.error('Failed to add challenge. Please try again.')
     }
-    await setDoc(newDocRef, challengeWithId)
-    await fetchChallenges()
   }
 
   const updateChallenge = async (challengeId, updated) => {
@@ -55,46 +75,93 @@ export const ChallengeProvider = ({ children }) => {
     await fetchChallenges()
   }
 
-  const deleteChallenge = async (challengeId) => {
-    const challengeRef = doc(db, 'challenges', challengeId)
-    const tasksCol = collection(challengeRef, 'tasks')
-    const usersCol = collection(challengeRef, 'users')
-    
-    // Get all tasks, questions, and users in parallel
-    const tasksQuery = query(tasksCol)
-    const usersQuery = query(usersCol)
-    const [tasksSnapshot, allQuestionsSnapshots, usersSnapshot] = await Promise.all([
-      getDocs(tasksQuery),
-      Promise.all(
-        (await getDocs(tasksQuery)).docs.map(async (taskDoc) => {
+  const deleteChallenge = async (challengeId, challengeOrder) => {
+    try {
+      const challengeRef = doc(db, 'challenges', challengeId)
+      const tasksCol = collection(challengeRef, 'tasks')
+      const usersCol = collection(challengeRef, 'users')
+
+      const tasksSnapshot = await getDocs(tasksCol)
+      const usersSnapshot = await getDocs(usersCol)
+
+      const allQuestionsSnapshots = await Promise.all(
+        tasksSnapshot.docs.map(async (taskDoc) => {
           const questionsCol = collection(taskDoc.ref, 'questions')
           return getDocs(questionsCol)
         })
-      ),
-      getDocs(usersQuery)
-    ])
+      )
 
-    const batch = writeBatch(db)
+      const batch = writeBatch(db)
 
-    // Delete all questions and tasks in parallel
-    allQuestionsSnapshots.forEach((questionsSnapshot, taskIndex) => {
-      questionsSnapshot.docs.forEach((questionDoc) => {
-        batch.delete(questionDoc.ref)
+      allQuestionsSnapshots.forEach((questionsSnapshot, index) => {
+        questionsSnapshot.docs.forEach((questionDoc) => {
+          batch.delete(questionDoc.ref)
+        })
+        batch.delete(tasksSnapshot.docs[index].ref)
       })
-      batch.delete(tasksSnapshot.docs[taskIndex].ref)
-    })
 
-    // Delete all users in the challenge
-    usersSnapshot.docs.forEach((userDoc) => {
-      batch.delete(userDoc.ref)
-    })
+      usersSnapshot.docs.forEach((userDoc) => {
+        batch.delete(userDoc.ref)
+      })
 
-    // Delete the challenge document itself
-    batch.delete(challengeRef)
-    
-    // Commit all the deletions in one batch
-    await batch.commit()
-    await fetchChallenges()
+      batch.delete(challengeRef)
+
+      const reorderQuery = query(
+        collection(db, 'challenges'),
+        where('challenge_order', '>', challengeOrder)
+      )
+      const reorderSnapshot = await getDocs(reorderQuery)
+
+      reorderSnapshot.docs.forEach((docSnap) => {
+        const docRef = doc(db, 'challenges', docSnap.id)
+        const currentOrder = docSnap.data().challenge_order || 0
+        batch.update(docRef, { challenge_order: currentOrder - 1 })
+      })
+
+      // Commit everything
+      await batch.commit()
+      await fetchChallenges()
+    } catch (error) {
+      console.error('Error deleting challenge:', error)
+    }
+  }
+
+  const handleReorderChallenges = async (challenge1, challenge2) => {
+    try {
+      const tempOrder = challenge1.challenge_order
+      challenge1.challenge_order = challenge2.challenge_order
+      challenge2.challenge_order = tempOrder
+
+      const batch = writeBatch(db)
+      const challenge1Ref = doc(db, 'challenges', challenge1.id)
+      const challenge2Ref = doc(db, 'challenges', challenge2.id)
+
+      batch.update(challenge1Ref, {
+        challenge_order: challenge1.challenge_order,
+      })
+      batch.update(challenge2Ref, {
+        challenge_order: challenge2.challenge_order,
+      })
+
+      await batch.commit()
+      toast.success('Challenges reordered successfully')
+      setChallenges((prev) =>
+        prev
+          .map((c) => {
+            if (c.id === challenge1.id) {
+              return { ...c, challenge_order: challenge1.challenge_order }
+            }
+            if (c.id === challenge2.id) {
+              return { ...c, challenge_order: challenge2.challenge_order }
+            }
+            return c
+          })
+          .sort((a, b) => a.challenge_order - b.challenge_order)
+      )
+    } catch (error) {
+      console.error('Error reordering challenges:', error)
+      toast.error('Failed to reorder challenges. Please try again.')
+    }
   }
 
   // === Tasks inside Challenges ===
@@ -251,6 +318,7 @@ export const ChallengeProvider = ({ children }) => {
     addChallenge,
     updateChallenge,
     deleteChallenge,
+    handleReorderChallenges,
     getTasks,
     addTask,
     updateTask,

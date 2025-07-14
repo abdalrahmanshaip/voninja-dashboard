@@ -17,7 +17,6 @@ const Users = () => {
     let currentRank = 1
     let previousPoints = null
     let sameRankCount = 0
-    console.log(sorted)
 
     for (let i = 0; i < sorted.length; i++) {
       const user = sorted[i]

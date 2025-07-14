@@ -2,14 +2,14 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import ChallengeDetails from '../components/challenges/ChallengeDetails'
 import ChallengeForm from '../components/challenges/ChallengeForm'
+import TopUsers from '../components/challenges/TopUsers'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import Modal from '../components/common/Modal'
 import Table from '../components/common/Table'
 import { useChallenge } from '../context/ChallengeContext'
-import TopUsers from '../components/challenges/TopUsers'
 
 const Challenges = () => {
-  const { deleteChallenge, challenges, updateChallenge } = useChallenge()
+  const { deleteChallenge, challenges, updateChallenge, handleReorderChallenges } = useChallenge()
   const [selectedChallenge, setSelectedChallenge] = useState(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -44,7 +44,7 @@ const Challenges = () => {
   const confirmDelete = async () => {
     if (challengeToDelete) {
       try {
-        await deleteChallenge(challengeToDelete.id)
+        await deleteChallenge(challengeToDelete.id, challengeToDelete.challenge_order)
         toast.success('Challenge deleted successfully')
         setChallengeToDelete(null)
         setIsDeleteConfirmOpen(false)
@@ -69,6 +69,7 @@ const Challenges = () => {
     }
   }
 
+ 
   const columns = [
     { field: 'id', header: 'ID', sortable: true },
     { field: 'title', header: 'Title', sortable: true },
@@ -112,6 +113,7 @@ const Challenges = () => {
         </button>
       ),
     },
+    { field: 'challenge_order', header: 'Order', sortable: true },
   ]
 
   const renderActions = (challenge) => (
@@ -190,8 +192,9 @@ const Challenges = () => {
           actions={renderActions}
           onRowClick={handleViewDetails}
           emptyMessage="No challenges found. Click 'Add Challenge' to create one."
-          initialSortField='endTime'
+          initialSortField='order'
           initialSortDirection='asc'
+          onReorder={handleReorderChallenges}
         />
       </div>
 

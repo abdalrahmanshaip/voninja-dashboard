@@ -170,7 +170,7 @@ const EventDetails = ({ event, onClose }) => {
 
   return (
     <>
-      <div className='space-y-6 h-[80vh] overflow-y-auto'>
+      <div className='space-y-6'>
         <div className='overflow-auto'>
           <div className='flex justify-between items-start mb-6'>
             <div>

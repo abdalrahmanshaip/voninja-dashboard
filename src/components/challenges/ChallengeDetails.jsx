@@ -20,7 +20,6 @@ const ChallengeDetails = ({ challenge, onClose }) => {
   const [tasks, setTasks] = useState([])
   const [refreshTrigger, setRefreshTrigger] = useState(false)
 
-
   useEffect(() => {
     const fetchTasks = async () => {
       const fetchedTasks = await getTasks(challenge.id)
@@ -57,22 +56,20 @@ const ChallengeDetails = ({ challenge, onClose }) => {
     setIsTaskQuestionsOpen(true)
   }
 
-
-
   const handleReorderTasks = async (task1, task2) => {
     try {
       const tempOrder = task1.order
       task1.order = task2.order
       task2.order = tempOrder
-  
+
       const batch = writeBatch(db)
       const task1Ref = doc(db, 'challenges', challenge.id, 'tasks', task1.id)
       const task2Ref = doc(db, 'challenges', challenge.id, 'tasks', task2.id)
       batch.update(task1Ref, { order: task1.order })
       batch.update(task2Ref, { order: task2.order })
-  
+
       await batch.commit()
-  
+
       setTasks((prevTasks) => {
         const updatedTasks = prevTasks.map((task) => {
           if (task.id === task1.id) return { ...task, order: task1.order }
@@ -81,9 +78,9 @@ const ChallengeDetails = ({ challenge, onClose }) => {
         })
         return updatedTasks.sort((a, b) => a.order - b.order)
       })
-  
+
       toast.success('Tasks reordered successfully')
-      setRefreshTrigger((prev) =>!prev)
+      setRefreshTrigger((prev) => !prev)
     } catch (error) {
       console.error('Error reordering tasks:', error)
       toast.error('Failed to reorder tasks. Please try again.')
@@ -135,121 +132,125 @@ const ChallengeDetails = ({ challenge, onClose }) => {
   )
 
   return (
-    <div className='space-y-6 h-[80vh] overflow-y-scroll '>
-      <div className='bg-gray-50 p-4 rounded-lg space-y-4'>
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-          <div>
-            <h3 className='text-sm font-medium text-gray-500'>
-              Challenge Title
-            </h3>
-            <p className='mt-1 text-sm text-gray-900'>{challenge.title}</p>
+    <>
+      <div className='space-y-6'>
+        <div className='bg-gray-50 p-4 rounded-lg space-y-4'>
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+            <div>
+              <h3 className='text-sm font-medium text-gray-500'>
+                Challenge Title
+              </h3>
+              <p className='mt-1 text-sm text-gray-900'>{challenge.title}</p>
+            </div>
+            <div>
+              <h3 className='text-sm font-medium text-gray-500'>End Time</h3>
+              <p className='mt-1 text-sm text-gray-900'>
+                {new Date(challenge.endTime.seconds * 1000).toLocaleString()}
+              </p>
+            </div>
+            <div>
+              <h3 className='text-sm font-medium text-gray-500'>
+                Required Points
+              </h3>
+              <p className='mt-1 text-sm text-gray-900'>
+                {challenge.subscriptionPoints}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className='text-sm font-medium text-gray-500'>End Time</h3>
-            <p className='mt-1 text-sm text-gray-900'>
-              {new Date(challenge.endTime.seconds * 1000).toLocaleString()}
-            </p>
+
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+            <div>
+              <h3 className='text-sm font-medium text-gray-500'>
+                Reward per Correct Answer
+              </h3>
+              <p className='mt-1 text-sm text-gray-900'>
+                +{challenge.rewardPoints} points
+              </p>
+            </div>
+            <div>
+              <h3 className='text-sm font-medium text-gray-500'>
+                Deduction per Wrong Answer
+              </h3>
+              <p className='mt-1 text-sm text-gray-900'>
+                -{challenge.deducePoints} points
+              </p>
+            </div>
+            <div>
+              <h3 className='text-sm font-medium text-gray-500'>
+                Number of Tasks
+              </h3>
+              <p className='mt-1 text-sm text-gray-900'>{tasks.length}</p>
+            </div>
           </div>
-          <div>
-            <h3 className='text-sm font-medium text-gray-500'>
-              Required Points
-            </h3>
-            <p className='mt-1 text-sm text-gray-900'>
-              {challenge.subscriptionPoints}
-            </p>
+
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+            <div>
+              <h3 className='text-sm font-medium text-gray-500'>
+                1st Place Reward
+              </h3>
+              <p className='mt-1 text-sm text-gray-900'>
+                {challenge.rewards.additionalProp1} points
+              </p>
+            </div>
+            <div>
+              <h3 className='text-sm font-medium text-gray-500'>
+                2nd Place Reward
+              </h3>
+              <p className='mt-1 text-sm text-gray-900'>
+                {challenge.rewards.additionalProp2} points
+              </p>
+            </div>
+            <div>
+              <h3 className='text-sm font-medium text-gray-500'>
+                3rd Place Reward
+              </h3>
+              <p className='mt-1 text-sm text-gray-900'>
+                {challenge.rewards.additionalProp3} points
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-          <div>
-            <h3 className='text-sm font-medium text-gray-500'>
-              Reward per Correct Answer
+        <div className='space-y-4'>
+          <div className='flex justify-between items-center'>
+            <h3 className='text-lg font-medium text-gray-900'>
+              Challenge Tasks
             </h3>
-            <p className='mt-1 text-sm text-gray-900'>
-              +{challenge.rewardPoints} points
-            </p>
-          </div>
-          <div>
-            <h3 className='text-sm font-medium text-gray-500'>
-              Deduction per Wrong Answer
-            </h3>
-            <p className='mt-1 text-sm text-gray-900'>
-              -{challenge.deducePoints} points
-            </p>
-          </div>
-          <div>
-            <h3 className='text-sm font-medium text-gray-500'>
-              Number of Tasks
-            </h3>
-            <p className='mt-1 text-sm text-gray-900'>{tasks.length}</p>
-          </div>
-        </div>
-
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-          <div>
-            <h3 className='text-sm font-medium text-gray-500'>
-              1st Place Reward
-            </h3>
-            <p className='mt-1 text-sm text-gray-900'>
-              {challenge.rewards.additionalProp1} points
-            </p>
-          </div>
-          <div>
-            <h3 className='text-sm font-medium text-gray-500'>
-              2nd Place Reward
-            </h3>
-            <p className='mt-1 text-sm text-gray-900'>
-              {challenge.rewards.additionalProp2} points
-            </p>
-          </div>
-          <div>
-            <h3 className='text-sm font-medium text-gray-500'>
-              3rd Place Reward
-            </h3>
-            <p className='mt-1 text-sm text-gray-900'>
-              {challenge.rewards.additionalProp3} points
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className='space-y-4'>
-        <div className='flex justify-between items-center'>
-          <h3 className='text-lg font-medium text-gray-900'>Challenge Tasks</h3>
-          <button
-            onClick={() => setIsAddTaskOpen(true)}
-            className='btn btn-primary flex items-center'
-          >
-            <svg
-              className='w-5 h-5 mr-2'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
+            <button
+              onClick={() => setIsAddTaskOpen(true)}
+              className='btn btn-primary flex items-center'
             >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth='2'
-                d='M12 6v6m0 0v6m0-6h6m-6 0H6'
-              />
-            </svg>
-            Add Task
-          </button>
+              <svg
+                className='w-5 h-5 mr-2'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M12 6v6m0 0v6m0-6h6m-6 0H6'
+                />
+              </svg>
+              Add Task
+            </button>
+          </div>
+
+          <Table
+            columns={taskColumns}
+            data={tasks}
+            actions={renderTaskActions}
+            onRowClick={handleViewQuestions}
+            emptyMessage="No tasks found. Click 'Add Task' to create one."
+            initialSortField='order'
+            initialSortDirection='asc'
+            onReorder={handleReorderTasks}
+          />
         </div>
 
-        <Table
-          columns={taskColumns}
-          data={tasks}
-          actions={renderTaskActions}
-          onRowClick={handleViewQuestions}
-          emptyMessage="No tasks found. Click 'Add Task' to create one."
-          initialSortField='order'
-          initialSortDirection='asc'
-          onReorder={handleReorderTasks}
-        />
+        {/* Add Task Modal */}
       </div>
-
-      {/* Add Task Modal */}
       <Modal
         isOpen={isAddTaskOpen}
         onClose={() => setIsAddTaskOpen(false)}
@@ -301,7 +302,7 @@ const ChallengeDetails = ({ challenge, onClose }) => {
         cancelText='Cancel'
         type='danger'
       />
-    </div>
+    </>
   )
 }
 

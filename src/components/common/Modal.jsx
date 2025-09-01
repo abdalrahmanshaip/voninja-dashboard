@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import PropTypes from 'prop-types';
 
 const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
   const modalRef = useRef(null);
@@ -73,10 +74,18 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
             </svg>
           </button>
         </div>
-        <div className="px-6 py-4">{children}</div>
+        <div className="px-6 py-4  max-h-[90vh] overflow-y-auto">{children}</div>
       </div>
     </div>
   );
+};
+
+Modal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  title: PropTypes.node,
+  children: PropTypes.node,
+  size: PropTypes.oneOf(['sm', 'md', 'lg', 'xl', 'full'])
 };
 
 export default Modal;

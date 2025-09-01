@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-react'
 import PropTypes from 'prop-types'
-import { formatDateLocal } from '../../utils/dateFormat'
+import { formatDateLocal, normalizeToDate } from '../../utils/dateFormat'
 import { useEffect, useState } from 'react'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../utils/firebase'
@@ -185,13 +185,13 @@ const EventDetails = ({ event, onClose }) => {
             <div>
               <h3 className='text-sm font-medium text-gray-500'>Start Date</h3>
               <p className='mt-1 text-sm text-gray-900'>
-                {formatDateLocal(new Date(event?.startAt?.seconds * 1000))}
+                {formatDateLocal(normalizeToDate(event?.startAt))}
               </p>
             </div>
             <div>
               <h3 className='text-sm font-medium text-gray-500'>End Date</h3>
               <p className='mt-1 text-sm text-gray-900'>
-                {formatDateLocal(new Date(event?.endAt?.seconds * 1000))}
+                {formatDateLocal(normalizeToDate(event?.endAt))}
               </p>
             </div>
           </div>

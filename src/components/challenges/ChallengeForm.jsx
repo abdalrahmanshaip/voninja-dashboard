@@ -2,7 +2,7 @@ import { Firestore } from 'firebase/firestore'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useChallenge } from '../../context/ChallengeContext'
-import { formatDateLocal } from '../../utils/dateFormat'
+import { formatDateLocal, normalizeToDate } from '../../utils/dateFormat'
 import LoadingSpinner from '../common/LoadingSpinner'
 
 const ChallengeForm = ({ challenge, onClose }) => {
@@ -32,7 +32,7 @@ const ChallengeForm = ({ challenge, onClose }) => {
       setFormData({
         title: challenge.title || '',
         createdAt: challenge.createdAt || new Date(),
-        endTime: formatDateLocal(new Date(challenge.endTime.seconds * 1000)),
+        endTime: formatDateLocal(normalizeToDate(challenge.endTime)),
         deducePoints: challenge.deducePoints || 5,
         rewardPoints: challenge.rewardPoints || 20,
         subscriptionPoints: challenge.subscriptionPoints || 100,

@@ -14,6 +14,7 @@ import { UserProvider } from './context/UserContext'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import Users from './pages/Users'
 import { LibraryProvider } from './context/LibraryContext'
+import { EventProvider } from './context/EventContext'
 import Library from './pages/Library'
 import Events from './pages/Events'
 
@@ -21,12 +22,13 @@ function App() {
   return (
     <HashRouter>
       <AuthProvider>
-        <DataProvider>
-          <ChallengeProvider>
-            <TransactionsProvider>
-              <CouponProvider>
-                <LibraryProvider>
-                  <UserProvider>
+        <UserProvider>
+          {/* <DataProvider>
+            <ChallengeProvider>
+              <TransactionsProvider>
+                <CouponProvider>
+                  <LibraryProvider> */}
+                  <EventProvider >
                     <Routes>
                       <Route
                         path='/login'
@@ -83,12 +85,13 @@ function App() {
                         }
                       />
                     </Routes>
-                  </UserProvider>
-                </LibraryProvider>
-              </CouponProvider>
-            </TransactionsProvider>
-          </ChallengeProvider>
-        </DataProvider>
+                  </EventProvider>
+                  {/* </LibraryProvider>
+                </CouponProvider>
+              </TransactionsProvider>
+            </ChallengeProvider>
+          </DataProvider> */}
+        </UserProvider>
       </AuthProvider>
     </HashRouter>
   )

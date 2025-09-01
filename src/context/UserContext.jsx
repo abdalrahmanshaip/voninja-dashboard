@@ -1,4 +1,5 @@
 import { collection, doc, getDocs, updateDoc } from 'firebase/firestore'
+import PropTypes from 'prop-types'
 import { createContext, useContext, useEffect, useState } from 'react'
 import { db } from '../utils/firebase'
 
@@ -36,6 +37,10 @@ export const UserProvider = ({ children }) => {
   }
 
   return <UsersContext.Provider value={value}>{children}</UsersContext.Provider>
+}
+
+UserProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 }
 
 export default UsersContext

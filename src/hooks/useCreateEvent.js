@@ -1,13 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Timestamp } from 'firebase/firestore'
 import { useForm } from 'react-hook-form'
-import { formatDateLocal } from '../utils/dateFormat'
+import { formatDateLocal, normalizeToDate } from '../utils/dateFormat'
 import { getEventSchema } from '../schemas/events'
-
+import { uploadImage } from '../utils/UploadImage'
+import { useEvents } from '../context/EventContext'
+import { toast } from 'sonner'
 
 export const useCreateEvent = (activeTab, basicSubType, event, onClose) => {
-
-  
+  const { updateEvent, addEvent, error } = useEvents()
   const {
     control,
     handleSubmit,
@@ -21,8 +22,17 @@ export const useCreateEvent = (activeTab, basicSubType, event, onClose) => {
       title: event?.title || '',
       description: event?.description || '',
       imageUrl: event?.imageUrl || '',
-      startAt: formatDateLocal(new Date(event?.startAt?.seconds * 1000)) || '',
-      endAt: formatDateLocal(new Date(event?.endAt?.seconds * 1000)) || '',
+      startAt:
+        (!(activeTab === 'basic' && basicSubType === 'welcome') &&
+          event?.startAt &&
+          formatDateLocal(normalizeToDate(event.startAt))) ||
+        '',
+
+      endAt:
+        (!(activeTab === 'basic' && basicSubType === 'welcome') &&
+          event?.endAt &&
+          formatDateLocal(normalizeToDate(event.endAt))) ||
+        '',
       type:
         event?.type ||
         (activeTab === 'double'
@@ -37,6 +47,7 @@ export const useCreateEvent = (activeTab, basicSubType, event, onClose) => {
         ...(activeTab === 'challenge' && {
           quizMinCorrect: event?.rules?.quizMinCorrect || 0,
           quizReward: event?.rules?.quizReward || 0,
+          quizTotal: event?.rules?.quizTotal || 0,
         }),
         ...(activeTab === 'basic' &&
           basicSubType === 'target_points' && {
@@ -51,15 +62,35 @@ export const useCreateEvent = (activeTab, basicSubType, event, onClose) => {
       },
     },
   })
-  const onSubmit = (data) => {
-    const formData = {
-      ...data,
-      createdAt: event ? event?.createdAt : Timestamp.fromDate(new Date()),
+  const onSubmit = async (data) => {
+    console.log(data)
+    let url = ''
+    try {
+      if (typeof data.imageUrl === 'string' && data.imageUrl.length > 0) {
+        url = data.imageUrl
+      } else if (data.imageUrl instanceof File) {
+        url = await uploadImage(data.imageUrl)
+      }
+      const formData = {
+        ...data,
+        imageUrl: url,
+        createdAt: event ? event?.createdAt : Timestamp.fromDate(new Date()),
+      }
+      console.log('Form Data here:', formData)
+      if (event) {
+        await updateEvent(event.id, formData)
+        toast.success('Event updated successfully')
+      } else {
+        await addEvent(formData)
+        toast.success('Event added successfully')
+      }
+      onClose()
+    } catch {
+      console.error('Error submitting question:', error)
+      toast.error(error || 'Failed to save question')
     }
-    onClose()
-    console.log('Form Data Submitted:', formData)
-    return formData
   }
+
   return {
     control,
     handleSubmit,
@@ -68,6 +99,6 @@ export const useCreateEvent = (activeTab, basicSubType, event, onClose) => {
     setValue,
     errors,
     isSubmitting,
-    onSubmit
+    onSubmit,
   }
 }

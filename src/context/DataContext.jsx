@@ -10,6 +10,7 @@ import {
   updateDoc,
   writeBatch
 } from 'firebase/firestore'
+import PropTypes from 'prop-types'
 import { createContext, useContext, useState } from 'react'
 import { db } from '../utils/firebase'
 
@@ -331,6 +332,10 @@ export const DataProvider = ({ children }) => {
   }
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>
+}
+
+DataProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 }
 
 export default DataContext

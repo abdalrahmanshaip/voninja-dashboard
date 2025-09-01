@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useCoupon } from '../../context/CouponContext'
-import { formatDateLocal } from '../../utils/dateFormat'
+import { formatDateLocal, normalizeToDate } from '../../utils/dateFormat'
 import { Firestore } from 'firebase/firestore'
 import { toast } from 'sonner'
 import LoadingSpinner from '../common/LoadingSpinner'
@@ -19,7 +19,7 @@ const CouponForm = ({ coupon, onClose }) => {
       setFormData({
         id: coupon.id || '',
         points: coupon.points || 0,
-        expireDate: formatDateLocal(new Date(coupon.expireDate.seconds * 1000)),
+        expireDate: formatDateLocal(normalizeToDate(coupon.expireDate)),
       })
     } else {
       setFormData({

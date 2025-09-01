@@ -2,12 +2,17 @@ import { useState } from 'react'
 import Table from '../components/common/Table'
 import Modal from '../components/common/Modal'
 import SharedEventForm from '../components/Events/SharedEventForm'
-import { ArrowDownUp, Plus } from 'lucide-react'
+import { ArrowDownUp, Minus, Plus } from 'lucide-react'
 import EventDetails from '../components/Events/EventDetails'
 import ReorderEvents from '../components/Events/ReorderEvents'
 import ConfirmDialog from '../components/common/ConfirmDialog'
+import { useEvents } from '../context/EventContext'
+import { toast } from 'sonner'
+import { normalizeToDate } from '../utils/dateFormat'
 
 const Events = () => {
+  const { events, error, deleteEvent } = useEvents()
+  console.log(events)
   const [activeTab, setActiveTab] = useState('basic')
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -17,71 +22,7 @@ const Events = () => {
   const [eventToDelete, setEventToDelete] = useState(null)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
 
-  // Mock data for events
-  const mockEvents = [
-    {
-      id: '1',
-      title: 'Target Points Event',
-      description: 'Welcome to our platform!',
-      type: 'target_points',
-      startAt: new Date('2025-08-20T17:05:12Z'),
-      endAt: new Date('2025-09-25T17:05:12Z'),
-      createdAt: new Date('2025-08-20T16:05:13Z'),
-      imageUrl: 'https://picsum.photos/800/400?random=1',
-      rules: {
-        targetGoal: 5000,
-        targetReward: 1500,
-      },
-      order: 1,
-    },
-    {
-      id: '2',
-      title: 'Welcome Event',
-      description: 'Welcome to our platform!',
-      type: 'welcome',
-      startAt: new Date('2025-08-20T17:05:12Z'),
-      endAt: new Date('2025-09-25T17:05:12Z'),
-      createdAt: new Date('2025-08-20T16:05:13Z'),
-      imageUrl: 'https://picsum.photos/800/400?random=2',
-      rules: {
-        welcomeGoal: 12,
-        welcomeReward: 1500,
-      },
-      order: 2,
-    },
-    {
-      id: '3',
-      title: 'Double Points Weekend',
-      description: 'كل نقطة هتتقلب ×2 خلال فترة العرض.',
-      type: 'multiplier',
-      startAt: new Date('2025-08-20T17:05:12Z'),
-      endAt: new Date('2025-09-25T17:05:12Z'),
-      createdAt: new Date('2025-08-20T16:05:13Z'),
-      imageUrl: 'https://picsum.photos/800/400?random=3',
-      order: 3,
-      rules: {
-        multiplier: 2,
-      },
-    },
-    {
-      id: '4',
-      title: 'Special Challenge',
-      description: 'Complete special challenges to earn rewards!',
-      type: 'quiz',
-      startAt: new Date('2025-08-20T17:05:12Z'),
-      endAt: new Date('2025-09-25T17:05:12Z'),
-      createdAt: new Date('2025-08-20T16:05:13Z'),
-      imageUrl: 'https://picsum.photos/800/400?random=4',
-      order: 4,
-      rules: {
-        quizMinCorrect: 5,
-        quizReward: 2000,
-        quizTotal: 10,
-      },
-    },
-  ]
-
-  const filteredEvents = mockEvents.filter((event) => {
+  const filteredEvents = events.filter((event) => {
     switch (activeTab) {
       case 'basic':
         return event.type !== 'multiplier' && event.type !== 'quiz'
@@ -152,33 +93,48 @@ const Events = () => {
       field: 'startAt',
       header: 'Start Date',
       sortable: true,
-      render: (row) => (
-        <span className='font-medium'>
-          {row.startAt.toLocaleString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </span>
-      ),
+      render: (row) => {
+        const date = normalizeToDate(row.startAt)
+
+        return (
+          <span className='font-medium'>
+            {date && !isNaN(date) ? (
+              date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            ) : (
+              <Minus strokeWidth={2} />
+            )}
+          </span>
+        )
+      },
     },
     {
       field: 'endAt',
       header: 'End Date',
       sortable: true,
-      render: (row) => (
-        <span className='font-medium'>
-          {row.endAt.toLocaleString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </span>
-      ),
+      render: (row) => {
+        let date = normalizeToDate(row.endAt)
+        return (
+          <span className='font-medium'>
+            {date && !isNaN(date) ? (
+              date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            ) : (
+              <Minus strokeWidth={2} />
+            )}
+          </span>
+        )
+      },
     },
     {
       field: 'order',
@@ -207,15 +163,23 @@ const Events = () => {
   }
 
   const confirmDelete = async () => {
+    // try {
+    //   await deleteCoupon(couponToDelete.id)
+    //   toast.success('Coupon deleted successfully')
+    //   setCouponToDelete(null)
+    //   setIsDeleteConfirmOpen(false)
+    // } catch (error) {
+    //   toast.error(error.message || 'Failed to delete coupon')
+    // }
     if (eventToDelete) {
-      // try {
-      //   await deleteCoupon(couponToDelete.id)
-      //   toast.success('Coupon deleted successfully')
-      //   setCouponToDelete(null)
-      //   setIsDeleteConfirmOpen(false)
-      // } catch (error) {
-      //   toast.error(error.message || 'Failed to delete coupon')
-      // }
+      try {
+        await deleteEvent(eventToDelete.id)
+        toast.success('Event deleted successfully')
+        setEventToDelete(null)
+        setIsDeleteConfirmOpen(false)
+      } catch {
+        toast.error(error || 'Failed to delete coupon')
+      }
     }
   }
 
@@ -315,22 +279,22 @@ const Events = () => {
             actions={renderActions}
             onRowClick={activeTab == 'challenge' && handleViewDetails}
             emptyMessage="No events found. Click 'Add Event' to create one."
-            initialSortField='startAt'
+            initialSortField='order'
             initialSortDirection='asc'
           />
         </div>
       </div>
 
-      <Modal
+      {/* <Modal
         isOpen={reorderModalOpen}
         onClose={() => setReorderModalOpen(false)}
         title={'Reorder Events'}
       >
         <ReorderEvents
-          events={mockEvents}
+          events={events}
           onClose={() => setReorderModalOpen(false)}
         />
-      </Modal>
+      </Modal> */}
 
       <Modal
         size='lg'

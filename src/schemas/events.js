@@ -8,10 +8,12 @@ export function getEventSchema(activeTab, basicSubType) {
       imageUrl: z
         .union([z.instanceof(File), z.string().url(), z.string().length(0)])
         .optional(),
-      startAt: z.coerce
-        .date()
-        .min(new Date(), { message: 'Start date must be in the future' }),
-      endAt: z.coerce.date(),
+      ...(!(activeTab == 'basic' && basicSubType == 'welcome') && {
+        startAt: z.coerce
+          .date()
+          .min(new Date(), { message: 'Start date must be in the future' }),
+        endAt: z.coerce.date(),
+      }),
       type: z.enum(['multiplier', 'quiz', 'welcome', 'target_points']),
       rules: z
         .object({
@@ -21,7 +23,7 @@ export function getEventSchema(activeTab, basicSubType) {
           ...(activeTab === 'challenge' && {
             quizMinCorrect: z.number().min(1, 'Minimum correct answers is required'),
             quizReward: z.number().min(1, 'Reward is required'),
-            
+            quizTotal: z.number()
           }),
           ...(activeTab === 'basic' &&
             basicSubType === 'target_points' && {
@@ -48,8 +50,14 @@ export function getEventSchema(activeTab, basicSubType) {
         })
         .optional(),
     })
-    .refine((data) => data.endAt > data.startAt, {
-      message: 'End date must be after start date',
-      path: ['endAt'],
-    })
+    .refine(
+      (data) =>
+        data.startAt && data.endAt
+          ? data.endAt > data.startAt
+          : true,
+      {
+        message: 'End date must be after start date',
+        path: ['endAt'],
+      }
+    )
 }

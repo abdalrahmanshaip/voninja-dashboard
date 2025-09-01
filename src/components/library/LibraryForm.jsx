@@ -142,16 +142,7 @@ const LibraryForm = ({ item, onClose, onSuccess }) => {
           <p className='text-sm text-red-500'>{errors.url.message}</p>
         )}
 
-        {watch('url') && (
-          <div className='mt-2'>
-            <p className='text-sm text-gray-500'>File selected:</p>
-            <p className='text-sm text-gray-800'>
-              {typeof watch('url') === 'string'
-                ? watch('url')
-                : watch('url')?.name || ''}
-            </p>
-          </div>
-        )}
+      
       </div>
 
       <div className='flex justify-end mt-6 space-x-3'>

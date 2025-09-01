@@ -15,6 +15,7 @@ import ProtectedRoute from './components/common/ProtectedRoute'
 import Users from './pages/Users'
 import { LibraryProvider } from './context/LibraryContext'
 import Library from './pages/Library'
+import Events from './pages/Events'
 
 function App() {
   return (
@@ -46,6 +47,10 @@ function App() {
                         <Route
                           path='lessons'
                           element={<Lessons />}
+                        />
+                        <Route
+                          path='events'
+                          element={<Events />}
                         />
                         <Route
                           path='users'

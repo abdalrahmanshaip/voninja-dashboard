@@ -35,9 +35,17 @@ body {
   .btn-danger {
     @apply bg-red-500 text-white hover:bg-red-600 focus:ring-red-500;
   }
+  
+  .btn-info {
+    @apply bg-[#16A2B9]/80 text-white hover:bg-[#16A2B9] focus:ring-[#16A2B9]/80;
+  }
 
   .btn-ghost {
     @apply bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-300;
+  }
+
+  .btn-disabled {
+    @apply btn bg-gray-400 pointer-events-auto
   }
 
   .input {

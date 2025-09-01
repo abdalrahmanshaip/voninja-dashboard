@@ -154,9 +154,7 @@ const TopUsers = ({ onClose, challenge }) => {
             setIsGivePointsOpen(true)
           }}
           className={`flex items-center ms-auto ${
-            loading
-              ? ' btn bg-gray-400 pointer-events-auto'
-              : 'btn btn-secondary'
+            loading ? ' btn-disabled' : 'btn btn-secondary'
           }  `}
           disabled={loading}
         >

@@ -1,0 +1,372 @@
+import { useState } from 'react'
+import Table from '../components/common/Table'
+import Modal from '../components/common/Modal'
+import SharedEventForm from '../components/Events/SharedEventForm'
+import { ArrowDownUp, Plus } from 'lucide-react'
+import EventDetails from '../components/Events/EventDetails'
+import ReorderEvents from '../components/Events/ReorderEvents'
+import ConfirmDialog from '../components/common/ConfirmDialog'
+
+const Events = () => {
+  const [activeTab, setActiveTab] = useState('basic')
+
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  const [selectedEvent, setSelectedEvent] = useState(null)
+  const [reorderModalOpen, setReorderModalOpen] = useState(false)
+  const [eventToDelete, setEventToDelete] = useState(null)
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+
+  // Mock data for events
+  const mockEvents = [
+    {
+      id: '1',
+      title: 'Target Points Event',
+      description: 'Welcome to our platform!',
+      type: 'target_points',
+      startAt: new Date('2025-08-20T17:05:12Z'),
+      endAt: new Date('2025-09-25T17:05:12Z'),
+      createdAt: new Date('2025-08-20T16:05:13Z'),
+      imageUrl: 'https://picsum.photos/800/400?random=1',
+      rules: {
+        targetGoal: 5000,
+        targetReward: 1500,
+      },
+      order: 1,
+    },
+    {
+      id: '2',
+      title: 'Welcome Event',
+      description: 'Welcome to our platform!',
+      type: 'welcome',
+      startAt: new Date('2025-08-20T17:05:12Z'),
+      endAt: new Date('2025-09-25T17:05:12Z'),
+      createdAt: new Date('2025-08-20T16:05:13Z'),
+      imageUrl: 'https://picsum.photos/800/400?random=2',
+      rules: {
+        welcomeGoal: 12,
+        welcomeReward: 1500,
+      },
+      order: 2,
+    },
+    {
+      id: '3',
+      title: 'Double Points Weekend',
+      description: 'كل نقطة هتتقلب ×2 خلال فترة العرض.',
+      type: 'multiplier',
+      startAt: new Date('2025-08-20T17:05:12Z'),
+      endAt: new Date('2025-09-25T17:05:12Z'),
+      createdAt: new Date('2025-08-20T16:05:13Z'),
+      imageUrl: 'https://picsum.photos/800/400?random=3',
+      order: 3,
+      rules: {
+        multiplier: 2,
+      },
+    },
+    {
+      id: '4',
+      title: 'Special Challenge',
+      description: 'Complete special challenges to earn rewards!',
+      type: 'quiz',
+      startAt: new Date('2025-08-20T17:05:12Z'),
+      endAt: new Date('2025-09-25T17:05:12Z'),
+      createdAt: new Date('2025-08-20T16:05:13Z'),
+      imageUrl: 'https://picsum.photos/800/400?random=4',
+      order: 4,
+      rules: {
+        quizMinCorrect: 5,
+        quizReward: 2000,
+        quizTotal: 10,
+      },
+    },
+  ]
+
+  const filteredEvents = mockEvents.filter((event) => {
+    switch (activeTab) {
+      case 'basic':
+        return event.type !== 'multiplier' && event.type !== 'quiz'
+      case 'double':
+        return event.type === 'multiplier'
+      case 'challenge':
+        return event.type === 'quiz'
+      default:
+        return true
+    }
+  })
+
+  const columns = [
+    {
+      field: 'imageUrl',
+      header: 'Image',
+      render: (row) => (
+        <img
+          src={row.imageUrl}
+          alt={row.title}
+          className='w-20 h-20 object-cover rounded mr-4 border'
+        />
+      ),
+    },
+    {
+      field: 'title',
+      header: 'Title',
+    },
+    {
+      field: 'description',
+      header: 'Description',
+    },
+    {
+      field: 'rules',
+      header: 'Rules',
+      render: (row) => {
+        switch (row.type) {
+          case 'target_points':
+            return (
+              <div className='space-y-4'>
+                <div>Target: {row.rules.targetGoal} points</div>
+                <div>Reward: {row.rules.targetReward} points</div>
+              </div>
+            )
+          case 'welcome':
+            return (
+              <div className='space-y-4'>
+                <div>Goal: {row.rules.welcomeGoal} visits</div>
+                <div>Reward: {row.rules.welcomeReward} points</div>
+              </div>
+            )
+          case 'multiplier':
+            return <div>Multiplier: {row.rules.multiplier}x</div>
+          case 'quiz':
+            return (
+              <div className='space-y-4'>
+                <div>Min Correct: {row.rules.quizMinCorrect}</div>
+                <div>Reward: {row.rules.quizReward} points</div>
+                <div>Total quiz: {row.rules.quizTotal}</div>
+              </div>
+            )
+          default:
+            return null
+        }
+      },
+    },
+    {
+      field: 'startAt',
+      header: 'Start Date',
+      sortable: true,
+      render: (row) => (
+        <span className='font-medium'>
+          {row.startAt.toLocaleString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </span>
+      ),
+    },
+    {
+      field: 'endAt',
+      header: 'End Date',
+      sortable: true,
+      render: (row) => (
+        <span className='font-medium'>
+          {row.endAt.toLocaleString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </span>
+      ),
+    },
+    {
+      field: 'order',
+      header: 'Order',
+      sortable: true,
+    },
+  ]
+
+  const handleAddEvent = () => {
+    setSelectedEvent(null)
+    setIsModalOpen(true)
+  }
+
+  const handleEditEvent = (event) => {
+    setSelectedEvent(event)
+    setIsModalOpen(true)
+  }
+  const handleViewDetails = (event) => {
+    setSelectedEvent(event)
+    setIsDetailsModalOpen(true)
+  }
+
+  const handleDeleteClick = (event) => {
+    setEventToDelete(event)
+    setIsDeleteConfirmOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (eventToDelete) {
+      // try {
+      //   await deleteCoupon(couponToDelete.id)
+      //   toast.success('Coupon deleted successfully')
+      //   setCouponToDelete(null)
+      //   setIsDeleteConfirmOpen(false)
+      // } catch (error) {
+      //   toast.error(error.message || 'Failed to delete coupon')
+      // }
+    }
+  }
+
+  const renderActions = (event) => (
+    <>
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          handleEditEvent(event)
+        }}
+        className='text-blue-600 hover:text-blue-900 focus:outline-none mr-2'
+      >
+        Edit
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          handleDeleteClick(event)
+        }}
+        className='text-red-600 hover:text-red-900 focus:outline-none'
+      >
+        Delete
+      </button>
+    </>
+  )
+
+  return (
+    <>
+      <div className='space-y-6'>
+        <div className='flex justify-between items-center'>
+          <h1 className='text-2xl font-bold text-gray-900'>Events</h1>
+          <div className='flex gap-x-5'>
+            <button
+              onClick={() => setReorderModalOpen(true)}
+              className='btn btn-info flex items-center  text-base'
+            >
+              <ArrowDownUp
+                size={20}
+                className='mr-2'
+              />
+              Reorder Events
+            </button>
+            <button
+              onClick={handleAddEvent}
+              className='btn btn-primary flex items-center  text-base'
+            >
+              <Plus
+                size={20}
+                className='mr-2'
+              />
+              Create Event
+            </button>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className='border-b border-gray-200'>
+          <nav className='-mb-px flex space-x-8'>
+            <button
+              onClick={() => setActiveTab('basic')}
+              className={`${
+                activeTab === 'basic'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Basic Events
+            </button>
+            <button
+              onClick={() => setActiveTab('double')}
+              className={`${
+                activeTab === 'double'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Double Points Events
+            </button>
+            <button
+              onClick={() => setActiveTab('challenge')}
+              className={`${
+                activeTab === 'challenge'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Special Challenge Events
+            </button>
+          </nav>
+        </div>
+
+        {/* Table */}
+        <div className='card'>
+          <Table
+            columns={columns}
+            data={filteredEvents}
+            actions={renderActions}
+            onRowClick={activeTab == 'challenge' && handleViewDetails}
+            emptyMessage="No events found. Click 'Add Event' to create one."
+            initialSortField='startAt'
+            initialSortDirection='asc'
+          />
+        </div>
+      </div>
+
+      <Modal
+        isOpen={reorderModalOpen}
+        onClose={() => setReorderModalOpen(false)}
+        title={'Reorder Events'}
+      >
+        <ReorderEvents
+          events={mockEvents}
+          onClose={() => setReorderModalOpen(false)}
+        />
+      </Modal>
+
+      <Modal
+        size='lg'
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={selectedEvent ? 'Edit Event' : 'Add New Event'}
+      >
+        <SharedEventForm
+          event={selectedEvent}
+          activeTab={activeTab}
+          onClose={() => setIsModalOpen(false)}
+        />
+      </Modal>
+      <Modal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        title='Event Details'
+        size='full'
+      >
+        <EventDetails
+          event={selectedEvent}
+          onClose={() => setIsDetailsModalOpen(false)}
+        />
+      </Modal>
+      <ConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={confirmDelete}
+        title='Delete Event'
+        message='Are you sure you want to delete this event? This action cannot be undone.'
+        confirmText='Delete'
+        cancelText='Cancel'
+        type='danger'
+      />
+    </>
+  )
+}
+
+export default Events

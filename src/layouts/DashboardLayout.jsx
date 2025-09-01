@@ -1,17 +1,18 @@
-import { useState } from 'react'
-import { Outlet, NavLink } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import {
-  FaBook,
-  FaTrophy,
-  FaExchangeAlt,
-  FaTicketAlt,
-  FaSignOutAlt,
-  FaBars,
-  FaTimes,
-} from 'react-icons/fa'
 import { Users } from 'lucide-react'
+import { useState } from 'react'
+import {
+  FaBars,
+  FaBook,
+  FaExchangeAlt,
+  FaSignOutAlt,
+  FaTicketAlt,
+  FaTimes,
+  FaTrophy
+} from 'react-icons/fa'
 import { IoLibrary } from 'react-icons/io5'
+import { MdEmojiEvents } from 'react-icons/md'
+import { NavLink, Outlet } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const DashboardLayout = () => {
   const { user, logout } = useAuth()
@@ -30,6 +31,11 @@ const DashboardLayout = () => {
       path: '/',
       name: 'Lessons',
       icon: <FaBook className='w-5 h-5' />,
+    },
+    {
+      path: '/events',
+      name: 'Events',
+      icon: <MdEmojiEvents  className='w-5 h-5' />,
     },
     {
       path: '/users',

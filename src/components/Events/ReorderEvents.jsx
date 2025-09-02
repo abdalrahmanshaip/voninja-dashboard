@@ -4,14 +4,18 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import PropTypes from 'prop-types'
+import { toast } from 'sonner'
+import { useEvents } from '../../context/EventContext'
+import LoadingSpinner from '../common/LoadingSpinner'
 import SortableItem from './SortableItem'
 
 const ReorderEvents = ({ events, onClose }) => {
+  const { updateEventsOrder, error } = useEvents()
   const [items, setItems] = useState(events)
-  const [isChange, setIsChange] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const handleDragEnd = (event) => {
     const { active, over } = event
@@ -19,13 +23,32 @@ const ReorderEvents = ({ events, onClose }) => {
       setItems((prev) => {
         const oldIndex = prev.findIndex((i) => i.id === active.id)
         const newIndex = prev.findIndex((i) => i.id === over.id)
-        setIsChange(true)
         return arrayMove(prev, oldIndex, newIndex)
       })
     }
   }
 
-  console.log(items)
+  const handleSave = async () => {
+    setLoading(true)
+    try {
+      const reorderedWithOrder = items.map((event, index) => ({
+        ...event,
+        order: 1 + index,
+      }))
+      await updateEventsOrder(reorderedWithOrder)
+      toast.success('Events reordered successfully')
+      onClose()
+    } catch {
+      toast.error(error || 'Failed to delete coupon')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+    const isChanged = useMemo(() => {
+    if (items.length !== events.length) return true
+    return items.some((item, idx) => item.id !== events[idx].id)
+  }, [items, events])
 
   return (
     <div className='text-black'>
@@ -55,13 +78,23 @@ const ReorderEvents = ({ events, onClose }) => {
           Cancel
         </button>
         <button
+          onClick={handleSave}
           type='submit'
           className={` ${
-            !isChange ? ' btn-disabled text-white' : 'btn btn-primary'
+            !isChanged  || loading
+              ? ' btn-disabled text-white'
+              : 'btn btn-primary'
           }`}
-          disabled={!isChange}
+          disabled={!isChanged }
         >
-            Save
+          {loading ? (
+            <div className='flex gap-1'>
+              <LoadingSpinner />
+              Saving
+            </div>
+          ) : (
+            'Save'
+          )}
         </button>
       </div>
     </div>
@@ -73,19 +106,14 @@ export default ReorderEvents
 ReorderEvents.propTypes = {
   events: PropTypes.arrayOf(
     PropTypes.shape({
+      id: PropTypes.string,
       title: PropTypes.string,
       description: PropTypes.string,
       imageUrl: PropTypes.string,
-      startAt: PropTypes.shape({
-        seconds: PropTypes.func,
-      }),
-      endAt: PropTypes.shape({
-        seconds: PropTypes.func,
-      }),
       createdAt: PropTypes.any,
       type: PropTypes.string,
       rules: PropTypes.object,
-      order: PropTypes.number
+      order: PropTypes.number,
     })
   ),
   onClose: PropTypes.func.isRequired,

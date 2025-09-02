@@ -1,85 +1,31 @@
 import { Plus } from 'lucide-react'
 import PropTypes from 'prop-types'
-import { formatDateLocal, normalizeToDate } from '../../utils/dateFormat'
 import { useEffect, useState } from 'react'
-import { collection, query, where, getDocs } from 'firebase/firestore'
-import { db } from '../../utils/firebase'
-import Table from '../common/Table'
-import Modal from '../common/Modal'
-import QuestionForm from './QuestionForm'
-import ConfirmDialog from '../common/ConfirmDialog'
 import { toast } from 'sonner'
+import { useEvents } from '../../context/EventContext'
+import { normalizeToDate } from '../../utils/dateFormat'
+import ConfirmDialog from '../common/ConfirmDialog'
+import Modal from '../common/Modal'
+import Table from '../common/Table'
+import QuestionForm from './QuestionForm'
 
-const EventDetails = ({ event, onClose }) => {
-  const [questions, setQuestions] = useState([])
+const EventDetails = ({ event }) => {
+  const { fetchQuestions, setQuestions, questions, deleteQuestion } =
+    useEvents()
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [questionToDelete, setQuestionToDelete] = useState(null)
   const [isEditQuestionOpen, setIsEditQuestionOpen] = useState(false)
   const [selectedQuestion, setSelectedQuestion] = useState(null)
   const [isAddQuestionOpen, setIsAddQuestionOpen] = useState(false)
-  const [refreshTrigger, setRefreshTrigger] = useState(false)
 
   useEffect(() => {
-    // Mock questions data
-    const mockQuestions = [
-      {
-        id: 'q1',
-        eventId: event?.id,
-        content: 'What is the capital of France?',
-        correct_answer: 'Paris',
-        choices: ['Paris', 'London', 'Berlin', 'Madrid'],
-        image_url: '',
-      },
-      {
-        id: 'q2',
-        eventId: event?.id,
-        content: 'Which planet is known as the Red Planet?',
-        correct_answer: 'Mars',
-        choices: ['Earth', 'Mars', 'Jupiter', 'Venus'],
-        image_url: '',
-      },
-      {
-        id: 'q3',
-        eventId: 'other-event-id',
-        content: 'What is 2 + 2?',
-        correct_answer: '4',
-        choices: ['3', '4', '5', '6'],
-        image_url: '',
-      },
-    ]
-
-    if (event?.id) {
-      const filteredQuestions = mockQuestions.filter(
-        (q) => q.eventId === event.id
-      )
-      setQuestions(filteredQuestions)
+    const pushQuestionsToState = async () => {
+      const data = await fetchQuestions(event?.id)
+      console.log(data)
+      setQuestions(data)
     }
-  }, [event?.id])
-
-  // useEffect(() => {
-  //   const fetchQuestions = async () => {
-  //     if (!event?.id) return
-
-  //     try {
-  //       const q = query(
-  //         collection(db, 'questions'),
-  //         where('eventId', '==', event.id)
-  //       )
-  //       const querySnapshot = await getDocs(q)
-  //       const questionsList = querySnapshot.docs.map((doc) => ({
-  //         id: doc.id,
-  //         ...doc.data(),
-  //       }))
-  //       setQuestions(questionsList)
-  //     } catch (error) {
-  //       console.error('Error fetching questions:', error)
-  //     } finally {
-  //       setLoading(false)
-  //     }
-  //   }
-
-  //   fetchQuestions()
-  // }, [event?.id])
+    pushQuestionsToState()
+  }, [event?.id, fetchQuestions, setQuestions])
 
   const handleDeleteQuestion = (question) => {
     setQuestionToDelete(question)
@@ -92,16 +38,14 @@ const EventDetails = ({ event, onClose }) => {
 
   const confirmDeleteQuestion = async () => {
     if (questionToDelete) {
-      // try {
-      //   await deleteTaskQuestion(challengeId, task.id, questionToDelete.id)
-      //   setQuestionToDelete(null)
-      //   setIsDeleteConfirmOpen(false)
-      //   setRefreshTrigger(prev => !prev)
-      //   toast.success('Question deleted successfully')
-      // } catch (error) {
-      //   toast.error('Failed to delete question: ' + error.message)
-      // }
-      toast.success('Deletedddd')
+      try {
+        await deleteQuestion(event?.id, questionToDelete.id)
+        setQuestionToDelete(null)
+        setIsDeleteConfirmOpen(false)
+        toast.success('Question deleted successfully')
+      } catch (error) {
+        toast.error('Failed to delete question: ' + error.message)
+      }
     }
   }
 
@@ -170,7 +114,7 @@ const EventDetails = ({ event, onClose }) => {
 
   return (
     <>
-      <div className='space-y-6'>
+      <div className='space-y-6 min-h-[90vh]'>
         <div className='overflow-auto'>
           <div className='flex justify-between items-start mb-6'>
             <div>
@@ -185,13 +129,25 @@ const EventDetails = ({ event, onClose }) => {
             <div>
               <h3 className='text-sm font-medium text-gray-500'>Start Date</h3>
               <p className='mt-1 text-sm text-gray-900'>
-                {formatDateLocal(normalizeToDate(event?.startAt))}
+                {normalizeToDate(event?.startAt).toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
               </p>
             </div>
             <div>
               <h3 className='text-sm font-medium text-gray-500'>End Date</h3>
               <p className='mt-1 text-sm text-gray-900'>
-                {formatDateLocal(normalizeToDate(event?.endAt))}
+                {normalizeToDate(event?.endAt).toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
               </p>
             </div>
           </div>
@@ -237,7 +193,6 @@ const EventDetails = ({ event, onClose }) => {
         <QuestionForm
           eventId={event?.id}
           onClose={() => setIsAddQuestionOpen(false)}
-          setRefreshTrigger={setRefreshTrigger}
         />
       </Modal>
 
@@ -250,7 +205,6 @@ const EventDetails = ({ event, onClose }) => {
           eventId={event?.id}
           question={selectedQuestion}
           onClose={() => setIsEditQuestionOpen(false)}
-          setRefreshTrigger={setRefreshTrigger}
         />
       </Modal>
 
@@ -286,5 +240,4 @@ EventDetails.propTypes = {
     type: PropTypes.string,
     rules: PropTypes.object,
   }),
-  onClose: PropTypes.func.isRequired,
 }

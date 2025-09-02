@@ -6,6 +6,7 @@ import {
   getDocs,
   orderBy,
   query,
+  setDoc,
   updateDoc,
   writeBatch,
 } from 'firebase/firestore'
@@ -31,17 +32,14 @@ export const useEvents = () => {
 
 export const EventProvider = ({ children }) => {
   const [events, setEvents] = useState([])
-  const [questions, setQuestions] = useState({}) // Store questions by eventId
-  const [loading, setLoading] = useState(false)
+  const [questions, setQuestions] = useState([])
   const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchEvents()
   }, [])
 
-  // Fetch all events ordered by order field
   const fetchEvents = useCallback(async () => {
-    setLoading(true)
     try {
       const eventsQuery = query(
         collection(db, 'events'),
@@ -57,59 +55,53 @@ export const EventProvider = ({ children }) => {
     } catch (err) {
       setError('Failed to fetch events')
       console.error('Error fetching events:', err)
-    } finally {
-      setLoading(false)
     }
   }, [])
 
-  // Add new event
-  const addEvent = useCallback(async (eventData) => {
-    try {
-      const lastOrder = events.length > 0 ? events[events.length - 1].order || 0 : 0
+  const addEvent = useCallback(
+    async (eventData) => {
+      try {
+        const lastOrder =
+          events.length > 0 ? events[events.length - 1].order || 0 : 0
 
-      const nextOrder = lastOrder + 1
-      // Optimistic update
-      const newEvent = {
-        ...eventData,
-        order: nextOrder
-      }
-      setEvents((prev) => [...prev, newEvent])
+        const nextOrder = lastOrder + 1
+        const newEvent = {
+          ...eventData,
+          order: nextOrder,
+        }
+        setEvents((prev) => [...prev, newEvent])
 
-      // Actual API call
-      const docRef = await addDoc(collection(db, 'events'), newEvent)
-      setEvents((prev) =>
-        prev.map((event) =>
-          event === newEvent ? { ...newEvent, id: docRef.id } : event
+        const docRef = await addDoc(collection(db, 'events'), newEvent)
+        setEvents((prev) =>
+          prev.map((event) =>
+            event === newEvent ? { ...newEvent, id: docRef.id } : event
+          )
         )
-      )
-      return docRef.id
-    } catch (err) {
-      // Rollback optimistic update
-      setEvents((prev) => prev.filter((event) => event !== eventData))
-      setError('Failed to add event')
-      console.error('Error adding event:', err)
-      throw err
-    }
-  }, [events])
+        return docRef.id
+      } catch (err) {
+        setEvents((prev) => prev.filter((event) => event !== eventData))
+        setError('Failed to add event')
+        console.error('Error adding event:', err)
+        throw err
+      }
+    },
+    [events]
+  )
 
-  // Update event
   const updateEvent = useCallback(
     async (eventId, eventData) => {
       try {
         const eventRef = doc(db, 'events', eventId)
 
-        // Optimistic update
         setEvents((prev) =>
           prev.map((event) =>
             event.id === eventId ? { ...event, ...eventData } : event
           )
         )
 
-        // Actual API call
         await updateDoc(eventRef, eventData)
       } catch (err) {
-        // Rollback optimistic update
-        fetchEvents() // Refetch to ensure consistency
+        fetchEvents()
         setError('Failed to update event')
         console.error('Error updating event:', err)
         throw err
@@ -118,36 +110,31 @@ export const EventProvider = ({ children }) => {
     [fetchEvents]
   )
 
-  // Delete event
   const deleteEvent = useCallback(
     async (eventId) => {
       try {
         const eventRef = doc(db, 'events', eventId)
 
-        // Store event for potential rollback
         const eventToDelete = events.find((e) => e.id === eventId)
 
-        // Optimistic update
         setEvents((prev) => prev.filter((event) => event.id !== eventId))
 
-        // If it's a quiz event, delete all associated questions
-        if (eventToDelete.type === 'quiz') {
-          const batch = writeBatch(db)
-          const questionsQuery = query(
-            collection(db, 'events', eventId, 'questions')
-          )
-          const questionsDocs = await getDocs(questionsQuery)
-          questionsDocs.forEach((doc) => {
-            batch.delete(doc.ref)
+        const batch = writeBatch(db)
+
+        if (eventToDelete?.type === 'quiz') {
+          const questionsRef = collection(db, 'events', eventId, 'questions')
+          const questionsSnap = await getDocs(questionsRef)
+
+          questionsSnap.forEach((qDoc) => {
+            batch.delete(qDoc.ref)
           })
-          batch.delete(eventRef)
-          await batch.commit()
-        } else {
-          await deleteDoc(eventRef)
         }
+
+        batch.delete(eventRef)
+
+        await batch.commit()
       } catch (err) {
-        // Rollback optimistic update
-        fetchEvents() // Refetch to ensure consistency
+        fetchEvents()
         setError('Failed to delete event')
         console.error('Error deleting event:', err)
         throw err
@@ -156,15 +143,13 @@ export const EventProvider = ({ children }) => {
     [events, fetchEvents]
   )
 
-  // Update events order
   const updateEventsOrder = useCallback(
     async (reorderedEvents) => {
       const batch = writeBatch(db)
+
       try {
-        // Optimistic update
         setEvents(reorderedEvents)
 
-        // Batch update all events with new order
         reorderedEvents.forEach((event) => {
           const eventRef = doc(db, 'events', event.id)
           batch.update(eventRef, { order: event.order })
@@ -172,8 +157,7 @@ export const EventProvider = ({ children }) => {
 
         await batch.commit()
       } catch (err) {
-        // Rollback optimistic update
-        fetchEvents() // Refetch to ensure consistency
+        fetchEvents()
         setError('Failed to reorder events')
         console.error('Error reordering events:', err)
         throw err
@@ -182,23 +166,17 @@ export const EventProvider = ({ children }) => {
     [fetchEvents]
   )
 
-  // Quiz Questions Operations
   const fetchQuestions = useCallback(async (eventId) => {
     try {
       const questionsQuery = query(
-        collection(db, 'events', eventId, 'questions'),
-        orderBy('order', 'asc')
+        collection(db, 'events', eventId, 'questions')
       )
       const snapshot = await getDocs(questionsQuery)
       const questionsData = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }))
-      // Update local state
-      setQuestions((prev) => ({
-        ...prev,
-        [eventId]: questionsData,
-      }))
+      setQuestions(questionsData)
       return questionsData
     } catch (err) {
       setError('Failed to fetch questions')
@@ -208,43 +186,34 @@ export const EventProvider = ({ children }) => {
   }, [])
 
   const addQuestion = useCallback(async (eventId, questionData) => {
+    const newDocRef = doc(collection(db, 'events', eventId, 'questions'))
+
+    const questionId = newDocRef.id
+
+    const newQuestion = { ...questionData, id: questionId }
+
+    setQuestions((prev) => [...prev, newQuestion])
+
     try {
-      // Prepare the new question with temporary ID
-      const tempId = 'temp-' + Date.now()
-      const newQuestion = {
-        id: tempId,
-        ...questionData,
-      }
+      const docRef = await setDoc(newDocRef, newQuestion)
+      setEvents((prev) =>
+        prev.map((question) =>
+          question === newQuestion
+            ? { ...newQuestion, id: docRef.id }
+            : question
+        )
+      )
 
-      // Optimistic update
-      setQuestions((prev) => ({
-        ...prev,
-        [eventId]: [...(prev[eventId] || []), newQuestion],
-      }))
-
-      // Actual API call
-      const questionsCol = collection(db, 'events', eventId, 'questions')
-      const docRef = await addDoc(questionsCol, {
-        ...questionData,
-      })
-
-      // Update local state with real ID
-      setQuestions((prev) => ({
-        ...prev,
-        [eventId]: prev[eventId].map((q) =>
-          q.id === tempId ? { ...newQuestion, id: docRef.id } : q
-        ),
-      }))
-
-      return docRef.id
+      return questionId
     } catch (err) {
-      // Rollback optimistic update
-      setQuestions((prev) => ({
-        ...prev,
-        [eventId]: prev[eventId].filter((q) => !q.id.startsWith('temp-')),
-      }))
+      setQuestions((prev) =>
+        prev.filter((question) => question !== questionData)
+      )
+
       setError('Failed to add question')
+
       console.error('Error adding question:', err)
+
       throw err
     }
   }, [])
@@ -252,20 +221,18 @@ export const EventProvider = ({ children }) => {
   const updateQuestion = useCallback(
     async (eventId, questionId, questionData) => {
       try {
-        // Optimistic update
-        setQuestions((prev) => ({
-          ...prev,
-          [eventId]: prev[eventId].map((q) =>
-            q.id === questionId ? { ...q, ...questionData } : q
-          ),
-        }))
+        setQuestions((prev) =>
+          prev.map((question) =>
+            question.id === questionId
+              ? { ...question, ...questionData }
+              : question
+          )
+        )
 
-        // Actual API call
         const questionRef = doc(db, 'events', eventId, 'questions', questionId)
         await updateDoc(questionRef, questionData)
       } catch (err) {
-        // Rollback optimistic update
-        fetchQuestions(eventId) // Refetch to ensure consistency
+        fetchQuestions(eventId)
         setError('Failed to update question')
         console.error('Error updating question:', err)
         throw err
@@ -274,42 +241,25 @@ export const EventProvider = ({ children }) => {
     [fetchQuestions]
   )
 
-  const deleteQuestion = useCallback(
-    async (eventId, questionId) => {
-      // Store question for potential rollback
-      const questionToDelete = questions[eventId]?.find(
-        (q) => q.id === questionId
+  const deleteQuestion = useCallback(async (eventId, questionId) => {
+    try {
+      setQuestions((prev) =>
+        prev.filter((question) => question.id !== questionId)
       )
-      try {
-        // Optimistic update
-        setQuestions((prev) => ({
-          ...prev,
-          [eventId]: prev[eventId].filter((q) => q.id !== questionId),
-        }))
 
-        // Actual API call
-        const questionRef = doc(db, 'events', eventId, 'questions', questionId)
-        await deleteDoc(questionRef)
-      } catch (err) {
-        // Rollback optimistic update
-        if (questionToDelete) {
-          setQuestions((prev) => ({
-            ...prev,
-            [eventId]: [...prev[eventId], questionToDelete],
-          }))
-        }
-        setError('Failed to delete question')
-        console.error('Error deleting question:', err)
-        throw err
-      }
-    },
-    [questions]
-  )
+      const questionRef = doc(db, 'events', eventId, 'questions', questionId)
+      await deleteDoc(questionRef)
+    } catch (err) {
+      setError('Failed to delete question')
+      console.error('Error deleting question:', err)
+      throw err
+    }
+  }, [])
 
   const value = {
     events,
     questions,
-    loading,
+    setQuestions,
     error,
     fetchEvents,
     addEvent,

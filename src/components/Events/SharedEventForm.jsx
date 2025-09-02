@@ -6,7 +6,6 @@ import { useCreateEvent } from '../../hooks/useCreateEvent'
 import LoadingSpinner from '../common/LoadingSpinner'
 
 const SharedEventForm = ({ event, activeTab, onClose }) => {
-  console.log(event)
   const [basicSubType, setBasicSubType] = useState(
     event ? event.type : 'welcome'
   )

@@ -45,10 +45,10 @@ SortableItem.propTypes = {
     description: PropTypes.string,
     imageUrl: PropTypes.string,
     startAt: PropTypes.shape({
-      seconds: PropTypes.func,
+      seconds: PropTypes.oneOfType([PropTypes.func, PropTypes.number]),
     }),
     endAt: PropTypes.shape({
-      seconds: PropTypes.func,
+      seconds: PropTypes.oneOfType([PropTypes.func, PropTypes.number]),
     }),
     createdAt: PropTypes.any,
     type: PropTypes.string,

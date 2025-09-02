@@ -12,7 +12,6 @@ import { normalizeToDate } from '../utils/dateFormat'
 
 const Events = () => {
   const { events, error, deleteEvent } = useEvents()
-  console.log(events)
   const [activeTab, setActiveTab] = useState('basic')
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -62,14 +61,14 @@ const Events = () => {
         switch (row.type) {
           case 'target_points':
             return (
-              <div className='space-y-4'>
+              <div className='space-y-2'>
                 <div>Target: {row.rules.targetGoal} points</div>
                 <div>Reward: {row.rules.targetReward} points</div>
               </div>
             )
           case 'welcome':
             return (
-              <div className='space-y-4'>
+              <div className='space-y-2'>
                 <div>Goal: {row.rules.welcomeGoal} visits</div>
                 <div>Reward: {row.rules.welcomeReward} points</div>
               </div>
@@ -78,7 +77,7 @@ const Events = () => {
             return <div>Multiplier: {row.rules.multiplier}x</div>
           case 'quiz':
             return (
-              <div className='space-y-4'>
+              <div className='space-y-2'>
                 <div>Min Correct: {row.rules.quizMinCorrect}</div>
                 <div>Reward: {row.rules.quizReward} points</div>
                 <div>Total quiz: {row.rules.quizTotal}</div>
@@ -163,14 +162,6 @@ const Events = () => {
   }
 
   const confirmDelete = async () => {
-    // try {
-    //   await deleteCoupon(couponToDelete.id)
-    //   toast.success('Coupon deleted successfully')
-    //   setCouponToDelete(null)
-    //   setIsDeleteConfirmOpen(false)
-    // } catch (error) {
-    //   toast.error(error.message || 'Failed to delete coupon')
-    // }
     if (eventToDelete) {
       try {
         await deleteEvent(eventToDelete.id)
@@ -178,7 +169,7 @@ const Events = () => {
         setEventToDelete(null)
         setIsDeleteConfirmOpen(false)
       } catch {
-        toast.error(error || 'Failed to delete coupon')
+        toast.error(error || 'Failed to delete event')
       }
     }
   }
@@ -285,7 +276,7 @@ const Events = () => {
         </div>
       </div>
 
-      {/* <Modal
+      <Modal
         isOpen={reorderModalOpen}
         onClose={() => setReorderModalOpen(false)}
         title={'Reorder Events'}
@@ -294,7 +285,7 @@ const Events = () => {
           events={events}
           onClose={() => setReorderModalOpen(false)}
         />
-      </Modal> */}
+      </Modal>
 
       <Modal
         size='lg'
@@ -314,10 +305,7 @@ const Events = () => {
         title='Event Details'
         size='full'
       >
-        <EventDetails
-          event={selectedEvent}
-          onClose={() => setIsDetailsModalOpen(false)}
-        />
+        <EventDetails event={selectedEvent} />
       </Modal>
       <ConfirmDialog
         isOpen={isDeleteConfirmOpen}

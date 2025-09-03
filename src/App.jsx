@@ -23,80 +23,74 @@ function App() {
     <HashRouter>
       <AuthProvider>
         <UserProvider>
-          {/* <DataProvider>
+          <DataProvider>
             <ChallengeProvider>
               <TransactionsProvider>
                 <CouponProvider>
-                <LibraryProvider>
-                
-                  */}
-
-          <EventProvider>
-            <Routes>
-              <Route
-                path='/login'
-                element={<Login />}
-              />
-              <Route
-                path='/'
-                element={
-                  <ProtectedRoute>
-                    <DashboardLayout />
-                  </ProtectedRoute>
-                }
-              >
-                {/* <Route
-                  index
-                  element={<Lessons />}
-                /> */}
-                <Route
-                  path='lessons'
-                  element={<Lessons />}
-                />
-                <Route
-                  path='events'
-                  element={<Events />}
-                />
-                <Route
-                  path='users'
-                  element={<Users />}
-                />
-                <Route
-                  path='challenges'
-                  element={<Challenges />}
-                />
-                <Route
-                  path='transactions'
-                  element={<Transactions />}
-                />
-                <Route
-                  path='coupons'
-                  element={<Coupons />}
-                />
-                <Route
-                  path='library'
-                  element={<Library />}
-                />
-              </Route>
-              <Route
-                path='*'
-                element={
-                  <Navigate
-                    to='/'
-                    replace
-                  />
-                }
-              />
-            </Routes>
-          </EventProvider>
-
-          {/*
-          </LibraryProvider>
+                  <LibraryProvider>
+                    <EventProvider>
+                      <Routes>
+                        <Route
+                          path='/login'
+                          element={<Login />}
+                        />
+                        <Route
+                          path='/'
+                          element={
+                            <ProtectedRoute>
+                              <DashboardLayout />
+                            </ProtectedRoute>
+                          }
+                        >
+                          <Route
+                            index
+                            element={<Lessons />}
+                          />
+                          <Route
+                            path='lessons'
+                            element={<Lessons />}
+                          />
+                          <Route
+                            path='events'
+                            element={<Events />}
+                          />
+                          <Route
+                            path='users'
+                            element={<Users />}
+                          />
+                          <Route
+                            path='challenges'
+                            element={<Challenges />}
+                          />
+                          <Route
+                            path='transactions'
+                            element={<Transactions />}
+                          />
+                          <Route
+                            path='coupons'
+                            element={<Coupons />}
+                          />
+                          <Route
+                            path='library'
+                            element={<Library />}
+                          />
+                        </Route>
+                        <Route
+                          path='*'
+                          element={
+                            <Navigate
+                              to='/'
+                              replace
+                            />
+                          }
+                        />
+                      </Routes>
+                    </EventProvider>
+                  </LibraryProvider>
                 </CouponProvider>
               </TransactionsProvider>
             </ChallengeProvider>
-          </DataProvider> 
-          */}
+          </DataProvider>
         </UserProvider>
       </AuthProvider>
     </HashRouter>

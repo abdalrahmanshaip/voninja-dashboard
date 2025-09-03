@@ -1,20 +1,23 @@
-import { useState } from 'react'
-import Table from '../components/common/Table'
-import Modal from '../components/common/Modal'
-import SharedEventForm from '../components/Events/SharedEventForm'
 import { ArrowDownUp, Minus, Plus } from 'lucide-react'
-import EventDetails from '../components/Events/EventDetails'
-import ReorderEvents from '../components/Events/ReorderEvents'
-import ConfirmDialog from '../components/common/ConfirmDialog'
-import { useEvents } from '../context/EventContext'
+import { useState } from 'react'
 import { toast } from 'sonner'
+import ConfirmDialog from '../components/common/ConfirmDialog'
+import Modal from '../components/common/Modal'
+import Table from '../components/common/Table'
+import EventDetails from '../components/Events/EventDetails'
+import ParticipantDetailModal from '../components/Events/ParticipantDetailModal'
+import ReorderEvents from '../components/Events/ReorderEvents'
+import SharedEventForm from '../components/Events/SharedEventForm'
+import { useEvents } from '../context/EventContext'
 import { normalizeToDate } from '../utils/dateFormat'
 
 const Events = () => {
-  const { events, error, deleteEvent } = useEvents()
+  const { events, error, deleteEvent, usersWithEvents } = useEvents()
+
   const [activeTab, setActiveTab] = useState('basic')
 
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isUsersModalOpen, setIsUsersModalOpen] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [reorderModalOpen, setReorderModalOpen] = useState(false)
@@ -161,6 +164,11 @@ const Events = () => {
     setIsDeleteConfirmOpen(true)
   }
 
+  const handleUsersEvent = (event) => {
+    setSelectedEvent(event)
+    setIsUsersModalOpen(true)
+  }
+
   const confirmDelete = async () => {
     if (eventToDelete) {
       try {
@@ -175,7 +183,16 @@ const Events = () => {
   }
 
   const renderActions = (event) => (
-    <>
+    <div className='flex flex-col gap-4'>
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          handleUsersEvent(event)
+        }}
+        className='text-indigo-600 hover:text-indigo-900 focus:outline-none'
+      >
+        Users
+      </button>
       <button
         onClick={(e) => {
           e.stopPropagation()
@@ -194,7 +211,7 @@ const Events = () => {
       >
         Delete
       </button>
-    </>
+    </div>
   )
 
   return (
@@ -306,6 +323,17 @@ const Events = () => {
         size='full'
       >
         <EventDetails event={selectedEvent} />
+      </Modal>
+      <Modal
+        isOpen={isUsersModalOpen}
+        onClose={() => setIsUsersModalOpen(false)}
+        size='xl'
+      >
+        <ParticipantDetailModal
+          onClose={() => setIsUsersModalOpen(false)}
+          usersWithEvents={usersWithEvents}
+          event={selectedEvent}
+        />
       </Modal>
       <ConfirmDialog
         isOpen={isDeleteConfirmOpen}

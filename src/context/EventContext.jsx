@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  collectionGroup,
   deleteDoc,
   doc,
   getDocs,
@@ -8,7 +9,7 @@ import {
   query,
   setDoc,
   updateDoc,
-  writeBatch,
+  writeBatch
 } from 'firebase/firestore'
 import PropTypes from 'prop-types'
 import {
@@ -19,6 +20,7 @@ import {
   useState,
 } from 'react'
 import { db } from '../utils/firebase'
+import { useUsers } from './UserContext'
 
 const EventContext = createContext()
 
@@ -31,13 +33,14 @@ export const useEvents = () => {
 }
 
 export const EventProvider = ({ children }) => {
+  const { users } = useUsers()
   const [events, setEvents] = useState([])
   const [questions, setQuestions] = useState([])
   const [error, setError] = useState(null)
+  const [usersWithEvents, setUsersWithEvents] = useState([])
+  const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    fetchEvents()
-  }, [])
+
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -256,11 +259,59 @@ export const EventProvider = ({ children }) => {
     }
   }, [])
 
+  const fetchUsersWithEvents = useCallback(async () => {
+    setLoading(true)
+    try {
+
+      const snap = await getDocs(collectionGroup(db, "user_events"))
+
+      const usersMap = new Map(users.map((u) => [String(u.id ?? ""), u]))
+
+      const merged = []
+      snap.docs.forEach((eventDoc) => {
+        const parentUserRef = eventDoc.ref.parent.parent
+        if (!parentUserRef?.id) return
+        console.log(eventDoc.id)
+        const user = usersMap.get(parentUserRef.id)
+        if (!user) return 
+
+        merged.push({
+          userData: {
+            username: user.username,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+          },
+          event: {
+            eventId: eventDoc.id,
+            ...eventDoc.data(),
+          },
+        })
+      })
+
+      console.log("merged (clean, optimized)", merged)
+
+      setUsersWithEvents(merged) 
+
+    } catch (err) {
+      console.error("fetchUsersWithEvents error:", err)
+      setUsersWithEvents([])
+    } finally {
+      setLoading(false)
+    }
+  }, [users])
+
+  useEffect(() => {
+    fetchEvents()
+    fetchUsersWithEvents()
+  }, [fetchEvents, fetchUsersWithEvents])
+
   const value = {
     events,
     questions,
-    setQuestions,
+    usersWithEvents,
+    loading,
     error,
+    setQuestions,
     fetchEvents,
     addEvent,
     updateEvent,

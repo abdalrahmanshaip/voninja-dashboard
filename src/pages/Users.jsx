@@ -9,7 +9,7 @@ const Users = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
   const [filteredUsers, setFilteredUsers] = useState([])
-
+  // console.log(users.length)
   const getRankedUsers = (list) => {
     const sorted = [...list].sort((a, b) => b.pointsNumber - a.pointsNumber)
 

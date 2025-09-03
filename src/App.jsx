@@ -45,10 +45,10 @@ function App() {
                   </ProtectedRoute>
                 }
               >
-                <Route
+                {/* <Route
                   index
                   element={<Lessons />}
-                />
+                /> */}
                 <Route
                   path='lessons'
                   element={<Lessons />}

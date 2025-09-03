@@ -1,11 +1,12 @@
-import { createContext, useContext, useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { auth } from '../utils/firebase'
 import {
+  onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged,
 } from 'firebase/auth'
+import PropTypes from 'prop-types'
+import { createContext, useContext, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { auth } from '../utils/firebase'
 
 const AuthContext = createContext()
 
@@ -71,5 +72,12 @@ export const AuthProvider = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
+
+
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+}
+
+
 
 export default AuthContext

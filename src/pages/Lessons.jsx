@@ -239,79 +239,83 @@ const Lessons = () => {
   )
 
   return (
-    <div className='space-y-6'>
-      <div className='flex justify-between items-center'>
-        <h1 className='text-2xl font-bold text-gray-900'>Lessons Management</h1>
-        <button
-          onClick={handleAddLesson}
-          className='btn btn-primary flex items-center'
-        >
-          <svg
-            className='w-5 h-5 mr-2'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
+    <>
+      <div className='space-y-6'>
+        <div className='flex justify-between items-center'>
+          <h1 className='text-2xl font-bold text-gray-900'>
+            Lessons Management
+          </h1>
+          <button
+            onClick={handleAddLesson}
+            className='btn btn-primary flex items-center'
           >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth='2'
-              d='M12 6v6m0 0v6m0-6h6m-6 0H6'
-            />
-          </svg>
-          Add Lesson
-        </button>
-      </div>
-
-      {/* Level tabs */}
-      <div className='border-b border-gray-200'>
-        <nav className='-mb-px flex space-x-8'>
-          {['Basic', 'Intermediate', 'Advanced'].map((level, index) => (
-            <button
-              key={index}
-              onClick={() => handleLevelChange(level)}
-              className={`${
-                selectedLevel === level
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none`}
+            <svg
+              className='w-5 h-5 mr-2'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
             >
-              {level}
-            </button>
-          ))}
-        </nav>
-      </div>
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth='2'
+                d='M12 6v6m0 0v6m0-6h6m-6 0H6'
+              />
+            </svg>
+            Add Lesson
+          </button>
+        </div>
 
-      <form className='flex items-center justify-start w-fit'>
-        <input
-          id='search'
-          type='search'
-          placeholder='Search lessons...'
-          className='input bg-white text-black w-60'
-          onChange={(e) => handleSearch(e.target.value)}
-        />
-        <button
-          type='reset'
-          onClick={handleResetSearch}
-          className='bg-black hover:bg-black/90 focus:ring-white text-white w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-1.5 text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm '
-        >
-          Reset
-        </button>
-      </form>
+        {/* Level tabs */}
+        <div className='border-b border-gray-200'>
+          <nav className='-mb-px flex space-x-8'>
+            {['Basic', 'Intermediate', 'Advanced'].map((level, index) => (
+              <button
+                key={index}
+                onClick={() => handleLevelChange(level)}
+                className={`${
+                  selectedLevel === level
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none`}
+              >
+                {level}
+              </button>
+            ))}
+          </nav>
+        </div>
 
-      {/* Lessons table */}
-      <div className='card'>
-        <Table
-          columns={columns}
-          data={Array.isArray(lessons) ? lessons : []}
-          actions={renderActions}
-          onRowClick={handleViewDetails}
-          emptyMessage={`No ${selectedLevel.toLowerCase()} lessons found. Click "Add Lesson" to create one.`}
-          initialSortField='order'
-          initialSortDirection='asc'
-          lessons={lessons}
-          onReorder={handleReorder}
-        />
+        <form className='flex items-center justify-start w-fit'>
+          <input
+            id='search'
+            type='search'
+            placeholder='Search lessons...'
+            className='input bg-white text-black w-60'
+            onChange={(e) => handleSearch(e.target.value)}
+          />
+          <button
+            type='reset'
+            onClick={handleResetSearch}
+            className='bg-black hover:bg-black/90 focus:ring-white text-white w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-1.5 text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm '
+          >
+            Reset
+          </button>
+        </form>
+
+        {/* Lessons table */}
+        <div className='card'>
+          <Table
+            columns={columns}
+            data={Array.isArray(lessons) ? lessons : []}
+            actions={renderActions}
+            onRowClick={handleViewDetails}
+            emptyMessage={`No ${selectedLevel.toLowerCase()} lessons found. Click "Add Lesson" to create one.`}
+            initialSortField='order'
+            initialSortDirection='asc'
+            lessons={lessons}
+            onReorder={handleReorder}
+          />
+        </div>
       </div>
 
       {/* Add Lesson Modal */}
@@ -381,7 +385,7 @@ const Lessons = () => {
         cancelText='Cancel'
         type='info'
       />
-    </div>
+    </>
   )
 }
 

@@ -1,4 +1,4 @@
-import { Users } from 'lucide-react'
+import { CalendarCheck2, Users } from 'lucide-react'
 import { useState } from 'react'
 import {
   FaBars,
@@ -10,7 +10,6 @@ import {
   FaTrophy
 } from 'react-icons/fa'
 import { IoLibrary } from 'react-icons/io5'
-import { MdEmojiEvents } from 'react-icons/md'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -35,7 +34,7 @@ const DashboardLayout = () => {
     {
       path: '/events',
       name: 'Events',
-      icon: <MdEmojiEvents  className='w-5 h-5' />,
+      icon: <CalendarCheck2   className='w-5 h-5' />,
     },
     {
       path: '/users',

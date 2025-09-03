@@ -1,87 +1,30 @@
+import { ArrowDownUp, FileQuestionMark, Minus, PencilOff, Plus, Trash, Users } from 'lucide-react'
 import { useState } from 'react'
-import Table from '../components/common/Table'
-import Modal from '../components/common/Modal'
-import SharedEventForm from '../components/Events/SharedEventForm'
-import { ArrowDownUp, Plus } from 'lucide-react'
-import EventDetails from '../components/Events/EventDetails'
-import ReorderEvents from '../components/Events/ReorderEvents'
+import { toast } from 'sonner'
 import ConfirmDialog from '../components/common/ConfirmDialog'
+import Modal from '../components/common/Modal'
+import Table from '../components/common/Table'
+import EventDetails from '../components/Events/EventDetails'
+import ParticipantDetailModal from '../components/Events/ParticipantDetailModal'
+import ReorderEvents from '../components/Events/ReorderEvents'
+import SharedEventForm from '../components/Events/SharedEventForm'
+import { useEvents } from '../context/EventContext'
+import { normalizeToDate } from '../utils/dateFormat'
 
 const Events = () => {
+  const { events, error, deleteEvent, usersWithEvents } = useEvents()
+
   const [activeTab, setActiveTab] = useState('basic')
 
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isUsersModalOpen, setIsUsersModalOpen] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [reorderModalOpen, setReorderModalOpen] = useState(false)
   const [eventToDelete, setEventToDelete] = useState(null)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
 
-  // Mock data for events
-  const mockEvents = [
-    {
-      id: '1',
-      title: 'Target Points Event',
-      description: 'Welcome to our platform!',
-      type: 'target_points',
-      startAt: new Date('2025-08-20T17:05:12Z'),
-      endAt: new Date('2025-09-25T17:05:12Z'),
-      createdAt: new Date('2025-08-20T16:05:13Z'),
-      imageUrl: 'https://picsum.photos/800/400?random=1',
-      rules: {
-        targetGoal: 5000,
-        targetReward: 1500,
-      },
-      order: 1,
-    },
-    {
-      id: '2',
-      title: 'Welcome Event',
-      description: 'Welcome to our platform!',
-      type: 'welcome',
-      startAt: new Date('2025-08-20T17:05:12Z'),
-      endAt: new Date('2025-09-25T17:05:12Z'),
-      createdAt: new Date('2025-08-20T16:05:13Z'),
-      imageUrl: 'https://picsum.photos/800/400?random=2',
-      rules: {
-        welcomeGoal: 12,
-        welcomeReward: 1500,
-      },
-      order: 2,
-    },
-    {
-      id: '3',
-      title: 'Double Points Weekend',
-      description: 'كل نقطة هتتقلب ×2 خلال فترة العرض.',
-      type: 'multiplier',
-      startAt: new Date('2025-08-20T17:05:12Z'),
-      endAt: new Date('2025-09-25T17:05:12Z'),
-      createdAt: new Date('2025-08-20T16:05:13Z'),
-      imageUrl: 'https://picsum.photos/800/400?random=3',
-      order: 3,
-      rules: {
-        multiplier: 2,
-      },
-    },
-    {
-      id: '4',
-      title: 'Special Challenge',
-      description: 'Complete special challenges to earn rewards!',
-      type: 'quiz',
-      startAt: new Date('2025-08-20T17:05:12Z'),
-      endAt: new Date('2025-09-25T17:05:12Z'),
-      createdAt: new Date('2025-08-20T16:05:13Z'),
-      imageUrl: 'https://picsum.photos/800/400?random=4',
-      order: 4,
-      rules: {
-        quizMinCorrect: 5,
-        quizReward: 2000,
-        quizTotal: 10,
-      },
-    },
-  ]
-
-  const filteredEvents = mockEvents.filter((event) => {
+  const filteredEvents = events.filter((event) => {
     switch (activeTab) {
       case 'basic':
         return event.type !== 'multiplier' && event.type !== 'quiz'
@@ -121,14 +64,14 @@ const Events = () => {
         switch (row.type) {
           case 'target_points':
             return (
-              <div className='space-y-4'>
+              <div className='space-y-2'>
                 <div>Target: {row.rules.targetGoal} points</div>
                 <div>Reward: {row.rules.targetReward} points</div>
               </div>
             )
           case 'welcome':
             return (
-              <div className='space-y-4'>
+              <div className='space-y-2'>
                 <div>Goal: {row.rules.welcomeGoal} visits</div>
                 <div>Reward: {row.rules.welcomeReward} points</div>
               </div>
@@ -137,7 +80,7 @@ const Events = () => {
             return <div>Multiplier: {row.rules.multiplier}x</div>
           case 'quiz':
             return (
-              <div className='space-y-4'>
+              <div className='space-y-2'>
                 <div>Min Correct: {row.rules.quizMinCorrect}</div>
                 <div>Reward: {row.rules.quizReward} points</div>
                 <div>Total quiz: {row.rules.quizTotal}</div>
@@ -152,33 +95,48 @@ const Events = () => {
       field: 'startAt',
       header: 'Start Date',
       sortable: true,
-      render: (row) => (
-        <span className='font-medium'>
-          {row.startAt.toLocaleString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </span>
-      ),
+      render: (row) => {
+        const date = normalizeToDate(row.startAt)
+
+        return (
+          <span className='font-medium'>
+            {date && !isNaN(date) ? (
+              date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            ) : (
+              <Minus strokeWidth={2} />
+            )}
+          </span>
+        )
+      },
     },
     {
       field: 'endAt',
       header: 'End Date',
       sortable: true,
-      render: (row) => (
-        <span className='font-medium'>
-          {row.endAt.toLocaleString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </span>
-      ),
+      render: (row) => {
+        let date = normalizeToDate(row.endAt)
+        return (
+          <span className='font-medium'>
+            {date && !isNaN(date) ? (
+              date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            ) : (
+              <Minus strokeWidth={2} />
+            )}
+          </span>
+        )
+      },
     },
     {
       field: 'order',
@@ -206,21 +164,46 @@ const Events = () => {
     setIsDeleteConfirmOpen(true)
   }
 
+  const handleUsersEvent = (event) => {
+    setSelectedEvent(event)
+    setIsUsersModalOpen(true)
+  }
+
   const confirmDelete = async () => {
     if (eventToDelete) {
-      // try {
-      //   await deleteCoupon(couponToDelete.id)
-      //   toast.success('Coupon deleted successfully')
-      //   setCouponToDelete(null)
-      //   setIsDeleteConfirmOpen(false)
-      // } catch (error) {
-      //   toast.error(error.message || 'Failed to delete coupon')
-      // }
+      try {
+        await deleteEvent(eventToDelete.id)
+        toast.success('Event deleted successfully')
+        setEventToDelete(null)
+        setIsDeleteConfirmOpen(false)
+      } catch {
+        toast.error(error || 'Failed to delete event')
+      }
     }
   }
 
   const renderActions = (event) => (
-    <>
+    <div className='flex flex-col gap-3 mx-auto'>
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          handleUsersEvent(event)
+        }}
+        className='text-indigo-600 hover:text-indigo-900 focus:outline-none'
+      >
+        <Users size={20} strokeWidth={2}/>
+      </button>
+      {event.type == 'quiz' && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            handleViewDetails(event)
+          }}
+          className='text-indigo-600 hover:text-indigo-900 focus:outline-none'
+        >
+          <FileQuestionMark size={20} strokeWidth={2}/>
+        </button>
+      )}
       <button
         onClick={(e) => {
           e.stopPropagation()
@@ -228,18 +211,20 @@ const Events = () => {
         }}
         className='text-blue-600 hover:text-blue-900 focus:outline-none mr-2'
       >
-        Edit
+        <PencilOff size={20} strokeWidth={2}/>
       </button>
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          handleDeleteClick(event)
-        }}
-        className='text-red-600 hover:text-red-900 focus:outline-none'
-      >
-        Delete
-      </button>
-    </>
+      {event.type !== 'welcome' && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            handleDeleteClick(event)
+          }}
+          className='text-red-600 hover:text-red-900 focus:outline-none'
+        >
+          <Trash size={20} strokeWidth={2}/>
+        </button>
+      )}
+    </div>
   )
 
   return (
@@ -315,7 +300,7 @@ const Events = () => {
             actions={renderActions}
             onRowClick={activeTab == 'challenge' && handleViewDetails}
             emptyMessage="No events found. Click 'Add Event' to create one."
-            initialSortField='startAt'
+            initialSortField='order'
             initialSortDirection='asc'
           />
         </div>
@@ -327,7 +312,7 @@ const Events = () => {
         title={'Reorder Events'}
       >
         <ReorderEvents
-          events={mockEvents}
+          events={events}
           onClose={() => setReorderModalOpen(false)}
         />
       </Modal>
@@ -350,9 +335,17 @@ const Events = () => {
         title='Event Details'
         size='full'
       >
-        <EventDetails
+        <EventDetails event={selectedEvent} />
+      </Modal>
+      <Modal
+        isOpen={isUsersModalOpen}
+        onClose={() => setIsUsersModalOpen(false)}
+        size='xl'
+      >
+        <ParticipantDetailModal
+          onClose={() => setIsUsersModalOpen(false)}
+          usersWithEvents={usersWithEvents}
           event={selectedEvent}
-          onClose={() => setIsDetailsModalOpen(false)}
         />
       </Modal>
       <ConfirmDialog

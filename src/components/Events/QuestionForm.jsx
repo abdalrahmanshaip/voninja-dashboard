@@ -4,9 +4,10 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { uploadImage } from '../../utils/UploadImage'
-// import { useChallenge } from '../../context/ChallengeContext'
 import PropTypes from 'prop-types'
 import LoadingSpinner from '../common/LoadingSpinner'
+import { useEvents } from '../../context/EventContext'
+import { Timestamp } from 'firebase/firestore'
 
 const QuestionSchema = z.object({
   content: z.string().min(1, {
@@ -18,7 +19,7 @@ const QuestionSchema = z.object({
         message: 'Choice cannot be empty',
       })
     )
-    .length(3),
+    .length(4),
   correct_answer: z.string().min(1, {
     message: 'Correct answer is required',
   }),
@@ -27,8 +28,8 @@ const QuestionSchema = z.object({
     .optional(),
 })
 
-const QuestionForm = ({ eventId, question, onClose, setRefreshTrigger }) => {
-  // const { addTaskQuestion, updateTaskQuestion } = useChallenge()
+const QuestionForm = ({ eventId, question, onClose }) => {
+  const { addQuestion, updateQuestion } = useEvents()
 
   const {
     handleSubmit,
@@ -41,7 +42,7 @@ const QuestionForm = ({ eventId, question, onClose, setRefreshTrigger }) => {
     resolver: zodResolver(QuestionSchema),
     defaultValues: {
       content: question?.content || '',
-      choices: question?.choices || ['', '', ''],
+      choices: question?.choices || ['', '', '', ''],
       correct_answer: question?.correct_answer || '',
       image_url: question?.image_url || '',
     },
@@ -59,18 +60,19 @@ const QuestionForm = ({ eventId, question, onClose, setRefreshTrigger }) => {
       } else if (data.image_url instanceof File) {
         url = await uploadImage(data.image_url)
       }
-      const dataWithImageUrl = {
+      const formData = {
         ...data,
+        createdAt: question
+          ? question?.createdAt
+          : Timestamp.fromDate(new Date()),
         image_url: url,
       }
       if (question) {
-        // await updateTaskQuestion(eventId, question.id, dataWithImageUrl)
-        toast.success('Task question updated successfully')
-        setRefreshTrigger((prev) => !prev)
+        await updateQuestion(eventId, question.id, formData)
+        toast.success('Question updated successfully')
       } else {
-        // await addTaskQuestion(eventId, dataWithImageUrl)
-        toast.success('Task question added successfully')
-        setRefreshTrigger((prev) => !prev)
+        await addQuestion(eventId, formData)
+        toast.success('Question added successfully')
       }
       onClose()
     } catch (error) {
@@ -249,9 +251,6 @@ export default QuestionForm
 
 QuestionForm.propTypes = {
   onClose: PropTypes.func.isRequired,
-
-  setRefreshTrigger: PropTypes.func.isRequired,
-
   eventId: PropTypes.string,
   question: PropTypes.shape({
     id: PropTypes.string,
@@ -259,5 +258,6 @@ QuestionForm.propTypes = {
     choices: PropTypes.array,
     correct_answer: PropTypes.string,
     image_url: PropTypes.string,
+    createdAt: PropTypes.any,
   }),
 }

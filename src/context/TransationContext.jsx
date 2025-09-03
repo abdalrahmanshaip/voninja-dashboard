@@ -4,6 +4,7 @@ import {
   getDocs,
   updateDoc
 } from 'firebase/firestore'
+import PropTypes from 'prop-types'
 import { createContext, useContext, useEffect, useState } from 'react'
 import { db } from '../utils/firebase'
 
@@ -53,3 +54,7 @@ export const TransactionsProvider = ({ children }) => {
 }
 
 export default TransactionsContext
+
+TransactionsProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+}

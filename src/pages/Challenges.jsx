@@ -9,7 +9,12 @@ import Table from '../components/common/Table'
 import { useChallenge } from '../context/ChallengeContext'
 
 const Challenges = () => {
-  const { deleteChallenge, challenges, updateChallenge, handleReorderChallenges } = useChallenge()
+  const {
+    deleteChallenge,
+    challenges,
+    updateChallenge,
+    handleReorderChallenges,
+  } = useChallenge()
   const [selectedChallenge, setSelectedChallenge] = useState(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -44,7 +49,10 @@ const Challenges = () => {
   const confirmDelete = async () => {
     if (challengeToDelete) {
       try {
-        await deleteChallenge(challengeToDelete.id, challengeToDelete.challenge_order)
+        await deleteChallenge(
+          challengeToDelete.id,
+          challengeToDelete.challenge_order
+        )
         toast.success('Challenge deleted successfully')
         setChallengeToDelete(null)
         setIsDeleteConfirmOpen(false)
@@ -69,7 +77,6 @@ const Challenges = () => {
     }
   }
 
- 
   const columns = [
     { field: 'id', header: 'ID', sortable: true },
     { field: 'title', header: 'Title', sortable: true },
@@ -158,46 +165,47 @@ const Challenges = () => {
   )
 
   return (
-    <div className='space-y-6'>
-      <div className='flex justify-between items-center'>
-        <h1 className='text-2xl font-bold text-gray-900'>
-          Challenges Management
-        </h1>
-        <button
-          onClick={handleAddChallenge}
-          className='btn btn-primary flex items-center'
-        >
-          <svg
-            className='w-5 h-5 mr-2'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
+    <>
+      <div className='space-y-6'>
+        <div className='flex justify-between items-center'>
+          <h1 className='text-2xl font-bold text-gray-900'>
+            Challenges Management
+          </h1>
+          <button
+            onClick={handleAddChallenge}
+            className='btn btn-primary flex items-center'
           >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth='2'
-              d='M12 6v6m0 0v6m0-6h6m-6 0H6'
-            />
-          </svg>
-          Add Challenge
-        </button>
-      </div>
+            <svg
+              className='w-5 h-5 mr-2'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth='2'
+                d='M12 6v6m0 0v6m0-6h6m-6 0H6'
+              />
+            </svg>
+            Add Challenge
+          </button>
+        </div>
 
-      {/* Challenges table */}
-      <div className='card'>
-        <Table
-          columns={columns}
-          data={challenges}
-          actions={renderActions}
-          onRowClick={handleViewDetails}
-          emptyMessage="No challenges found. Click 'Add Challenge' to create one."
-          initialSortField='order'
-          initialSortDirection='asc'
-          onReorder={handleReorderChallenges}
-        />
+        {/* Challenges table */}
+        <div className='card'>
+          <Table
+            columns={columns}
+            data={challenges}
+            actions={renderActions}
+            onRowClick={handleViewDetails}
+            emptyMessage="No challenges found. Click 'Add Challenge' to create one."
+            initialSortField='order'
+            initialSortDirection='asc'
+            onReorder={handleReorderChallenges}
+          />
+        </div>
       </div>
-
       {/* Add Challenge Modal */}
       <Modal
         isOpen={isAddModalOpen}
@@ -266,7 +274,7 @@ const Challenges = () => {
           challenge={selectedChallenge}
         />
       </Modal>
-    </div>
+    </>
   )
 }
 

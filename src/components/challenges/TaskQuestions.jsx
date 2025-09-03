@@ -116,42 +116,44 @@ const TaskQuestions = ({ challengeId, task, onClose }) => {
   )
 
   return (
-    <div className='space-y-6 h-[80vh] overflow-y-auto'>
-      <div className='overflow-auto'>
-        <div className='bg-gray-50 p-4 rounded-lg'>
-          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-            <div>
-              <h3 className='text-sm font-medium text-gray-500'>Task</h3>
-              <p className='mt-1 text-sm text-gray-900'>{task.title}</p>
-            </div>
-            <div>
-              <h3 className='text-sm font-medium text-gray-500'>
-                Questions Count
-              </h3>
-              <p className='mt-1 text-sm text-gray-900'>{questions.length}</p>
+    <>
+      <div className='space-y-6'>
+        <div className='overflow-auto'>
+          <div className='bg-gray-50 p-4 rounded-lg'>
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              <div>
+                <h3 className='text-sm font-medium text-gray-500'>Task</h3>
+                <p className='mt-1 text-sm text-gray-900'>{task.title}</p>
+              </div>
+              <div>
+                <h3 className='text-sm font-medium text-gray-500'>
+                  Questions Count
+                </h3>
+                <p className='mt-1 text-sm text-gray-900'>{questions.length}</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className='space-y-4'>
-          <div className='flex justify-between items-center'>
-            <h3 className='text-lg font-medium text-gray-900'>
-              Task Questions
-            </h3>
-            <button
-              onClick={() => setIsAddQuestionOpen(true)}
-              className='btn btn-primary flex items-center'
-            >
-              <Plus className='w-5 h-5 mr-2' />
-              Add Question
-            </button>
+          <div className='space-y-4'>
+            <div className='flex justify-between items-center'>
+              <h3 className='text-lg font-medium text-gray-900'>
+                Task Questions
+              </h3>
+              <button
+                onClick={() => setIsAddQuestionOpen(true)}
+                className='btn btn-primary flex items-center'
+              >
+                <Plus className='w-5 h-5 mr-2' />
+                Add Question
+              </button>
+            </div>
+            <Table
+              columns={questionColumns}
+              data={questions}
+              actions={renderQuestionActions}
+              emptyMessage="No questions found. Click 'Add Question' to create one."
+            />
           </div>
-          <Table
-            columns={questionColumns}
-            data={questions}
-            actions={renderQuestionActions}
-            emptyMessage="No questions found. Click 'Add Question' to create one."
-          />
         </div>
       </div>
 
@@ -195,7 +197,7 @@ const TaskQuestions = ({ challengeId, task, onClose }) => {
         cancelText='Cancel'
         type='danger'
       />
-    </div>
+    </>
   )
 }
 

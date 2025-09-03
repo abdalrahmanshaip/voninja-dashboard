@@ -6,6 +6,7 @@ import {
   setDoc,
   updateDoc,
 } from 'firebase/firestore'
+import PropTypes from 'prop-types'
 import { createContext, useContext, useEffect, useState } from 'react'
 import { db } from '../utils/firebase'
 
@@ -74,6 +75,10 @@ export const LibraryProvider = ({ children }) => {
   return (
     <LibraryContext.Provider value={value}>{children}</LibraryContext.Provider>
   )
+}
+
+LibraryProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 }
 
 export default LibraryContext

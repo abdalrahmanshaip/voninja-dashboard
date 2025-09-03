@@ -13,9 +13,10 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore'
+import PropTypes from 'prop-types'
 import { createContext, useContext, useEffect, useState } from 'react'
-import { db } from '../utils/firebase'
 import { toast } from 'sonner'
+import { db } from '../utils/firebase'
 
 const ChallengeContext = createContext()
 
@@ -336,3 +337,9 @@ export const ChallengeProvider = ({ children }) => {
     </ChallengeContext.Provider>
   )
 }
+
+ChallengeProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+}
+
+export default ChallengeContext

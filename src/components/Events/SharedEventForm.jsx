@@ -1,15 +1,12 @@
 import { Upload } from 'lucide-react'
 import PropTypes from 'prop-types'
-import { useState } from 'react'
-import { Controller } from 'react-hook-form'
 import { useCreateEvent } from '../../hooks/useCreateEvent'
 import LoadingSpinner from '../common/LoadingSpinner'
 
 const SharedEventForm = ({ event, activeTab, onClose }) => {
-  const [basicSubType, setBasicSubType] = useState('welcome')
-
+  const basicSubType = event ? event.type : 'target_points'
+  
   const {
-    control,
     errors,
     handleSubmit,
     onSubmit,
@@ -18,6 +15,8 @@ const SharedEventForm = ({ event, activeTab, onClose }) => {
     watch,
     isSubmitting,
   } = useCreateEvent(activeTab, basicSubType, event, onClose)
+
+  console.log(watch('type'))
 
   return (
     <form
@@ -72,82 +71,51 @@ const SharedEventForm = ({ event, activeTab, onClose }) => {
           </div>
         </div>
 
-        <div className='flex flex-1 gap-4'>
-          <div className='w-full'>
-            <label
-              htmlFor='startAt'
-              className='block text-sm font-medium text-gray-700'
-            >
-              Start Date
-            </label>
-            <input
-              type='datetime-local'
-              id='startAt'
-              name='startAt'
-              className={`mt-1 input ${errors.startAt ? 'border-red-500' : ''}`}
-              {...register('startAt', { valueAsDate: true })}
-            />
-            {errors.startAt && (
-              <p className='mt-1 text-sm text-red-600'>
-                {errors.startAt.message}
-              </p>
-            )}
-          </div>
-
-          <div className='w-full'>
-            <label
-              htmlFor='endAt'
-              className='block text-sm font-medium text-gray-700'
-            >
-              End Date
-            </label>
-            <input
-              type='datetime-local'
-              id='endAt'
-              name='endAt'
-              className={`mt-1 input ${errors.endAt ? 'border-red-500' : ''}`}
-              {...register('endAt', { valueAsDate: true })}
-            />
-            {errors.endAt && (
-              <p className='mt-1 text-sm text-red-600'>
-                {errors.endAt.message}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {activeTab === 'basic' && (
-          <div>
-            <label className='block text-sm font-medium text-gray-700'>
-              Event Type
-            </label>
-            <Controller
-              name='type'
-              control={control}
-              render={({ field }) => (
-                <select
-                  {...field}
-                  value={basicSubType}
-                  onChange={(e) => {
-                    field.onChange(e)
-                    setBasicSubType(e.target.value)
-                  }}
-                  className={`mt-1 input ${
-                    errors.type ? 'border-red-500' : ''
-                  }`}
-                >
-                  <option value='welcome'>
-                    Welcome (This is unlock for new users)
-                  </option>
-                  <option value='target_points'>
-                    Target Points (This is lock for new users)
-                  </option>
-                </select>
+        {!(activeTab == 'basic' && basicSubType == 'welcome') && (
+          <div className='flex flex-1 gap-4'>
+            <div className='w-full'>
+              <label
+                htmlFor='startAt'
+                className='block text-sm font-medium text-gray-700'
+              >
+                Start Date
+              </label>
+              <input
+                type='datetime-local'
+                id='startAt'
+                name='startAt'
+                className={`mt-1 input ${
+                  errors.startAt ? 'border-red-500' : ''
+                }`}
+                {...register('startAt', { valueAsDate: true })}
+              />
+              {errors.startAt && (
+                <p className='mt-1 text-sm text-red-600'>
+                  {errors.startAt.message}
+                </p>
               )}
-            />
-            {errors.type && (
-              <p className='mt-1 text-sm text-red-600'>{errors.type.message}</p>
-            )}
+            </div>
+
+            <div className='w-full'>
+              <label
+                htmlFor='endAt'
+                className='block text-sm font-medium text-gray-700'
+              >
+                End Date
+              </label>
+              <input
+                type='datetime-local'
+                id='endAt'
+                name='endAt'
+                className={`mt-1 input ${errors.endAt ? 'border-red-500' : ''}`}
+                {...register('endAt', { valueAsDate: true })}
+              />
+              {errors.endAt && (
+                <p className='mt-1 text-sm text-red-600'>
+                  {errors.endAt.message}
+                </p>
+              )}
+            </div>
           </div>
         )}
 
@@ -424,10 +392,10 @@ SharedEventForm.propTypes = {
     description: PropTypes.string,
     imageUrl: PropTypes.string,
     startAt: PropTypes.shape({
-      seconds: PropTypes.func,
+      seconds: PropTypes.oneOfType([PropTypes.func, PropTypes.number]),
     }),
     endAt: PropTypes.shape({
-      seconds: PropTypes.func,
+      seconds: PropTypes.oneOfType([PropTypes.func, PropTypes.number]),
     }),
     createdAt: PropTypes.any,
     type: PropTypes.string,

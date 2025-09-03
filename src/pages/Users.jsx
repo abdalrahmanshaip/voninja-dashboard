@@ -9,7 +9,7 @@ const Users = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
   const [filteredUsers, setFilteredUsers] = useState([])
-
+  // console.log(users.length)
   const getRankedUsers = (list) => {
     const sorted = [...list].sort((a, b) => b.pointsNumber - a.pointsNumber)
 
@@ -64,7 +64,6 @@ const Users = () => {
       header: 'Rank',
       sortable: false,
     },
-    { field: 'userId', header: 'ID', sortable: true },
     { field: 'email', header: 'Email', sortable: true },
     {
       field: 'username',
@@ -119,43 +118,45 @@ const Users = () => {
   )
 
   return (
-    <div className='space-y-6'>
-      <div className='flex justify-between items-center'>
-        <h1 className='text-2xl font-bold text-gray-900'>Users</h1>
-      </div>
-      <div className='flex items-center space-x-2'>
-        <span className='text-gray-700 font-medium'>Total Students:</span>
-        <span className='inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold text-sm shadow'>
-          {users.length}
-        </span>
-      </div>
-      <form className='flex items-center justify-start w-fit'>
-        <input
-          id='search'
-          type='search'
-          autoComplete='email'
-          placeholder='Search User by email...'
-          className='input bg-white text-black w-60'
-          onChange={(e) => handleSearch(e.target.value)}
-        />
-        <button
-          type='reset'
-          onClick={handleResetSearch}
-          className='bg-black hover:bg-black/90 focus:ring-white text-white w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-1.5 text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm '
-        >
-          Reset
-        </button>
-      </form>
-      {/* Coupons table */}
-      <div className='card'>
-        <Table
-          columns={columns}
-          data={filteredUsers}
-          actions={renderActions}
-          emptyMessage="No coupons found. Click 'Add Coupon' to create one."
-          initialSortField='expirationDate'
-          initialSortDirection='asc'
-        />
+    <>
+      <div className='space-y-6'>
+        <div className='flex justify-between items-center'>
+          <h1 className='text-2xl font-bold text-gray-900'>Users</h1>
+        </div>
+        <div className='flex items-center space-x-2'>
+          <span className='text-gray-700 font-medium'>Total Students:</span>
+          <span className='inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold text-sm shadow'>
+            {users.length}
+          </span>
+        </div>
+        <form className='flex items-center justify-start w-fit'>
+          <input
+            id='search'
+            type='search'
+            autoComplete='email'
+            placeholder='Search User by email...'
+            className='input bg-white text-black w-60'
+            onChange={(e) => handleSearch(e.target.value)}
+          />
+          <button
+            type='reset'
+            onClick={handleResetSearch}
+            className='bg-black hover:bg-black/90 focus:ring-white text-white w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-1.5 text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm '
+          >
+            Reset
+          </button>
+        </form>
+        {/* Coupons table */}
+        <div className='card'>
+          <Table
+            columns={columns}
+            data={filteredUsers}
+            actions={renderActions}
+            emptyMessage="No coupons found. Click 'Add Coupon' to create one."
+            initialSortField='expirationDate'
+            initialSortDirection='asc'
+          />
+        </div>
       </div>
       <Modal
         isOpen={isEditModalOpen}
@@ -167,7 +168,7 @@ const Users = () => {
           onClose={() => setIsEditModalOpen(false)}
         />
       </Modal>
-    </div>
+    </>
   )
 }
 

@@ -4,8 +4,9 @@ import {
   doc,
   getDocs,
   setDoc,
-  updateDoc
+  updateDoc,
 } from 'firebase/firestore'
+import PropTypes from 'prop-types'
 import { createContext, useContext, useEffect, useState } from 'react'
 import { db } from '../utils/firebase'
 
@@ -26,15 +27,14 @@ export const CouponProvider = ({ children }) => {
   }
 
   const addCoupon = async (coupon) => {
-    const newDocRef = doc(collection(db, 'coupons')) 
+    const newDocRef = doc(collection(db, 'coupons'))
 
     const couponWithId = {
       ...coupon,
       id: newDocRef.id,
     }
-  
+
     await setDoc(newDocRef, couponWithId)
-  
 
     fetchCoupons()
   }
@@ -59,6 +59,10 @@ export const CouponProvider = ({ children }) => {
   return (
     <CouponContext.Provider value={value}>{children}</CouponContext.Provider>
   )
+}
+
+CouponProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 }
 
 export default CouponContext

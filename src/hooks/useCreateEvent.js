@@ -39,7 +39,7 @@ export const useCreateEvent = (activeTab, basicSubType, event, onClose) => {
           ? 'multiplier'
           : activeTab === 'challenge'
           ? 'quiz'
-          : activeTab === 'basic' && 'welcome'),
+          : activeTab === 'basic' && 'target_points'),
       rules: {
         ...(activeTab === 'double' && {
           multiplier: event?.rules?.multiplier || 2,

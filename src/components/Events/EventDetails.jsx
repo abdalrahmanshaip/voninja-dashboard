@@ -21,7 +21,6 @@ const EventDetails = ({ event }) => {
   useEffect(() => {
     const pushQuestionsToState = async () => {
       const data = await fetchQuestions(event?.id)
-      console.log(data)
       setQuestions(data)
     }
     pushQuestionsToState()

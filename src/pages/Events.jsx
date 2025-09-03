@@ -1,4 +1,4 @@
-import { ArrowDownUp, Minus, Plus } from 'lucide-react'
+import { ArrowDownUp, FileQuestionMark, Minus, PencilOff, Plus, Trash, Users } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import ConfirmDialog from '../components/common/ConfirmDialog'
@@ -183,7 +183,7 @@ const Events = () => {
   }
 
   const renderActions = (event) => (
-    <div className='flex flex-col gap-4'>
+    <div className='flex flex-col gap-3 mx-auto'>
       <button
         onClick={(e) => {
           e.stopPropagation()
@@ -191,8 +191,19 @@ const Events = () => {
         }}
         className='text-indigo-600 hover:text-indigo-900 focus:outline-none'
       >
-        Users
+        <Users size={20} strokeWidth={2}/>
       </button>
+      {event.type == 'quiz' && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            handleViewDetails(event)
+          }}
+          className='text-indigo-600 hover:text-indigo-900 focus:outline-none'
+        >
+          <FileQuestionMark size={20} strokeWidth={2}/>
+        </button>
+      )}
       <button
         onClick={(e) => {
           e.stopPropagation()
@@ -200,17 +211,19 @@ const Events = () => {
         }}
         className='text-blue-600 hover:text-blue-900 focus:outline-none mr-2'
       >
-        Edit
+        <PencilOff size={20} strokeWidth={2}/>
       </button>
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          handleDeleteClick(event)
-        }}
-        className='text-red-600 hover:text-red-900 focus:outline-none'
-      >
-        Delete
-      </button>
+      {event.type !== 'welcome' && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            handleDeleteClick(event)
+          }}
+          className='text-red-600 hover:text-red-900 focus:outline-none'
+        >
+          <Trash size={20} strokeWidth={2}/>
+        </button>
+      )}
     </div>
   )
 

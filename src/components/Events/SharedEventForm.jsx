@@ -1,17 +1,12 @@
 import { Upload } from 'lucide-react'
 import PropTypes from 'prop-types'
-import { useState } from 'react'
-import { Controller } from 'react-hook-form'
 import { useCreateEvent } from '../../hooks/useCreateEvent'
 import LoadingSpinner from '../common/LoadingSpinner'
 
 const SharedEventForm = ({ event, activeTab, onClose }) => {
-  const [basicSubType, setBasicSubType] = useState(
-    event ? event.type : 'welcome'
-  )
-
+  const basicSubType = event ? event.type : 'target_points'
+  
   const {
-    control,
     errors,
     handleSubmit,
     onSubmit,
@@ -21,7 +16,7 @@ const SharedEventForm = ({ event, activeTab, onClose }) => {
     isSubmitting,
   } = useCreateEvent(activeTab, basicSubType, event, onClose)
 
-  console.log(errors)
+  console.log(watch('type'))
 
   return (
     <form
@@ -121,41 +116,6 @@ const SharedEventForm = ({ event, activeTab, onClose }) => {
                 </p>
               )}
             </div>
-          </div>
-        )}
-
-        {activeTab === 'basic' && (
-          <div>
-            <label className='block text-sm font-medium text-gray-700'>
-              Event Type
-            </label>
-            <Controller
-              name='type'
-              control={control}
-              render={({ field }) => (
-                <select
-                  {...field}
-                  value={basicSubType}
-                  onChange={(e) => {
-                    field.onChange(e)
-                    setBasicSubType(e.target.value)
-                  }}
-                  className={`mt-1 input ${
-                    errors.type ? 'border-red-500' : ''
-                  }`}
-                >
-                  <option value='welcome'>
-                    Welcome (This is unlock for new users)
-                  </option>
-                  <option value='target_points'>
-                    Target Points (This is lock for new users)
-                  </option>
-                </select>
-              )}
-            />
-            {errors.type && (
-              <p className='mt-1 text-sm text-red-600'>{errors.type.message}</p>
-            )}
           </div>
         )}
 

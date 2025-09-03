@@ -5,11 +5,12 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  increment,
   orderBy,
   query,
   setDoc,
   updateDoc,
-  writeBatch
+  writeBatch,
 } from 'firebase/firestore'
 import PropTypes from 'prop-types'
 import {
@@ -39,8 +40,6 @@ export const EventProvider = ({ children }) => {
   const [error, setError] = useState(null)
   const [usersWithEvents, setUsersWithEvents] = useState([])
   const [loading, setLoading] = useState(false)
-
-
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -189,11 +188,31 @@ export const EventProvider = ({ children }) => {
   }, [])
 
   const addQuestion = useCallback(async (eventId, questionData) => {
+    await updateDoc(doc(db, 'events', eventId), {
+      'rules.quizTotal': increment(1),
+    })
+
+    setEvents((prev) =>
+      prev.map((event) =>
+        event.id === eventId
+          ? {
+              ...event,
+              rules: {
+                ...event.rules,
+                quizTotal: (event.rules.quizTotal || 0) + 1,
+              },
+            }
+          : event
+      )
+    )
     const newDocRef = doc(collection(db, 'events', eventId, 'questions'))
 
     const questionId = newDocRef.id
 
-    const newQuestion = { ...questionData, id: questionId }
+    const newQuestion = {
+      ...questionData,
+      id: questionId,
+    }
 
     setQuestions((prev) => [...prev, newQuestion])
 
@@ -245,6 +264,23 @@ export const EventProvider = ({ children }) => {
   )
 
   const deleteQuestion = useCallback(async (eventId, questionId) => {
+    await updateDoc(doc(db, 'events', eventId), {
+      'rules.quizTotal': increment(-1),
+    })
+
+    setEvents((prev) =>
+      prev.map((event) =>
+        event.id === eventId
+          ? {
+              ...event,
+              rules: {
+                ...event.rules,
+                quizTotal: (event.rules.quizTotal || 0) - 1,
+              },
+            }
+          : event
+      )
+    )
     try {
       setQuestions((prev) =>
         prev.filter((question) => question.id !== questionId)
@@ -262,10 +298,9 @@ export const EventProvider = ({ children }) => {
   const fetchUsersWithEvents = useCallback(async () => {
     setLoading(true)
     try {
+      const snap = await getDocs(collectionGroup(db, 'user_events'))
 
-      const snap = await getDocs(collectionGroup(db, "user_events"))
-
-      const usersMap = new Map(users.map((u) => [String(u.id ?? ""), u]))
+      const usersMap = new Map(users.map((u) => [String(u.id ?? ''), u]))
 
       const merged = []
       snap.docs.forEach((eventDoc) => {
@@ -273,7 +308,7 @@ export const EventProvider = ({ children }) => {
         if (!parentUserRef?.id) return
         console.log(eventDoc.id)
         const user = usersMap.get(parentUserRef.id)
-        if (!user) return 
+        if (!user) return
 
         merged.push({
           userData: {
@@ -288,12 +323,9 @@ export const EventProvider = ({ children }) => {
         })
       })
 
-      console.log("merged (clean, optimized)", merged)
-
-      setUsersWithEvents(merged) 
-
+      setUsersWithEvents(merged)
     } catch (err) {
-      console.error("fetchUsersWithEvents error:", err)
+      console.error('fetchUsersWithEvents error:', err)
       setUsersWithEvents([])
     } finally {
       setLoading(false)

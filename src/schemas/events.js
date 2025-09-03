@@ -23,7 +23,7 @@ export function getEventSchema(activeTab, basicSubType) {
           ...(activeTab === 'challenge' && {
             quizMinCorrect: z.number().min(1, 'Minimum correct answers is required'),
             quizReward: z.number().min(1, 'Reward is required'),
-            quizTotal: z.number()
+            quizTotal: z.number().default(0)
           }),
           ...(activeTab === 'basic' &&
             basicSubType === 'target_points' && {

@@ -63,7 +63,6 @@ export const useCreateEvent = (activeTab, basicSubType, event, onClose) => {
     },
   })
   const onSubmit = async (data) => {
-    console.log(data)
     let url = ''
     try {
       if (typeof data.imageUrl === 'string' && data.imageUrl.length > 0) {
@@ -73,6 +72,7 @@ export const useCreateEvent = (activeTab, basicSubType, event, onClose) => {
       }
       const formData = {
         ...data,
+        order: event?.order || 0,
         imageUrl: url,
         createdAt: event ? event?.createdAt : Timestamp.fromDate(new Date()),
       }

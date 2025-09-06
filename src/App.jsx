@@ -4,6 +4,7 @@ import Lessons from './pages/Lessons'
 import Challenges from './pages/Challenges'
 import Transactions from './pages/Transactions'
 import Coupons from './pages/Coupons'
+import Boxes from './pages/Boxes'
 import DashboardLayout from './layouts/DashboardLayout'
 import { AuthProvider } from './context/AuthContext'
 import { DataProvider } from './context/DataContext'
@@ -23,12 +24,12 @@ function App() {
     <HashRouter>
       <AuthProvider>
         <UserProvider>
-          <DataProvider>
+          {/* <DataProvider>
             <ChallengeProvider>
               <TransactionsProvider>
                 <CouponProvider>
                   <LibraryProvider>
-                    <EventProvider>
+                    <EventProvider> */}
                       <Routes>
                         <Route
                           path='/login'
@@ -44,7 +45,7 @@ function App() {
                         >
                           <Route
                             index
-                            element={<Lessons />}
+                            element={<Boxes />}
                           />
                           <Route
                             path='lessons'
@@ -71,6 +72,10 @@ function App() {
                             element={<Coupons />}
                           />
                           <Route
+                            path='boxes'
+                            element={<Boxes />}
+                          />
+                          <Route
                             path='library'
                             element={<Library />}
                           />
@@ -85,12 +90,12 @@ function App() {
                           }
                         />
                       </Routes>
-                    </EventProvider>
+                    {/* </EventProvider>
                   </LibraryProvider>
                 </CouponProvider>
               </TransactionsProvider>
             </ChallengeProvider>
-          </DataProvider>
+          </DataProvider> */}
         </UserProvider>
       </AuthProvider>
     </HashRouter>

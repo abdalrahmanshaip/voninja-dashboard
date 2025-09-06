@@ -1,4 +1,4 @@
-import { CalendarCheck2, Users } from 'lucide-react'
+import { Box, CalendarCheck2, Users } from 'lucide-react'
 import { useState } from 'react'
 import {
   FaBars,
@@ -35,6 +35,11 @@ const DashboardLayout = () => {
       path: '/events',
       name: 'Events',
       icon: <CalendarCheck2   className='w-5 h-5' />,
+    },
+    {
+      path: '/boxes',
+      name: 'Boxes',
+      icon: <Box   className='w-5 h-5' />,
     },
     {
       path: '/users',

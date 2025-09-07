@@ -4,7 +4,6 @@ import { z } from 'zod'
 import PropTypes from 'prop-types'
 import LoadingSpinner from '../common/LoadingSpinner'
 
-// ✅ Schema
 const BoxSchema = z.object({
   tier: z.enum(['bronze', 'silver', 'gold'], {
     errorMap: () => ({ message: 'Tier is required' }),
@@ -18,7 +17,7 @@ const BoxSchema = z.object({
   }),
 })
 
-const BoxForm = ({ box, onClose, selectedTier }) => {
+const BoxForm = ({ box, onClose, selectedTier, onSubmit: handleFormSubmit }) => {
   const {
     register,
     handleSubmit,
@@ -34,32 +33,20 @@ const BoxForm = ({ box, onClose, selectedTier }) => {
     },
   })
 
-  // ✅ submit: build the tiers object
-  const onSubmit = (data) => {
-    const boxData = {
-      tiers: {
-        bronze: [],
-        silver: [],
-        gold: [],
-        [selectedTier]: [
-          {
-            id: `${selectedTier}-${Date.now()}`, // unique id
-            condition: {
-              minAds: data.minAds,
-              minPoints: data.minPoints,
-            },
-            index: 0, // أو تحسبه على حسب طول الـ array الموجود
-            rewardPoints: data.rewardPoints,
-          },
-        ],
-      },
+  const onSubmit = async (data) => {
+    try {
+      const boxData = {
+        tier: selectedTier,
+        minPoints: data.minPoints,
+        minAds: data.minAds,
+        rewardPoints: data.rewardPoints,
+      }
+      await handleFormSubmit(boxData)
+    } catch (error) {
+      console.error('Error submitting box form:', error)
     }
-    
-    console.log('Final Box Data:', boxData)
-    // هنا ممكن تبعته للباك إند أو للـ state
   }
 
-  // ✅ handle minAds input (allow null)
   const handleMinAdsChange = (e) => {
     const value = e.target.value.trim() === '' ? null : Number(e.target.value)
     setValue('minAds', value)
@@ -71,7 +58,6 @@ const BoxForm = ({ box, onClose, selectedTier }) => {
         onSubmit={handleSubmit(onSubmit)}
         className='space-y-4'
       >
-        {/* Tier */}
         <div>
           <label
             htmlFor='tier'
@@ -94,7 +80,6 @@ const BoxForm = ({ box, onClose, selectedTier }) => {
           )}
         </div>
 
-        {/* Minimum Points */}
         <div>
           <label
             htmlFor='minPoints'
@@ -116,7 +101,6 @@ const BoxForm = ({ box, onClose, selectedTier }) => {
           )}
         </div>
 
-        {/* Minimum Ads */}
         <div>
           <label
             htmlFor='minAds'
@@ -137,7 +121,6 @@ const BoxForm = ({ box, onClose, selectedTier }) => {
           )}
         </div>
 
-        {/* Reward Points */}
         <div>
           <label
             htmlFor='rewardPoints'
@@ -161,7 +144,6 @@ const BoxForm = ({ box, onClose, selectedTier }) => {
           )}
         </div>
 
-        {/* Actions */}
         <div className='flex justify-end pt-4 gap-4'>
           <button
             type='button'
@@ -199,4 +181,5 @@ BoxForm.propTypes = {
   box: PropTypes.object,
   onClose: PropTypes.func.isRequired,
   selectedTier: PropTypes.string,
+  onSubmit: PropTypes.func.isRequired,
 }

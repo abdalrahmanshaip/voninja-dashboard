@@ -11,10 +11,23 @@ import { toast } from 'sonner'
 import { useEvents } from '../../context/EventContext'
 import LoadingSpinner from '../common/LoadingSpinner'
 import SortableItem from './SortableItem'
+import { normalizeToDate } from '../../utils/dateFormat'
 
 const ReorderEvents = ({ events, onClose }) => {
   const { updateEventsOrder, error } = useEvents()
-  const [items, setItems] = useState(events)
+  
+  const nonExpiredEvents = useMemo(() => {
+    const now = new Date()
+    return events.filter(event => {
+      if (!event.endAt) return true
+      
+      // Convert Firebase Timestamp to JavaScript Date for comparison
+      const eventEndDate = normalizeToDate(event.endAt)
+      return eventEndDate > now
+    })
+  }, [events])
+  
+  const [items, setItems] = useState(nonExpiredEvents)
   const [loading, setLoading] = useState(false)
 
   const handleDragEnd = (event) => {
@@ -111,6 +124,7 @@ ReorderEvents.propTypes = {
       description: PropTypes.string,
       imageUrl: PropTypes.string,
       createdAt: PropTypes.any,
+      endAt: PropTypes.any, // Added endAt field for expiration check
       type: PropTypes.string,
       rules: PropTypes.object,
       order: PropTypes.number,

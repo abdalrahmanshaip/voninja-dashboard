@@ -39,7 +39,12 @@ const Library = () => {
 
   const columns = [
     { field: 'id', header: 'ID', sortable: true },
-    { field: 'title', header: 'Title', sortable: true },
+    {
+      field: 'title',
+      header: 'Title',
+      sortable: true,
+      render: (row) => <p className='max-w-80 text-wrap'>{row.title}</p>,
+    },
     {
       field: 'requiredPoint',
       header: 'Required Point',

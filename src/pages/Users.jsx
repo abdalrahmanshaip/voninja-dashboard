@@ -9,7 +9,6 @@ const Users = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
   const [filteredUsers, setFilteredUsers] = useState([])
-  // console.log(users.length)
   const getRankedUsers = (list) => {
     const sorted = [...list].sort((a, b) => b.pointsNumber - a.pointsNumber)
 
@@ -146,7 +145,7 @@ const Users = () => {
             Reset
           </button>
         </form>
-        {/* Coupons table */}
+
         <div className='card'>
           <Table
             columns={columns}
@@ -155,6 +154,8 @@ const Users = () => {
             emptyMessage="No coupons found. Click 'Add Coupon' to create one."
             initialSortField='expirationDate'
             initialSortDirection='asc'
+            pagination={true}
+            itemsPerPage={20}
           />
         </div>
       </div>

@@ -72,11 +72,10 @@ export const useCreateEvent = (activeTab, basicSubType, event, onClose) => {
       }
       const formData = {
         ...data,
-        order: event?.order || 0,
+        order: event?.order,
         imageUrl: url,
         createdAt: event ? event?.createdAt : Timestamp.fromDate(new Date()),
       }
-      console.log('Form Data here:', formData)
       if (event) {
         await updateEvent(event.id, formData)
         toast.success('Event updated successfully')

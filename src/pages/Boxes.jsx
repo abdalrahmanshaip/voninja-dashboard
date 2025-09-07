@@ -1,128 +1,44 @@
-import { Plus } from 'lucide-react'
+import { Plus, Users } from 'lucide-react'
 import { useState } from 'react'
 import { FaEdit, FaTrash } from 'react-icons/fa'
 import { toast } from 'sonner'
+import BoxForm from '../components/Boxes/BoxForm'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import Modal from '../components/common/Modal'
 import Table from '../components/common/Table'
-import BoxForm from '../components/Boxes/BoxForm'
+import { useBoxes } from '../context/BoxContext'
+import BoxDetails from '../components/Boxes/BoxDetails'
 
 const Boxes = () => {
-  // Mock data for boxes with three tier types
-  const mockBoxesData = {
-    tiers: {
-      bronze: [
-        {
-          id: 'b1',
-          condition: {
-            minAds: null,
-            minPoints: 400,
-          },
-          index: 0,
-          rewardPoints: 10,
-        },
-        {
-          id: 'b2',
-          condition: {
-            minAds: null,
-            minPoints: 500,
-          },
-          index: 1,
-          rewardPoints: 20,
-        },
-        {
-          id: 'b3',
-          condition: {
-            minAds: null,
-            minPoints: 600,
-          },
-          index: 2,
-          rewardPoints: 30,
-        },
-        {
-          id: 'b4',
-          condition: {
-            minAds: null,
-            minPoints: 700,
-          },
-          index: 3,
-          rewardPoints: 40,
-        },
-        {
-          id: 'b5',
-          condition: {
-            minAds: 2,
-            minPoints: 400,
-          },
-          index: 4,
-          rewardPoints: 50,
-        },
-      ],
-      silver: [
-        {
-          id: 's1',
-          condition: {
-            minAds: null,
-            minPoints: 800,
-          },
-          index: 0,
-          rewardPoints: 60,
-        },
-        {
-          id: 's2',
-          condition: {
-            minAds: 3,
-            minPoints: 600,
-          },
-          index: 1,
-          rewardPoints: 70,
-        },
-      ],
-      gold: [
-        {
-          id: 'g1',
-          condition: {
-            minAds: 5,
-            minPoints: 1000,
-          },
-          index: 0,
-          rewardPoints: 100,
-        },
-        {
-          id: 'g2',
-          condition: {
-            minAds: 8,
-            minPoints: 1200,
-          },
-          index: 1,
-          rewardPoints: 150,
-        },
-      ],
-    },
-  }
-
-  const [boxesData, setBoxesData] = useState(mockBoxesData)
+  const {
+    boxes,
+    loading,
+    error,
+    addBox,
+    updateBox,
+    deleteBox,
+    boxesOpenedByUser,
+  } = useBoxes()
   const [selectedTier, setSelectedTier] = useState('bronze')
   const [selectedBox, setSelectedBox] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-
+  const [isBoxOpen, setBoxOpen] = useState(false)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
-  const [formData, setFormData] = useState({
-    tier: 'bronze',
-    minPoints: 0,
-    minAds: null,
-    rewardPoints: 0,
-  })
 
-  // Get boxes for the selected tier
-  const boxes = boxesData.tiers[selectedTier] || []
-  console.log(boxes)
-  // Define table columns
+  const tierBoxes = boxes.tiers?.[selectedTier] || []
+
   const columns = [
     {
       field: 'index',
       header: 'Index',
       sortable: true,
+      render: (row) => {
+        return (
+          <div>
+            {row.index + 1}
+          </div>
+        )
+      },
     },
     {
       field: 'condition.minPoints',
@@ -144,142 +60,68 @@ const Boxes = () => {
     },
   ]
 
-
-  // Open add box modal
-  const handleAddBox = () => {
-    setFormData({
-      tier: selectedTier,
-      minPoints: 0,
-      minAds: null,
-      rewardPoints: 0,
-    })
-    setSelectedBox(null)
-    setIsModalOpen(true)
-  }
-
-  // Open edit box modal
-  const handleEditBox = (box) => {
-    setFormData({
-      tier: selectedTier,
-      minPoints: box.condition.minPoints,
-      minAds: box.condition.minAds,
-      rewardPoints: box.rewardPoints,
-    })
-    setSelectedBox(box)
-    setIsModalOpen(true)
-  }
-
-  // Open delete confirmation
   const handleDeleteClick = (box) => {
     setSelectedBox(box)
     setIsDeleteConfirmOpen(true)
   }
 
-  // Handle form input changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData({
-      ...formData,
-      [name]:
-        name === 'minAds' && value === ''
-          ? null
-          : name === 'minPoints' || name === 'rewardPoints' || name === 'minAds'
-          ? Number(value)
-          : value,
-    })
+  const handleBoxClick = (box) => {
+    setSelectedBox(box)
+    setBoxOpen(true)
   }
 
-  // Handle form submission for adding a box
-  const handleAddSubmit = (e) => {
-    e.preventDefault()
-    console.log('Adding box:', formData)
-
-    // In a real app, you would call Firebase here
-    // For now, we'll just update our mock data
-    const newBox = {
-      id: `${formData.tier[0]}${Date.now()}`,
-      condition: {
-        minAds: formData.minAds,
-        minPoints: formData.minPoints,
-      },
-      index: boxesData.tiers[formData.tier].length,
-      rewardPoints: formData.rewardPoints,
+  const handleAddSubmit = async (data) => {
+    try {
+      await addBox(data, selectedTier)
+      toast.success('Box added successfully')
+      setIsModalOpen(false)
+    } catch (error) {
+      toast.error('Failed to add box')
+      console.error('Error adding box:', error)
     }
-
-    setBoxesData((prev) => ({
-      ...prev,
-      tiers: {
-        ...prev.tiers,
-        [formData.tier]: [...prev.tiers[formData.tier], newBox],
-      },
-    }))
-
-    toast.success('Box added successfully')
-    setIsModalOpen(false)
   }
 
-  // Handle form submission for editing a box
-  const handleEditSubmit = (e) => {
-    e.preventDefault()
-    console.log('Editing box:', formData)
-
-    // In a real app, you would call Firebase here
-    // For now, we'll just update our mock data
-    const updatedBoxes = boxesData.tiers[selectedTier].map((box) => {
-      if (box.id === selectedBox.id) {
-        return {
-          ...box,
-          condition: {
-            minAds: formData.minAds,
-            minPoints: formData.minPoints,
-          },
-          rewardPoints: formData.rewardPoints,
-        }
-      }
-      return box
-    })
-
-    setBoxesData((prev) => ({
-      ...prev,
-      tiers: {
-        ...prev.tiers,
-        [selectedTier]: updatedBoxes,
-      },
-    }))
-
-    toast.success('Box updated successfully')
-    setIsEditModalOpen(false)
+  const handleEditSubmit = async (data) => {
+    try {
+      await updateBox(selectedBox.id, data, selectedTier)
+      toast.success('Box updated successfully')
+      setIsModalOpen(false)
+    } catch (error) {
+      toast.error('Failed to update box')
+      console.error('Error updating box:', error)
+    }
   }
 
-  // Handle box deletion
-  const confirmDelete = () => {
-    console.log('Deleting box:', selectedBox)
-
-    // In a real app, you would call Firebase here
-    // For now, we'll just update our mock data
-    const filteredBoxes = boxesData.tiers[selectedTier].filter(
-      (box) => box.id !== selectedBox.id
-    )
-
-    setBoxesData((prev) => ({
-      ...prev,
-      tiers: {
-        ...prev.tiers,
-        [selectedTier]: filteredBoxes,
-      },
-    }))
-
-    toast.success('Box deleted successfully')
-    setIsDeleteConfirmOpen(false)
+  const confirmDelete = async () => {
+    try {
+      await deleteBox(selectedBox.id, selectedTier)
+      toast.success('Box deleted successfully')
+      setIsDeleteConfirmOpen(false)
+    } catch (error) {
+      toast.error('Failed to delete box')
+      console.error('Error deleting box:', error)
+    }
   }
 
-  // Render actions column
   const renderActions = (box) => (
     <div className='flex space-x-2'>
       <button
         onClick={(e) => {
           e.stopPropagation()
-          handleEditBox(box)
+          handleBoxClick(box)
+        }}
+        className='text-indigo-600 hover:text-indigo-900 focus:outline-none'
+      >
+        <Users
+          size={20}
+          strokeWidth={2}
+        />
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          setSelectedBox(box)
+          setIsModalOpen(true)
         }}
         className='text-blue-600 hover:text-blue-900 focus:outline-none'
       >
@@ -304,7 +146,10 @@ const Boxes = () => {
           <h1 className='text-2xl font-bold text-gray-900'>Boxes Management</h1>
           <div className='flex gap-x-5'>
             <button
-              onClick={handleAddBox}
+              onClick={() => {
+                setSelectedBox(null)
+                setIsModalOpen(true)
+              }}
               className='btn btn-primary flex items-center  text-base'
             >
               <Plus
@@ -352,17 +197,27 @@ const Boxes = () => {
         </div>
 
         <div className='card'>
-          <Table
-            columns={columns}
-            data={boxes}
-            actions={renderActions}
-            emptyMessage="No boxes found for this tier. Click 'Add Box' to create one."
-            initialSortField='index'
-            initialSortDirection='asc'
-          />
+          {loading ? (
+            <div className='flex justify-center items-center p-8'>
+              <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500'></div>
+            </div>
+          ) : error ? (
+            <div className='text-red-500 p-4'>{error}</div>
+          ) : (
+            <Table
+              columns={columns}
+              data={tierBoxes}
+              actions={renderActions}
+              onRowClick={handleBoxClick}
+              emptyMessage="No boxes found for this tier. Click 'Add Box' to create one."
+              initialSortField='index'
+              initialSortDirection='asc'
+              sortable={true}
+            />
+          )}
         </div>
       </div>
-      {/* Add , Edit Box Modal */}
+
       <Modal
         size='lg'
         isOpen={isModalOpen}
@@ -373,10 +228,23 @@ const Boxes = () => {
           box={selectedBox}
           selectedTier={selectedTier}
           onClose={() => setIsModalOpen(false)}
+          onSubmit={selectedBox ? handleEditSubmit : handleAddSubmit}
         />
       </Modal>
 
-      {/* Delete Confirmation Dialog */}
+      <Modal
+        size='xl'
+        isOpen={isBoxOpen}
+        onClose={() => setBoxOpen(false)}
+        title={`Box Users`}
+      >
+        <BoxDetails
+          box={selectedBox}
+          selectedTier={selectedTier}
+          boxesOpenedByUser={boxesOpenedByUser}
+        />
+      </Modal>
+
       <ConfirmDialog
         isOpen={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}

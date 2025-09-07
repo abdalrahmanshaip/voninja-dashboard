@@ -1,6 +1,11 @@
 import { useState } from 'react'
+import Pagination from './Pagination'
+import PropTypes from 'prop-types'
+
 
 const Table = ({
+  pagination = false,
+  itemsPerPage = 10,
   columns,
   data,
   onRowClick,
@@ -11,6 +16,16 @@ const Table = ({
   initialSortField = null,
   initialSortDirection = 'asc',
 }) => {
+  const [currentPage, setCurrentPage] = useState(1)
+  const totalPages = pagination ? Math.ceil(data.length / itemsPerPage) : 0
+
+  if (pagination) {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    const currentItems = data.slice(startIndex, endIndex)
+    data = currentItems
+  }
+
   const [sortConfig, setSortConfig] = useState({
     key: initialSortField,
     direction: initialSortDirection,
@@ -112,7 +127,7 @@ const Table = ({
   const sortedData = getSortedData()
 
   return (
-    <div className='table-responsive'>
+    <div className='table-responsive space-y-10'>
       <table className='data-table'>
         <thead className='data-table-header'>
           <tr>
@@ -201,8 +216,31 @@ const Table = ({
           )}
         </tbody>
       </table>
+      {pagination && totalPages > 1 && (
+        <div className='pb-2'>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
     </div>
   )
 }
 
 export default Table
+
+Table.propTypes = {
+  pagination: PropTypes.bool,
+  itemsPerPage:  PropTypes.number,
+  columns: PropTypes.array,
+  data: PropTypes.array,
+  onRowClick: PropTypes.any,
+  actions: PropTypes.func,
+  onReorder: PropTypes.func,
+  emptyMessage: PropTypes.string,
+  sortable: PropTypes.bool,
+  initialSortField: PropTypes.string,
+  initialSortDirection: PropTypes.string,
+}

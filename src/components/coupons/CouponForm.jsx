@@ -91,14 +91,13 @@ const CouponForm = ({ coupon, onClose }) => {
             )
           : new Date(formData.expireDate),
       }
-      console.log('Submitting coupon data:', submitData)
-      // if (coupon) {
-      //   await updateCoupon(coupon.id, submitData)
-      //   toast.success('Coupon updated successfully')
-      // } else {
-      //   await addCoupon(submitData)
-      //   toast.success('Coupon created successfully')
-      // }
+      if (coupon) {
+        await updateCoupon(coupon.id, submitData)
+        toast.success('Coupon updated successfully')
+      } else {
+        await addCoupon(submitData)
+        toast.success('Coupon created successfully')
+      }
 
       onClose()
     } catch (error) {

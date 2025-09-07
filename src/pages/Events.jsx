@@ -1,4 +1,12 @@
-import { ArrowDownUp, FileQuestionMark, Minus, PencilOff, Plus, Trash, Users } from 'lucide-react'
+import {
+  ArrowDownUp,
+  FileQuestionMark,
+  Minus,
+  PencilOff,
+  Plus,
+  Trash,
+  Users,
+} from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import ConfirmDialog from '../components/common/ConfirmDialog'
@@ -56,6 +64,7 @@ const Events = () => {
     {
       field: 'description',
       header: 'Description',
+      render: (row) => <p className='max-w-80 text-wrap'>{row.description}</p>,
     },
     {
       field: 'rules',
@@ -191,7 +200,10 @@ const Events = () => {
         }}
         className='text-indigo-600 hover:text-indigo-900 focus:outline-none'
       >
-        <Users size={20} strokeWidth={2}/>
+        <Users
+          size={20}
+          strokeWidth={2}
+        />
       </button>
       {event.type == 'quiz' && (
         <button
@@ -201,7 +213,10 @@ const Events = () => {
           }}
           className='text-indigo-600 hover:text-indigo-900 focus:outline-none'
         >
-          <FileQuestionMark size={20} strokeWidth={2}/>
+          <FileQuestionMark
+            size={20}
+            strokeWidth={2}
+          />
         </button>
       )}
       <button
@@ -211,7 +226,10 @@ const Events = () => {
         }}
         className='text-blue-600 hover:text-blue-900 focus:outline-none mr-2'
       >
-        <PencilOff size={20} strokeWidth={2}/>
+        <PencilOff
+          size={20}
+          strokeWidth={2}
+        />
       </button>
       {event.type !== 'welcome' && (
         <button
@@ -221,7 +239,10 @@ const Events = () => {
           }}
           className='text-red-600 hover:text-red-900 focus:outline-none'
         >
-          <Trash size={20} strokeWidth={2}/>
+          <Trash
+            size={20}
+            strokeWidth={2}
+          />
         </button>
       )}
     </div>
@@ -309,7 +330,7 @@ const Events = () => {
       <Modal
         isOpen={reorderModalOpen}
         onClose={() => setReorderModalOpen(false)}
-        title={'Reorder Events'}
+        title={'Reorder Events (only show events not expired)'}
       >
         <ReorderEvents
           events={events}

@@ -306,7 +306,6 @@ export const EventProvider = ({ children }) => {
       snap.docs.forEach((eventDoc) => {
         const parentUserRef = eventDoc.ref.parent.parent
         if (!parentUserRef?.id) return
-        console.log(eventDoc.id)
         const user = usersMap.get(parentUserRef.id)
         if (!user) return
 

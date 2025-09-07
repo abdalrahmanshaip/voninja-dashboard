@@ -74,7 +74,7 @@ const LibraryForm = ({ item, onClose, onSuccess }) => {
     >
       <div>
         <label className='block text-sm font-medium text-gray-700'>Title</label>
-        <input
+        <textarea
           type='text'
           {...register('title')}
           className={`input mt-1 w-full ${

@@ -16,7 +16,6 @@ const SharedEventForm = ({ event, activeTab, onClose }) => {
     isSubmitting,
   } = useCreateEvent(activeTab, basicSubType, event, onClose)
 
-  console.log(watch('type'))
 
   return (
     <form

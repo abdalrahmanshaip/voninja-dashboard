@@ -154,8 +154,6 @@ const Users = () => {
             emptyMessage="No coupons found. Click 'Add Coupon' to create one."
             initialSortField='expirationDate'
             initialSortDirection='asc'
-            pagination={true}
-            itemsPerPage={20}
           />
         </div>
       </div>

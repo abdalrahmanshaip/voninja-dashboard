@@ -16,12 +16,11 @@ import Pagination from '../common/Pagination'
 const usersPerPage = 10
 
 const getStatusColor = (status) => {
+  console.log(status)
   switch (status) {
-    case 'active':
+    case 'finished':
       return 'bg-green-100 text-green-800 border-green-200'
-    case 'completed':
-      return 'bg-gray-100 text-gray-700 border-gray-200'
-    case 'pending':
+    case 'in_progress':
       return 'bg-yellow-100 text-yellow-800 border-yellow-200'
     case 'cancelled':
       return 'bg-red-100 text-red-800 border-red-200'
@@ -47,9 +46,22 @@ const ParticipantDetailModal = ({ event, usersWithEvents, onClose }) => {
   const [statusFilter, setStatusFilter] = useState('all')
 
   const participants = useMemo(() => {
-    return usersWithEvents.filter(
-      (userevent) => userevent.event.eventId == event.id
-    )
+    const now = Date.now() / 1000
+    return usersWithEvents
+      .filter((userevent) => userevent.event.eventId == event.id)
+      .map((p) => {
+        let status = p.event.status
+        if (p.event.userEndAt?.seconds && p.event.userEndAt.seconds < now) {
+          status = 'finished'
+        }
+        return {
+          ...p,
+          event: {
+            ...p.event,
+            status,
+          },
+        }
+      })
   }, [usersWithEvents, event])
 
   const filteredParticipants = useMemo(() => {
@@ -79,6 +91,8 @@ const ParticipantDetailModal = ({ event, usersWithEvents, onClose }) => {
   const startIndex = (currentPage - 1) * usersPerPage
   const endIndex = startIndex + usersPerPage
   const currentUsers = filteredParticipants.slice(startIndex, endIndex)
+
+  console.log(currentUsers)
 
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40'>

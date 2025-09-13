@@ -25,13 +25,13 @@ function App() {
     <HashRouter>
       <AuthProvider>
         <UserProvider>
-          <BoxProvider>
-            <DataProvider>
-              <ChallengeProvider>
-                <TransactionsProvider>
-                  <CouponProvider>
-                    <LibraryProvider>
-                      <EventProvider>
+          <DataProvider>
+            <ChallengeProvider>
+              <TransactionsProvider>
+                <CouponProvider>
+                  <LibraryProvider>
+                    <EventProvider>
+                      <BoxProvider>
                         <Routes>
                           <Route
                             path='/login'
@@ -92,13 +92,13 @@ function App() {
                             }
                           />
                         </Routes>
-                      </EventProvider>
-                    </LibraryProvider>
-                  </CouponProvider>
-                </TransactionsProvider>
-              </ChallengeProvider>
-            </DataProvider>
-          </BoxProvider>
+                      </BoxProvider>
+                    </EventProvider>
+                  </LibraryProvider>
+                </CouponProvider>
+              </TransactionsProvider>
+            </ChallengeProvider>
+          </DataProvider>
         </UserProvider>
       </AuthProvider>
     </HashRouter>

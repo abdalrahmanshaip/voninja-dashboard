@@ -3,6 +3,7 @@ import Modal from '../components/common/Modal'
 import Table from '../components/common/Table'
 import UserForm from '../components/user/UserForm'
 import { useUsers } from '../context/UserContext'
+import { Search } from 'lucide-react'
 
 const Users = () => {
   const { users } = useUsers()
@@ -40,17 +41,16 @@ const Users = () => {
   }, [users])
 
   const handleSearch = (value) => {
-    const filtered = users.filter((user) =>
-      user.email.toLowerCase().includes(value.toLowerCase())
+    const filtered = users.filter(
+      (user) =>
+        user.username?.toLowerCase().includes(value.toLowerCase()) ||
+        user.email?.toLowerCase().includes(value.toLowerCase()) ||
+        user.phoneNumber?.includes(value)
     )
     const ranked = getRankedUsers(filtered)
     setFilteredUsers(ranked)
   }
 
-  const handleResetSearch = () => {
-    const usersWithRank = getRankedUsers(users)
-    setFilteredUsers(usersWithRank)
-  }
 
   const handleEditPoints = (user) => {
     setSelectedUser(user)
@@ -128,23 +128,17 @@ const Users = () => {
             {users.length}
           </span>
         </div>
-        <form className='flex items-center justify-start w-fit'>
+
+        <div className='flex items-center justify-start relative'>
+          <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
           <input
             id='search'
-            type='search'
-            autoComplete='email'
-            placeholder='Search User by email...'
-            className='input bg-white text-black w-60'
+            type='text'
+            placeholder='Search by username, email, or phone...'
+            className='input ps-10 bg-white text-black w-1/2'
             onChange={(e) => handleSearch(e.target.value)}
           />
-          <button
-            type='reset'
-            onClick={handleResetSearch}
-            className='bg-black hover:bg-black/90 focus:ring-white text-white w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-1.5 text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm '
-          >
-            Reset
-          </button>
-        </form>
+        </div>
 
         <div className='card'>
           <Table

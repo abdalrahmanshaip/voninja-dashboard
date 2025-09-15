@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthContext';
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   
-  // Show loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -13,12 +12,10 @@ const ProtectedRoute = ({ children }) => {
     );
   }
   
-  // If not authenticated, redirect to login
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
   
-  // If authenticated, render children
   return children;
 };
 

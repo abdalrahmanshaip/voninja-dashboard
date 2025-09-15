@@ -9,6 +9,7 @@ import {
   orderBy,
   query,
   setDoc,
+  Timestamp,
   updateDoc,
   writeBatch,
 } from 'firebase/firestore'
@@ -22,6 +23,7 @@ import {
 } from 'react'
 import { db } from '../utils/firebase'
 import { useUsers } from './UserContext'
+import { toast } from 'sonner'
 
 const EventContext = createContext()
 
@@ -240,6 +242,84 @@ export const EventProvider = ({ children }) => {
     }
   }, [])
 
+  // this without update locale state for update ui without more fetch request
+
+  //   const handlePasteQuestions = async () => {
+  //   try {
+  //     const text = await navigator.clipboard.readText();
+  //     const parsed = JSON.parse(text); // array of questions
+
+  //     const batch = writeBatch(db);
+  //     const questionsRef = collection(db, "events", event.id, "questions");
+
+  //     parsed.forEach((q) => {
+  //       const newDoc = doc(questionsRef); // auto id
+  //       batch.set(newDoc, {
+  //         ...q,
+  //         createdAt: Timestamp.fromDate(new Date()),
+  //       });
+  //     });
+
+  //     await batch.commit(); // send once 🚀
+
+  //     toast.success(`${parsed.length} question(s) added!`);
+  //   } catch (err: any) {
+  //     toast.error("Paste failed: " + err.message);
+  //   }
+  // };
+
+  // this with update locale state for update ui with more fetch request
+
+  const handlePasteQuestions = async (eventId) => {
+    try {
+      const text = await navigator.clipboard.readText()
+      const parsed = JSON.parse(text) // array of questions
+
+      const batch = writeBatch(db)
+      const questionsRef = collection(db, 'events', eventId, 'questions')
+
+      const now = Timestamp.fromDate(new Date())
+
+      const newQuestions = parsed.map((q) => {
+        const newDoc = doc(questionsRef)
+        const newQuestion = {
+          ...q,
+          id: newDoc.id,
+          createdAt: now,
+        }
+        batch.set(newDoc, newQuestion)
+        return newQuestion
+      })
+
+      await batch.commit() // 🚀 request واحد
+      await updateDoc(doc(db, 'events', eventId), {
+        'rules.quizTotal': increment(newQuestions.length),
+      })
+      // ✅ Update local questions state
+      setQuestions((prev) => [...prev, ...newQuestions])
+
+      // ✅ Update events state → quizTotal
+      setEvents((prev) =>
+        prev.map((ev) =>
+          ev.id === eventId
+            ? {
+                ...ev,
+                rules: {
+                  ...ev.rules,
+                  quizTotal: (ev.rules.quizTotal || 0) + newQuestions.length,
+                },
+              }
+            : ev
+        )
+      )
+
+      toast.success(`${newQuestions.length} question(s) added!`)
+    } catch (err) {
+      console.error('Paste failed:', err)
+      toast.error('Paste failed: ' + err.message)
+    }
+  }
+
   const updateQuestion = useCallback(
     async (eventId, questionId, questionData) => {
       try {
@@ -350,6 +430,7 @@ export const EventProvider = ({ children }) => {
     updateEventsOrder,
     fetchQuestions,
     addQuestion,
+    handlePasteQuestions,
     updateQuestion,
     deleteQuestion,
   }

@@ -2,17 +2,19 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   increment,
   orderBy,
   query,
   setDoc,
   updateDoc,
-  writeBatch
+  writeBatch,
 } from 'firebase/firestore'
 import PropTypes from 'prop-types'
 import { createContext, useContext, useState } from 'react'
 import { db } from '../utils/firebase'
+import { toast } from 'sonner'
 
 const DataContext = createContext()
 export const useData = () => useContext(DataContext)
@@ -101,42 +103,50 @@ export const DataProvider = ({ children }) => {
   }
 
   const deleteLesson = async (levelId, lessonId) => {
-    const levelRef = doc(db, 'levels', levelId)
-    const lessonsCol = collection(levelRef, 'lessons')
-    const snapshot = await getDocs(query(lessonsCol, orderBy('lesson_order')))
-    const lessons = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-    const deletedLesson = lessons.find((lesson) => lesson.id === lessonId)
+  const levelRef = doc(db, "levels", levelId);
+  const lessonsCol = collection(levelRef, "lessons");
+  const lessonRef = doc(lessonsCol, lessonId);
 
-    if (!deletedLesson) return
+  // هات بيانات الـ lesson عشان تجيب numQuestions
+  const lessonSnap = await getDoc(lessonRef);
+  if (!lessonSnap.exists()) return;
 
-    const batch = writeBatch(db)
+  const deletedLesson = { id: lessonSnap.id, ...lessonSnap.data() };
+  const numQuestions = deletedLesson.numQuestions || 0;
 
-    batch.delete(doc(lessonsCol, lessonId))
+  const snapshot = await getDocs(query(lessonsCol, orderBy("lesson_order")));
+  const lessons = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-    lessons
-      .filter((l) => l.lesson_order > deletedLesson.lesson_order)
-      .forEach((l) => {
-        batch.update(doc(lessonsCol, l.id), {
-          lesson_order: l.lesson_order - 1,
-        })
-      })
+  const batch = writeBatch(db);
 
-    await batch.commit()
+  batch.delete(lessonRef);
 
-    await updateDoc(levelRef, {
-      totalLessons: increment(-1),
-    })
+  lessons
+    .filter((l) => l.lesson_order > deletedLesson.lesson_order)
+    .forEach((l) => {
+      batch.update(doc(lessonsCol, l.id), {
+        lesson_order: l.lesson_order - 1,
+      });
+    });
 
-    setData((prev) => ({
-      ...prev,
-      lessons: {
-        ...prev.lessons,
-        [levelId]: prev.lessons[levelId].filter(
-          (lesson) => lesson.id !== lessonId
-        ),
-      },
-    }))
-  }
+  await batch.commit();
+
+  await updateDoc(levelRef, {
+    totalLessons: increment(-1),
+    totalQuestions: increment(-numQuestions), 
+  });
+
+  setData((prev) => ({
+    ...prev,
+    lessons: {
+      ...prev.lessons,
+      [levelId]: prev.lessons[levelId].filter(
+        (lesson) => lesson.id !== lessonId
+      ),
+    },
+  }));
+};
+
 
   // === Vocabulary inside Lessons ===
   const getVocabularies = async (levelId, lessonId) => {
@@ -260,6 +270,76 @@ export const DataProvider = ({ children }) => {
     }
   }
 
+  const handlePasteQuestions = async (levelId, lessonId) => {
+    try {
+
+      const clipboardText = await navigator.clipboard.readText()
+      if (!clipboardText) {
+        toast.error('Clipboard is empty!')
+        return
+      }
+
+      let parsedQuestions
+      try {
+        parsedQuestions = JSON.parse(clipboardText)
+        if (!Array.isArray(parsedQuestions)) {
+          toast.error('Clipboard data is not a valid questions array!')
+          return
+        }
+      } catch (err) {
+        toast.error('Invalid clipboard data format!')
+        return
+      }
+
+      if (parsedQuestions.length === 0) {
+        toast.error('No questions found in clipboard!')
+        return
+      }
+
+
+      const batch = writeBatch(db)
+
+      parsedQuestions.forEach((q) => {
+        const qRef = doc(
+          collection(
+            doc(db, 'levels', levelId, 'lessons', lessonId),
+            'questions'
+          )
+        )
+        const questionWithId = { ...q, id: qRef.id }
+        batch.set(qRef, questionWithId)
+      })
+
+      // updates على counters
+      const levelRef = doc(db, 'levels', levelId)
+      const lessonRef = doc(db, 'levels', levelId, 'lessons', lessonId)
+
+      batch.update(levelRef, {
+        totalQuestions: increment(parsedQuestions.length),
+      })
+      batch.update(lessonRef, {
+        numQuestions: increment(parsedQuestions.length),
+      })
+
+      // نفذ الـ batch
+      await batch.commit()
+
+      // رجّع البيانات الجديدة
+      const updatedQuestions = await getQuestions(levelId, lessonId)
+      setData((prev) => ({
+        ...prev,
+        questions: updatedQuestions,
+      }))
+
+      toast.success(
+        `${parsedQuestions.length} question(s) pasted successfully!`
+      )
+    } catch (error) {
+      console.error('Error pasting questions:', error)
+      toast.error('Failed to paste questions!')
+    }
+  }
+
   const updateQuestion = async (levelId, lessonId, qId, updated) => {
     try {
       const ref = doc(
@@ -327,6 +407,7 @@ export const DataProvider = ({ children }) => {
     deleteVocabulary,
     getQuestions,
     addQuestion,
+    handlePasteQuestions,
     updateQuestion,
     deleteQuestion,
   }

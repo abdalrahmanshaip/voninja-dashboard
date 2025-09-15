@@ -21,7 +21,6 @@ import { normalizeToDate } from '../utils/dateFormat'
 
 const Events = () => {
   const { events, error, deleteEvent, usersWithEvents } = useEvents()
-
   const [activeTab, setActiveTab] = useState('basic')
 
   const [isModalOpen, setIsModalOpen] = useState(false)

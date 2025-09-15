@@ -6,9 +6,10 @@ import Table from '../common/Table'
 import TaskQuestionForm from './TaskQuestionForm'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
+import QuestionActions from '../common/QuestionActions'
 
 const TaskQuestions = ({ challengeId, task, onClose }) => {
-  const { getTaskQuestions, deleteTaskQuestion } = useChallenge()
+  const { getTaskQuestions, deleteTaskQuestion, handlePasteTaskQuestions } = useChallenge()
 
   const [isAddQuestionOpen, setIsAddQuestionOpen] = useState(false)
   const [isEditQuestionOpen, setIsEditQuestionOpen] = useState(false)
@@ -17,6 +18,7 @@ const TaskQuestions = ({ challengeId, task, onClose }) => {
   const [questionToDelete, setQuestionToDelete] = useState(null)
   const [questions, setQuestions] = useState([])
   const [refreshTrigger, setRefreshTrigger] = useState(false)
+  const [selectedRows, setSelectedRows] = useState([])
 
   useEffect(() => {
     const fetchTaskQuestions = async () => {
@@ -139,19 +141,20 @@ const TaskQuestions = ({ challengeId, task, onClose }) => {
               <h3 className='text-lg font-medium text-gray-900'>
                 Task Questions
               </h3>
-              <button
-                onClick={() => setIsAddQuestionOpen(true)}
-                className='btn btn-primary flex items-center'
-              >
-                <Plus className='w-5 h-5 mr-2' />
-                Add Question
-              </button>
+              <QuestionActions
+                handlePaste={() => handlePasteTaskQuestions(challengeId, task.id)}
+                openAddModal={setIsAddQuestionOpen}
+                selectedRows={selectedRows}
+              />
+              {/*  */}
             </div>
             <Table
               columns={questionColumns}
               data={questions}
               actions={renderQuestionActions}
               emptyMessage="No questions found. Click 'Add Question' to create one."
+              selectable={true}
+              onSelectionChange={(rows) => setSelectedRows(rows)}
             />
           </div>
         </div>

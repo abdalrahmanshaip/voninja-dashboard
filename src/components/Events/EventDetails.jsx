@@ -1,4 +1,3 @@
-import { Plus } from 'lucide-react'
 import PropTypes from 'prop-types'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -6,17 +5,24 @@ import { useEvents } from '../../context/EventContext'
 import { normalizeToDate } from '../../utils/dateFormat'
 import ConfirmDialog from '../common/ConfirmDialog'
 import Modal from '../common/Modal'
+import QuestionActions from '../common/QuestionActions'
 import Table from '../common/Table'
 import QuestionForm from './QuestionForm'
 
 const EventDetails = ({ event }) => {
-  const { fetchQuestions, setQuestions, questions, deleteQuestion } =
-    useEvents()
+  const {
+    fetchQuestions,
+    setQuestions,
+    questions,
+    handlePasteQuestions,
+    deleteQuestion,
+  } = useEvents()
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [questionToDelete, setQuestionToDelete] = useState(null)
   const [isEditQuestionOpen, setIsEditQuestionOpen] = useState(false)
   const [selectedQuestion, setSelectedQuestion] = useState(null)
   const [isAddQuestionOpen, setIsAddQuestionOpen] = useState(false)
+  const [selectedRows, setSelectedRows] = useState([])
 
   useEffect(() => {
     const pushQuestionsToState = async () => {
@@ -47,9 +53,7 @@ const EventDetails = ({ event }) => {
       }
     }
   }
-
   const questionColumns = [
-    { field: 'id', header: 'ID' },
     {
       field: 'content',
       header: 'Question',
@@ -115,12 +119,16 @@ const EventDetails = ({ event }) => {
     <>
       <div className='space-y-6 min-h-[90vh]'>
         <div className='overflow-auto'>
-          <div className='flex justify-between items-start mb-6'>
-            <div>
-              <h2 className='text-2xl font-bold text-gray-900'>
-                {event?.title}
-              </h2>
-              <p className='mt-2 text-gray-600'>{event?.description}</p>
+          <div className='mb-6 space-y-2'>
+            <h2 className='text-2xl font-bold text-gray-900'>{event?.title}</h2>
+            <p className=' text-gray-600'>{event?.description}</p>
+            <div className='flex items-center space-x-2'>
+              <span className='text-gray-700 font-medium'>
+                Total Questions:
+              </span>
+              <span className='inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold text-sm shadow'>
+                {questions.length}
+              </span>
             </div>
           </div>
 
@@ -164,26 +172,26 @@ const EventDetails = ({ event }) => {
           <div className='mt-4'>
             <div className='flex items-center justify-between mb-4'>
               <h3 className='text-lg font-semibold'>Quiz Event Questions</h3>
-              <button
-                className='btn btn-primary flex items-center  text-base'
-                onClick={() => setIsAddQuestionOpen(true)}
-              >
-                <Plus
-                  size={20}
-                  className='mr-2'
-                />
-                Add Question
-              </button>
+              <QuestionActions
+                handlePaste={() => handlePasteQuestions(event.id)}
+                openAddModal={setIsAddQuestionOpen}
+                selectedRows={selectedRows}
+              />
             </div>
+
             <Table
               columns={questionColumns}
               data={questions}
               actions={renderQuestionActions}
               emptyMessage="No questions found. Click 'Add Question' to create one."
+              selectable={true}
+              onSelectionChange={(rows) => setSelectedRows(rows)}
             />
           </div>
         </div>
       </div>
+
+      {/* Add Modal */}
       <Modal
         isOpen={isAddQuestionOpen}
         onClose={() => setIsAddQuestionOpen(false)}
@@ -195,6 +203,7 @@ const EventDetails = ({ event }) => {
         />
       </Modal>
 
+      {/* Edit Modal */}
       <Modal
         isOpen={isEditQuestionOpen}
         onClose={() => setIsEditQuestionOpen(false)}
@@ -207,6 +216,7 @@ const EventDetails = ({ event }) => {
         />
       </Modal>
 
+      {/* Delete Confirm */}
       <ConfirmDialog
         isOpen={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}

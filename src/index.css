@@ -159,7 +159,7 @@ body {
   }
 
   .btn-disabled {
-    @apply btn bg-gray-400 pointer-events-auto
+    @apply btn bg-gray-400 cursor-not-allowed pointer-events-auto
   }
 
   .input {

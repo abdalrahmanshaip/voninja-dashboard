@@ -3,8 +3,6 @@ import { ClipboardList, Copy, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 
 const QuestionActions = ({ selectedRows, handlePaste, openAddModal }) => {
-
-
   const handleCopyQuestions = (selectedQuestions) => {
     const dataString = JSON.stringify(selectedQuestions)
     navigator.clipboard
@@ -32,16 +30,7 @@ const QuestionActions = ({ selectedRows, handlePaste, openAddModal }) => {
         />
         Copy Selected
       </button>
-      <button
-        className='btn btn-primary flex items-center text-base'
-        onClick={() => openAddModal(true)}
-      >
-        <Plus
-          size={20}
-          className='mr-2'
-        />
-        Add Question
-      </button>
+
       <button
         onClick={handlePaste}
         className='btn btn-info flex items-center text-base'
@@ -51,6 +40,16 @@ const QuestionActions = ({ selectedRows, handlePaste, openAddModal }) => {
           className='mr-2'
         />
         Paste Questions
+      </button>
+      <button
+        className='btn btn-primary flex items-center text-base'
+        onClick={() => openAddModal(true)}
+      >
+        <Plus
+          size={20}
+          className='mr-2'
+        />
+        Add Question
       </button>
     </div>
   )

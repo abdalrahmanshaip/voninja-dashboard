@@ -6,10 +6,16 @@ import Modal from '../common/Modal'
 import Table from '../common/Table'
 import QuestionForm from './QuestionForm'
 import VocabularyForm from './VocabularyForm'
+import QuestionActions from '../common/QuestionActions'
 
 const LessonDetails = ({ lesson, level, levelId }) => {
-  const { deleteVocabulary, deleteQuestion, getVocabularies, getQuestions } =
-    useData()
+  const {
+    deleteVocabulary,
+    deleteQuestion,
+    getVocabularies,
+    getQuestions,
+    handlePasteQuestions,
+  } = useData()
 
   const [questions, setQuestions] = useState([])
   const [vocabularies, setVocabularies] = useState([])
@@ -23,6 +29,7 @@ const LessonDetails = ({ lesson, level, levelId }) => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [itemToDelete, setItemToDelete] = useState(null)
   const [deleteType, setDeleteType] = useState(null)
+  const [selectedRows, setSelectedRows] = useState([])
 
   useEffect(() => {
     const fetchVocabularies = async () => {
@@ -284,31 +291,19 @@ const LessonDetails = ({ lesson, level, levelId }) => {
           <div className='space-y-4'>
             <div className='flex justify-between items-center'>
               <h3 className='text-lg font-medium text-gray-900'>Questions</h3>
-              <button
-                onClick={() => setIsAddQuestionOpen(true)}
-                className='btn btn-primary flex items-center'
-              >
-                <svg
-                  className='w-5 h-5 mr-2'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth='2'
-                    d='M12 6v6m0 0v6m0-6h6m-6 0H6'
-                  />
-                </svg>
-                Add Question
-              </button>
+              <QuestionActions
+                handlePaste={() => handlePasteQuestions(levelId, lesson.id)}
+                openAddModal={setIsAddQuestionOpen}
+                selectedRows={selectedRows}
+              />
             </div>
             <Table
               columns={questionColumns}
               data={questions}
               actions={renderQuestionActions}
               emptyMessage="No questions found. Click 'Add Question' to create one."
+              selectable={true}
+              onSelectionChange={(rows) => setSelectedRows(rows)}
             />
           </div>
         )}

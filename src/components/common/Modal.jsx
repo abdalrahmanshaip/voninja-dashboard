@@ -58,7 +58,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50  bg-black bg-opacity-50 flex items-center justify-center p-4">
       <div 
         ref={modalRef}
         className={`bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} transition-all duration-300 transform ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
@@ -74,7 +74,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
             </svg>
           </button>
         </div>
-        <div className="px-6 py-4  max-h-[90vh] overflow-y-auto">{children}</div>
+        <div className="px-6 py-4  max-h-[90vh]  overflow-y-auto">{children}</div>
       </div>
     </div>
   );

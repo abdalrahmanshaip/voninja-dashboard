@@ -5,7 +5,6 @@ import {
 } from 'firebase/auth'
 import PropTypes from 'prop-types'
 import { createContext, useContext, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { auth } from '../utils/firebase'
 
 const AuthContext = createContext()
@@ -15,7 +14,6 @@ export const useAuth = () => useContext(AuthContext)
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  const navigate = useNavigate()
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -56,7 +54,6 @@ export const AuthProvider = ({ children }) => {
     try {
       await signOut(auth)
       setUser(null)
-      navigate('/login')
     } catch (error) {
       console.error('Logout error:', error)
     }

@@ -16,7 +16,6 @@ import Pagination from '../common/Pagination'
 const usersPerPage = 10
 
 const getStatusColor = (status) => {
-  console.log(status)
   switch (status) {
     case 'finished':
       return 'bg-green-100 text-green-800 border-green-200'
@@ -64,6 +63,7 @@ const ParticipantDetailModal = ({ event, usersWithEvents, onClose }) => {
       })
   }, [usersWithEvents, event])
 
+
   const filteredParticipants = useMemo(() => {
     return participants.filter((p) => {
       const matchesSearch =
@@ -92,7 +92,6 @@ const ParticipantDetailModal = ({ event, usersWithEvents, onClose }) => {
   const endIndex = startIndex + usersPerPage
   const currentUsers = filteredParticipants.slice(startIndex, endIndex)
 
-  console.log(currentUsers)
 
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40'>
@@ -290,7 +289,7 @@ const ParticipantDetailModal = ({ event, usersWithEvents, onClose }) => {
                             <div>
                               Accumulated:{' '}
                               <span className='font-medium'>
-                                {p.event.pointsAccumulated || 0}
+                                {p.event.progress.pointsAccumulated || 0}
                               </span>
                             </div>
                             <div>

@@ -35,13 +35,15 @@ const Transactions = () => {
     if (selectedTransaction) {
       try {
         await updateTransaction(selectedTransaction.id, {
-          status: actionType
+          status: actionType,
         })
         toast.success(`Transaction successfully ${actionType.toLowerCase()}`)
         setSelectedTransaction(null)
       } catch (error) {
         console.error('Error updating transaction:', error)
-        toast.error(`Failed to ${actionType.toLowerCase()} transaction: ${error.message}`)
+        toast.error(
+          `Failed to ${actionType.toLowerCase()} transaction: ${error.message}`
+        )
       }
     }
   }

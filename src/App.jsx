@@ -1,83 +1,42 @@
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
-import Login from './pages/Login'
-import Lessons from './pages/Lessons'
-import Challenges from './pages/Challenges'
-import Transactions from './pages/Transactions'
-import Coupons from './pages/Coupons'
-import DashboardLayout from './layouts/DashboardLayout'
+import { RouterProvider } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
-import { DataProvider } from './context/DataContext'
-import { CouponProvider } from './context/CouponContext'
+import { BoxProvider } from './context/BoxContext'
 import { ChallengeProvider } from './context/ChallengeContext'
+import { CouponProvider } from './context/CouponContext'
+import { DataProvider } from './context/DataContext'
+import { EventProvider } from './context/EventContext'
+import { LibraryProvider } from './context/LibraryContext'
 import { TransactionsProvider } from './context/TransationContext'
 import { UserProvider } from './context/UserContext'
-import ProtectedRoute from './components/common/ProtectedRoute'
-import Users from './pages/Users'
+import router from './routes/app-routes'
 
 function App() {
   return (
-    <HashRouter>
-      <AuthProvider>
+    <AuthProvider>
+      <UserProvider>
         <DataProvider>
           <ChallengeProvider>
-            <TransactionsProvider>
+            <EventProvider>
               <CouponProvider>
-                <UserProvider>
-                  <Routes>
-                    <Route
-                      path='/login'
-                      element={<Login />}
-                    />
-                    <Route
-                      path='/'
-                      element={
-                        <ProtectedRoute>
-                          <DashboardLayout />
-                        </ProtectedRoute>
-                      }
-                    >
-                      <Route
-                        index
-                        element={<Lessons />}
+                <TransactionsProvider>
+                  <LibraryProvider>
+                    <BoxProvider>
+                      <RouterProvider
+                        router={router}
+                        future={{
+                          v7_startTransition: true,
+                          v7_relativeSplatPath: true,
+                        }}
                       />
-                      <Route
-                        path='lessons'
-                        element={<Lessons />}
-                      />
-                      <Route
-                        path='users'
-                        element={<Users />}
-                      />
-                      <Route
-                        path='challenges'
-                        element={<Challenges />}
-                      />
-                      <Route
-                        path='transactions'
-                        element={<Transactions />}
-                      />
-                      <Route
-                        path='coupons'
-                        element={<Coupons />}
-                      />
-                    </Route>
-                    <Route
-                      path='*'
-                      element={
-                        <Navigate
-                          to='/'
-                          replace
-                        />
-                      }
-                    />
-                  </Routes>
-                </UserProvider>
+                    </BoxProvider>
+                  </LibraryProvider>
+                </TransactionsProvider>
               </CouponProvider>
-            </TransactionsProvider>
+            </EventProvider>
           </ChallengeProvider>
         </DataProvider>
-      </AuthProvider>
-    </HashRouter>
+      </UserProvider>
+    </AuthProvider>
   )
 }
 

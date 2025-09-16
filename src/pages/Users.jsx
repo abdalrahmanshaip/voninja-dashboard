@@ -3,28 +3,54 @@ import Modal from '../components/common/Modal'
 import Table from '../components/common/Table'
 import UserForm from '../components/user/UserForm'
 import { useUsers } from '../context/UserContext'
+import { Search } from 'lucide-react'
 
 const Users = () => {
   const { users } = useUsers()
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
   const [filteredUsers, setFilteredUsers] = useState([])
+  const getRankedUsers = (list) => {
+    const sorted = [...list].sort((a, b) => b.pointsNumber - a.pointsNumber)
+
+    const ranked = []
+    let currentRank = 1
+    let previousPoints = null
+    let sameRankCount = 0
+
+    for (let i = 0; i < sorted.length; i++) {
+      const user = sorted[i]
+
+      if (user.pointsNumber === previousPoints) {
+        sameRankCount
+      } else {
+        currentRank = currentRank + sameRankCount
+        sameRankCount = 1
+      }
+
+      ranked.push({ ...user, rank: currentRank })
+      previousPoints = user.pointsNumber
+    }
+
+    return ranked
+  }
 
   useEffect(() => {
-    setFilteredUsers(users)
+    const ranked = getRankedUsers(users)
+    setFilteredUsers(ranked)
   }, [users])
 
   const handleSearch = (value) => {
-    value.stopPropagation
-    const filtered = users.filter((user) =>
-      user.email.toLowerCase().includes(value.toLowerCase())
+    const filtered = users.filter(
+      (user) =>
+        user.username?.toLowerCase().includes(value.toLowerCase()) ||
+        user.email?.toLowerCase().includes(value.toLowerCase()) ||
+        user.phoneNumber?.includes(value)
     )
-    setFilteredUsers(filtered)
+    const ranked = getRankedUsers(filtered)
+    setFilteredUsers(ranked)
   }
 
-  const handleResetSearch = () => {
-    setFilteredUsers(users)
-  }
 
   const handleEditPoints = (user) => {
     setSelectedUser(user)
@@ -32,7 +58,11 @@ const Users = () => {
   }
 
   const columns = [
-    { field: 'userId', header: 'ID', sortable: true },
+    {
+      field: 'rank',
+      header: 'Rank',
+      sortable: false,
+    },
     { field: 'email', header: 'Email', sortable: true },
     {
       field: 'username',
@@ -44,6 +74,26 @@ const Users = () => {
       header: 'Phone Number',
       sortable: true,
       render: (row) => <span className='font-medium'>{row.phoneNumber}</span>,
+    },
+    {
+      field: 'createdAt',
+      header: 'Created At',
+      sortable: true,
+      render: (row) => {
+        const date = new Date(row.createdAt?.seconds * 1000)
+
+        return (
+          <span className='font-medium'>
+            {date.toLocaleString('en-US', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+        )
+      },
     },
     {
       field: 'pointsNumber',
@@ -67,37 +117,39 @@ const Users = () => {
   )
 
   return (
-    <div className='space-y-6'>
-      <div className='flex justify-between items-center'>
-        <h1 className='text-2xl font-bold text-gray-900'>Users</h1>
-      </div>
-      <form className='flex items-center justify-start w-fit'>
-        <input
-          id='search'
-          type='search'
-          autoComplete='email'
-          placeholder='Search User by email...'
-          className='input bg-white text-black w-60'
-          onChange={(e) => handleSearch(e.target.value)}
-        />
-        <button
-          type='reset'
-          onClick={handleResetSearch}
-          className='bg-black hover:bg-black/90 focus:ring-white text-white w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-1.5 text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm '
-        >
-          Reset
-        </button>
-      </form>
-      {/* Coupons table */}
-      <div className='card'>
-        <Table
-          columns={columns}
-          data={filteredUsers}
-          actions={renderActions}
-          emptyMessage="No coupons found. Click 'Add Coupon' to create one."
-          initialSortField='expirationDate'
-          initialSortDirection='asc'
-        />
+    <>
+      <div className='space-y-6'>
+        <div className='flex justify-between items-center'>
+          <h1 className='text-2xl font-bold text-gray-900'>Users</h1>
+        </div>
+        <div className='flex items-center space-x-2'>
+          <span className='text-gray-700 font-medium'>Total Students:</span>
+          <span className='inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold text-sm shadow'>
+            {users.length}
+          </span>
+        </div>
+
+        <div className='flex items-center justify-start relative'>
+          <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
+          <input
+            id='search'
+            type='text'
+            placeholder='Search by username, email, or phone...'
+            className='input ps-10 bg-white text-black w-1/2'
+            onChange={(e) => handleSearch(e.target.value)}
+          />
+        </div>
+
+        <div className='card'>
+          <Table
+            columns={columns}
+            data={filteredUsers}
+            actions={renderActions}
+            emptyMessage="No coupons found. Click 'Add Coupon' to create one."
+            initialSortField='expirationDate'
+            initialSortDirection='asc'
+          />
+        </div>
       </div>
       <Modal
         isOpen={isEditModalOpen}
@@ -109,7 +161,7 @@ const Users = () => {
           onClose={() => setIsEditModalOpen(false)}
         />
       </Modal>
-    </div>
+    </>
   )
 }
 

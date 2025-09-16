@@ -1,16 +1,17 @@
+import { Box, CalendarCheck2, Users } from 'lucide-react'
 import { useState } from 'react'
-import { Outlet, NavLink } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
 import {
-  FaBook,
-  FaTrophy,
-  FaExchangeAlt,
-  FaTicketAlt,
-  FaSignOutAlt,
   FaBars,
+  FaBook,
+  FaExchangeAlt,
+  FaSignOutAlt,
+  FaTicketAlt,
   FaTimes,
+  FaTrophy
 } from 'react-icons/fa'
-import { Users } from 'lucide-react'
+import { IoLibrary } from 'react-icons/io5'
+import { NavLink, Outlet } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const DashboardLayout = () => {
   const { user, logout } = useAuth()
@@ -31,6 +32,16 @@ const DashboardLayout = () => {
       icon: <FaBook className='w-5 h-5' />,
     },
     {
+      path: '/events',
+      name: 'Events',
+      icon: <CalendarCheck2   className='w-5 h-5' />,
+    },
+    {
+      path: '/boxes',
+      name: 'Boxes',
+      icon: <Box   className='w-5 h-5' />,
+    },
+    {
       path: '/users',
       name: 'Users',
       icon: <Users className='w-5 h-5' />,
@@ -49,6 +60,11 @@ const DashboardLayout = () => {
       path: '/coupons',
       name: 'Coupons',
       icon: <FaTicketAlt className='w-5 h-5' />,
+    },
+    {
+      path: '/library',
+      name: 'Library',
+      icon: <IoLibrary className='w-5 h-5' />,
     },
   ]
 

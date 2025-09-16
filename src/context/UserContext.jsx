@@ -1,10 +1,5 @@
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  updateDoc,
-} from 'firebase/firestore'
+import { collection, doc, getDocs, updateDoc } from 'firebase/firestore'
+import PropTypes from 'prop-types'
 import { createContext, useContext, useEffect, useState } from 'react'
 import { db } from '../utils/firebase'
 
@@ -36,17 +31,16 @@ export const UserProvider = ({ children }) => {
     )
   }
 
-  const blockUser = async (id) => {
-    await deleteDoc(doc(db, 'coupons', id))
-  }
-
   const value = {
     users,
-    blockUser,
     changePoints,
   }
 
   return <UsersContext.Provider value={value}>{children}</UsersContext.Provider>
+}
+
+UserProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 }
 
 export default UsersContext

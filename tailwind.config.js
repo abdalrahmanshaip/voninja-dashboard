@@ -11,6 +11,7 @@ export default {
           DEFAULT: '#4f46e5',
           light: '#6366f1',
           dark: '#4338ca',
+          foreground: "hsl(var(--primary-foreground))"
         },
         secondary: {
           DEFAULT: '#10b981',
@@ -22,6 +23,11 @@ export default {
           light: '#6b7280',
           dark: '#374151',
         },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        foreground: "hsl(var(--foreground))"
       },
       boxShadow: {
         card: '0 2px 5px 0 rgba(0, 0, 0, 0.16)',

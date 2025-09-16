@@ -17,11 +17,11 @@ const usersPerPage = 10
 
 const getStatusColor = (status) => {
   switch (status) {
-    case 'finished':
+    case 'reward_claimed':
       return 'bg-green-100 text-green-800 border-green-200'
     case 'in_progress':
       return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-    case 'cancelled':
+    case 'Fail':
       return 'bg-red-100 text-red-800 border-red-200'
     default:
       return 'bg-gray-100 text-gray-700 border-gray-200'
@@ -50,8 +50,12 @@ const ParticipantDetailModal = ({ event, usersWithEvents, onClose }) => {
       .filter((userevent) => userevent.event.eventId == event.id)
       .map((p) => {
         let status = p.event.status
-        if (p.event.userEndAt?.seconds && p.event.userEndAt.seconds < now) {
-          status = 'finished'
+        if (
+          p.event.userEndAt?.seconds &&
+          p.event.userEndAt.seconds < now &&
+          p.event.status == 'in_progress'
+        ) {
+          status = 'Fail'
         }
         return {
           ...p,
@@ -62,7 +66,6 @@ const ParticipantDetailModal = ({ event, usersWithEvents, onClose }) => {
         }
       })
   }, [usersWithEvents, event])
-
 
   const filteredParticipants = useMemo(() => {
     return participants.filter((p) => {
@@ -75,7 +78,7 @@ const ParticipantDetailModal = ({ event, usersWithEvents, onClose }) => {
         statusFilter === 'all' ||
         (p.event.status &&
           p.event.status.toLowerCase() === statusFilter.toLowerCase())
-
+      setCurrentPage(1)
       return matchesSearch && matchesStatus
     })
   }, [participants, searchTerm, statusFilter])
@@ -91,7 +94,6 @@ const ParticipantDetailModal = ({ event, usersWithEvents, onClose }) => {
   const startIndex = (currentPage - 1) * usersPerPage
   const endIndex = startIndex + usersPerPage
   const currentUsers = filteredParticipants.slice(startIndex, endIndex)
-
 
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40'>
@@ -357,7 +359,7 @@ ParticipantDetailModal.propTypes = {
   usersWithEvents: PropTypes.arrayOf(
     PropTypes.shape({
       userData: PropTypes.shape({
-        userName: PropTypes.string,
+        username: PropTypes.string,
         email: PropTypes.string,
         phoneNumber: PropTypes.string,
       }),

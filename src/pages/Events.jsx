@@ -216,7 +216,7 @@ const Events = () => {
       >
         <Users size={20} strokeWidth={2} />
       </button>
-      {event.type == "quiz" && (
+      {(event.type == "quiz" || event.type == "leaderboard_quiz") && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -249,6 +249,7 @@ const Events = () => {
       )}
     </div>
   );
+
 
   return (
     <>
@@ -325,7 +326,10 @@ const Events = () => {
             columns={columns}
             data={filteredEvents}
             actions={renderActions}
-            onRowClick={activeTab == "challenge" && handleViewDetails}
+            onRowClick={
+              (activeTab === "challenge" || activeTab === "leaderboard") &&
+              handleViewDetails
+            }
             emptyMessage="No events found. Click 'Add Event' to create one."
             initialSortField="order"
             initialSortDirection="asc"

@@ -1,13 +1,14 @@
-import PropTypes from 'prop-types'
-import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
-import { useEvents } from '../../context/EventContext'
-import { normalizeToDate } from '../../utils/dateFormat'
-import ConfirmDialog from '../common/ConfirmDialog'
-import Modal from '../common/Modal'
-import QuestionActions from '../common/QuestionActions'
-import Table from '../common/Table'
-import QuestionForm from './QuestionForm'
+import PropTypes from "prop-types";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useEvents } from "../../context/EventContext";
+import { normalizeToDate } from "../../utils/dateFormat";
+import ConfirmDialog from "../common/ConfirmDialog";
+import Modal from "../common/Modal";
+import QuestionActions from "../common/QuestionActions";
+import Table from "../common/Table";
+import QuestionForm from "./QuestionForm";
+import ReorderQuestions from "./ReorderQuestions";
 
 const EventDetails = ({ event }) => {
   const {
@@ -16,167 +17,262 @@ const EventDetails = ({ event }) => {
     questions,
     handlePasteQuestions,
     deleteQuestion,
-  } = useEvents()
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
-  const [questionToDelete, setQuestionToDelete] = useState(null)
-  const [isEditQuestionOpen, setIsEditQuestionOpen] = useState(false)
-  const [selectedQuestion, setSelectedQuestion] = useState(null)
-  const [isAddQuestionOpen, setIsAddQuestionOpen] = useState(false)
-  const [selectedRows, setSelectedRows] = useState([])
+  } = useEvents();
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState(null);
+  const [isEditQuestionOpen, setIsEditQuestionOpen] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState(null);
+  const [isAddQuestionOpen, setIsAddQuestionOpen] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [isReorderOpen, setIsReorderOpen] = useState(false);
 
   useEffect(() => {
     const pushQuestionsToState = async () => {
-      const data = await fetchQuestions(event?.id)
-      setQuestions(data)
-    }
-    pushQuestionsToState()
-  }, [event?.id, fetchQuestions, setQuestions])
+      const data = await fetchQuestions(event?.id);
+      setQuestions(data);
+    };
+    pushQuestionsToState();
+  }, [event?.id, fetchQuestions, setQuestions]);
 
   const handleDeleteQuestion = (question) => {
-    setQuestionToDelete(question)
-    setIsDeleteConfirmOpen(true)
-  }
+    setQuestionToDelete(question);
+    setIsDeleteConfirmOpen(true);
+  };
   const handleEditQuestion = (question) => {
-    setSelectedQuestion(question)
-    setIsEditQuestionOpen(true)
-  }
+    setSelectedQuestion(question);
+    setIsEditQuestionOpen(true);
+  };
 
   const confirmDeleteQuestion = async () => {
     if (questionToDelete) {
       try {
-        await deleteQuestion(event?.id, questionToDelete.id)
-        setQuestionToDelete(null)
-        setIsDeleteConfirmOpen(false)
-        toast.success('Question deleted successfully')
+        await deleteQuestion(event?.id, questionToDelete.id);
+        setQuestionToDelete(null);
+        setIsDeleteConfirmOpen(false);
+        toast.success("Question deleted successfully");
       } catch (error) {
-        toast.error('Failed to delete question: ' + error.message)
+        toast.error("Failed to delete question: " + error.message);
       }
     }
-  }
+  };
   const questionColumns = [
+    ...(event?.type === "leaderboard_quiz"
+      ? [{ field: "order", header: "#", sortable: true }]
+      : []),
     {
-      field: 'content',
-      header: 'Question',
+      field: "content",
+      header: "Question",
       sortable: true,
-      render: (row) => <div className='truncate max-w-xs'>{row.content}</div>,
+      render: (row) => <div className="truncate max-w-xs">{row.content}</div>,
     },
     {
-      field: 'correct_answer',
-      header: 'Correct Answer',
+      field: "correct_answer",
+      header: "Correct Answer",
       sortable: true,
     },
     {
-      field: 'choices',
-      header: 'Choices',
+      field: "choices",
+      header: "Choices",
       sortable: false,
       render: (row) => (
-        <div className='truncate max-w-xs'>{row.choices.join(', ')}</div>
+        <div className="truncate max-w-xs">{row.choices.join(", ")}</div>
       ),
     },
+    ...(event?.type === "leaderboard_quiz"
+      ? [
+          {
+            field: "explanation",
+            header: "Explanation",
+            sortable: false,
+            render: (row) => (
+              <p className="text-sm text-gray-600 max-w-xs text-wrap">
+                {row.explanation}
+              </p>
+            ),
+          },
+        ]
+      : []),
     {
-      field: 'image_url',
-      header: 'Image',
+      field: "image_url",
+      header: "Image",
       sortable: false,
       render: (row) =>
         row.image_url ? (
-          <div className='flex items-center justify-center'>
+          <div className="flex items-center justify-center">
             <img
               src={row.image_url}
-              alt='Question'
-              className='h-8 w-8 object-cover rounded'
+              alt="Question"
+              className="h-8 w-8 object-cover rounded"
             />
           </div>
         ) : (
-          'No image'
+          "No image"
         ),
     },
-  ]
+  ];
 
   const renderQuestionActions = (question) => (
     <>
       <button
         onClick={(e) => {
-          e.stopPropagation()
-          handleEditQuestion(question)
+          e.stopPropagation();
+          handleEditQuestion(question);
         }}
-        className='text-green-600 hover:text-green-900 focus:outline-none'
+        className="text-green-600 hover:text-green-900 focus:outline-none"
       >
         Edit
       </button>
       <button
         onClick={(e) => {
-          e.stopPropagation()
-          handleDeleteQuestion(question)
+          e.stopPropagation();
+          handleDeleteQuestion(question);
         }}
-        className='ml-2 text-red-600 hover:text-red-900 focus:outline-none'
+        className="ml-2 text-red-600 hover:text-red-900 focus:outline-none"
       >
         Delete
       </button>
     </>
-  )
+  );
+
+  console.log("Event details rendered with event:", questions);
 
   return (
     <>
-      <div className='space-y-6 min-h-[90vh]'>
-        <div className='overflow-auto'>
-          <div className='mb-6 space-y-2'>
-            <h2 className='text-2xl font-bold text-gray-900'>{event?.title}</h2>
-            <p className=' text-gray-600'>{event?.description}</p>
-            <div className='flex items-center space-x-2'>
-              <span className='text-gray-700 font-medium'>
+      <div className="space-y-6 min-h-[90vh]">
+        <div className="overflow-auto">
+          <div className="mb-6 space-y-2">
+            <h2 className="text-2xl font-bold text-gray-900">{event?.title}</h2>
+            <p className=" text-gray-600">{event?.description}</p>
+            <div className="flex items-center space-x-2">
+              <span className="text-gray-700 font-medium">
                 Total Questions:
               </span>
-              <span className='inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold text-sm shadow'>
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold text-sm shadow">
                 {questions.length}
               </span>
             </div>
           </div>
 
-          <div className='grid grid-cols-2 gap-4 mb-6'>
+          <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
-              <h3 className='text-sm font-medium text-gray-500'>Start Date</h3>
-              <p className='mt-1 text-sm text-gray-900'>
-                {normalizeToDate(event?.startAt).toLocaleString('en-US', {
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit',
+              <h3 className="text-sm font-medium text-gray-500">Start Date</h3>
+              <p className="mt-1 text-sm text-gray-900">
+                {normalizeToDate(event?.startAt).toLocaleString("en-US", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
                 })}
               </p>
             </div>
             <div>
-              <h3 className='text-sm font-medium text-gray-500'>End Date</h3>
-              <p className='mt-1 text-sm text-gray-900'>
-                {normalizeToDate(event?.endAt).toLocaleString('en-US', {
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit',
+              <h3 className="text-sm font-medium text-gray-500">End Date</h3>
+              <p className="mt-1 text-sm text-gray-900">
+                {normalizeToDate(event?.endAt).toLocaleString("en-US", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
                 })}
               </p>
             </div>
           </div>
 
           {event?.imageUrl && (
-            <div className='mb-6'>
+            <div className="mb-6">
               <img
                 src={event.imageUrl}
                 alt={event.title}
-                className='max-h-52 object-contain rounded-lg'
+                className="max-h-52 object-contain rounded-lg"
               />
             </div>
           )}
 
-          <div className='mt-4'>
-            <div className='flex items-center justify-between mb-4'>
-              <h3 className='text-lg font-semibold'>Quiz Event Questions</h3>
+          {event?.type === "leaderboard_quiz" && (
+            <>
+              {event.instructions?.length > 0 && (
+                <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                  <h4 className="text-sm font-semibold text-blue-700 mb-2">
+                    Instructions
+                  </h4>
+                  <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800">
+                    {event.instructions.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+              {event.rules && (
+                <div className="mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    {
+                      label: "Normal Points",
+                      value: `${event.rules.normalQuestionPoints} pts`,
+                    },
+                    {
+                      label: "Golden Every",
+                      value: `${event.rules.goldenEvery} Qs`,
+                    },
+                    {
+                      label: "Golden Points",
+                      value: `${event.rules.goldenQuestionPoints} pts`,
+                    },
+                    {
+                      label: "Ad Multiplier",
+                      value: `×${event.rules.rewardedAdMultiplier}`,
+                    },
+                    {
+                      label: "1st Prize",
+                      value: event.rules.firstPrize?.toLocaleString(),
+                    },
+                    {
+                      label: "2nd–3rd Prize",
+                      value: event.rules.secondThirdPrize?.toLocaleString(),
+                    },
+                    {
+                      label: "4th–10th Prize",
+                      value: event.rules.fourthTenthPrize?.toLocaleString(),
+                    },
+                    { label: "Page Size", value: event.rules.pageSize },
+                  ].map(({ label, value }) => (
+                    <div
+                      key={label}
+                      className="bg-gray-50 rounded p-2 text-center"
+                    >
+                      <p className="text-xs text-gray-500">{label}</p>
+                      <p className="text-sm font-semibold text-gray-800">
+                        {value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-black">
+                Quiz Event Questions
+              </h3>
+              <div className="flex justify-end items-center gap-4">
+                {event?.type === "leaderboard_quiz" && (
+                  <button
+                    type="button"
+                    onClick={() => setIsReorderOpen(true)}
+                    className="btn btn-info text-sm"
+                  >
+                    Reorder
+                  </button>
+                )}
               <QuestionActions
                 handlePaste={() => handlePasteQuestions(event.id)}
                 openAddModal={setIsAddQuestionOpen}
                 selectedRows={selectedRows}
               />
+              </div>
             </div>
 
             <Table
@@ -195,10 +291,11 @@ const EventDetails = ({ event }) => {
       <Modal
         isOpen={isAddQuestionOpen}
         onClose={() => setIsAddQuestionOpen(false)}
-        title='Add Question'
+        title="Add Question"
       >
         <QuestionForm
           eventId={event?.id}
+          eventType={event?.type}
           onClose={() => setIsAddQuestionOpen(false)}
         />
       </Modal>
@@ -207,12 +304,26 @@ const EventDetails = ({ event }) => {
       <Modal
         isOpen={isEditQuestionOpen}
         onClose={() => setIsEditQuestionOpen(false)}
-        title='Edit Question'
+        title="Edit Question"
       >
         <QuestionForm
           eventId={event?.id}
+          eventType={event?.type}
           question={selectedQuestion}
           onClose={() => setIsEditQuestionOpen(false)}
+        />
+      </Modal>
+
+      {/* Reorder Modal */}
+      <Modal
+        isOpen={isReorderOpen}
+        onClose={() => setIsReorderOpen(false)}
+        title="Reorder Questions"
+      >
+        <ReorderQuestions
+          eventId={event?.id}
+          questions={questions}
+          onClose={() => setIsReorderOpen(false)}
         />
       </Modal>
 
@@ -221,17 +332,17 @@ const EventDetails = ({ event }) => {
         isOpen={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
         onConfirm={confirmDeleteQuestion}
-        title='Delete Question'
-        message='Are you sure you want to delete this question? This action cannot be undone.'
-        confirmText='Delete'
-        cancelText='Cancel'
-        type='danger'
+        title="Delete Question"
+        message="Are you sure you want to delete this question? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
       />
     </>
-  )
-}
+  );
+};
 
-export default EventDetails
+export default EventDetails;
 
 EventDetails.propTypes = {
   event: PropTypes.shape({
@@ -239,6 +350,7 @@ EventDetails.propTypes = {
     title: PropTypes.string,
     description: PropTypes.string,
     imageUrl: PropTypes.string,
+    instructions: PropTypes.arrayOf(PropTypes.string),
     startAt: PropTypes.shape({
       seconds: PropTypes.number,
     }),
@@ -249,4 +361,4 @@ EventDetails.propTypes = {
     type: PropTypes.string,
     rules: PropTypes.object,
   }),
-}
+};

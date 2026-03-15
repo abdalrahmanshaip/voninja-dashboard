@@ -12,187 +12,187 @@ import {
   Timestamp,
   updateDoc,
   writeBatch,
-} from 'firebase/firestore'
-import PropTypes from 'prop-types'
+} from "firebase/firestore";
+import PropTypes from "prop-types";
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useState,
-} from 'react'
-import { db } from '../utils/firebase'
-import { useUsers } from './UserContext'
-import { toast } from 'sonner'
+} from "react";
+import { db } from "../utils/firebase";
+import { useUsers } from "./UserContext";
+import { toast } from "sonner";
 
-const EventContext = createContext()
+const EventContext = createContext();
 
 export const useEvents = () => {
-  const context = useContext(EventContext)
+  const context = useContext(EventContext);
   if (!context) {
-    throw new Error('useEvents must be used within an EventProvider')
+    throw new Error("useEvents must be used within an EventProvider");
   }
-  return context
-}
+  return context;
+};
 
 export const EventProvider = ({ children }) => {
-  const { users } = useUsers()
-  const [events, setEvents] = useState([])
-  const [questions, setQuestions] = useState([])
-  const [error, setError] = useState(null)
-  const [usersWithEvents, setUsersWithEvents] = useState([])
-  const [loading, setLoading] = useState(false)
+  const { users } = useUsers();
+  const [events, setEvents] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [error, setError] = useState(null);
+  const [usersWithEvents, setUsersWithEvents] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const fetchEvents = useCallback(async () => {
     try {
       const eventsQuery = query(
-        collection(db, 'events'),
-        orderBy('order', 'asc')
-      )
-      const snapshot = await getDocs(eventsQuery)
+        collection(db, "events"),
+        orderBy("order", "asc"),
+      );
+      const snapshot = await getDocs(eventsQuery);
       const eventsData = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      }))
-      setEvents(eventsData)
-      setError(null)
+      }));
+      setEvents(eventsData);
+      setError(null);
     } catch (err) {
-      setError('Failed to fetch events')
-      console.error('Error fetching events:', err)
+      setError("Failed to fetch events");
+      console.error("Error fetching events:", err);
     }
-  }, [])
+  }, []);
 
   const addEvent = useCallback(
     async (eventData) => {
       try {
         const lastOrder =
-          events.length > 0 ? events[events.length - 1].order || 0 : 0
+          events.length > 0 ? events[events.length - 1].order || 0 : 0;
 
-        const nextOrder = lastOrder + 1
+        const nextOrder = lastOrder + 1;
         const newEvent = {
           ...eventData,
           order: nextOrder,
-        }
-        setEvents((prev) => [...prev, newEvent])
+        };
+        setEvents((prev) => [...prev, newEvent]);
 
-        const docRef = await addDoc(collection(db, 'events'), newEvent)
+        const docRef = await addDoc(collection(db, "events"), newEvent);
         setEvents((prev) =>
           prev.map((event) =>
-            event === newEvent ? { ...newEvent, id: docRef.id } : event
-          )
-        )
-        return docRef.id
+            event === newEvent ? { ...newEvent, id: docRef.id } : event,
+          ),
+        );
+        return docRef.id;
       } catch (err) {
-        setEvents((prev) => prev.filter((event) => event !== eventData))
-        setError('Failed to add event')
-        console.error('Error adding event:', err)
-        throw err
+        setEvents((prev) => prev.filter((event) => event !== eventData));
+        setError("Failed to add event");
+        console.error("Error adding event:", err);
+        throw err;
       }
     },
-    [events]
-  )
+    [events],
+  );
 
   const updateEvent = useCallback(
     async (eventId, eventData) => {
       try {
-        const eventRef = doc(db, 'events', eventId)
+        const eventRef = doc(db, "events", eventId);
 
         setEvents((prev) =>
           prev.map((event) =>
-            event.id === eventId ? { ...event, ...eventData } : event
-          )
-        )
+            event.id === eventId ? { ...event, ...eventData } : event,
+          ),
+        );
 
-        await updateDoc(eventRef, eventData)
+        await updateDoc(eventRef, eventData);
       } catch (err) {
-        fetchEvents()
-        setError('Failed to update event')
-        console.error('Error updating event:', err)
-        throw err
+        fetchEvents();
+        setError("Failed to update event");
+        console.error("Error updating event:", err);
+        throw err;
       }
     },
-    [fetchEvents]
-  )
+    [fetchEvents],
+  );
 
   const deleteEvent = useCallback(
     async (eventId) => {
       try {
-        const eventRef = doc(db, 'events', eventId)
+        const eventRef = doc(db, "events", eventId);
 
-        const eventToDelete = events.find((e) => e.id === eventId)
+        const eventToDelete = events.find((e) => e.id === eventId);
 
-        setEvents((prev) => prev.filter((event) => event.id !== eventId))
+        setEvents((prev) => prev.filter((event) => event.id !== eventId));
 
-        const batch = writeBatch(db)
+        const batch = writeBatch(db);
 
-        if (eventToDelete?.type === 'quiz') {
-          const questionsRef = collection(db, 'events', eventId, 'questions')
-          const questionsSnap = await getDocs(questionsRef)
+        if (eventToDelete?.type === "quiz") {
+          const questionsRef = collection(db, "events", eventId, "questions");
+          const questionsSnap = await getDocs(questionsRef);
 
           questionsSnap.forEach((qDoc) => {
-            batch.delete(qDoc.ref)
-          })
+            batch.delete(qDoc.ref);
+          });
         }
 
-        batch.delete(eventRef)
+        batch.delete(eventRef);
 
-        await batch.commit()
+        await batch.commit();
       } catch (err) {
-        fetchEvents()
-        setError('Failed to delete event')
-        console.error('Error deleting event:', err)
-        throw err
+        fetchEvents();
+        setError("Failed to delete event");
+        console.error("Error deleting event:", err);
+        throw err;
       }
     },
-    [events, fetchEvents]
-  )
+    [events, fetchEvents],
+  );
 
   const updateEventsOrder = useCallback(
     async (reorderedEvents) => {
-      const batch = writeBatch(db)
+      const batch = writeBatch(db);
 
       try {
-        setEvents(reorderedEvents)
+        setEvents(reorderedEvents);
 
         reorderedEvents.forEach((event) => {
-          const eventRef = doc(db, 'events', event.id)
-          batch.update(eventRef, { order: event.order })
-        })
+          const eventRef = doc(db, "events", event.id);
+          batch.update(eventRef, { order: event.order });
+        });
 
-        await batch.commit()
+        await batch.commit();
       } catch (err) {
-        fetchEvents()
-        setError('Failed to reorder events')
-        console.error('Error reordering events:', err)
-        throw err
+        fetchEvents();
+        setError("Failed to reorder events");
+        console.error("Error reordering events:", err);
+        throw err;
       }
     },
-    [fetchEvents]
-  )
+    [fetchEvents],
+  );
 
   const fetchQuestions = useCallback(async (eventId) => {
     try {
       const questionsQuery = query(
-        collection(db, 'events', eventId, 'questions')
-      )
-      const snapshot = await getDocs(questionsQuery)
+        collection(db, "events", eventId, "questions"),
+      );
+      const snapshot = await getDocs(questionsQuery);
       const questionsData = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      }))
-      setQuestions(questionsData)
-      return questionsData
+      }));
+      setQuestions(questionsData);
+      return questionsData;
     } catch (err) {
-      setError('Failed to fetch questions')
-      console.error('Error fetching questions:', err)
-      throw err
+      setError("Failed to fetch questions");
+      console.error("Error fetching questions:", err);
+      throw err;
     }
-  }, [])
+  }, []);
 
   const addQuestion = useCallback(async (eventId, questionData) => {
-    await updateDoc(doc(db, 'events', eventId), {
-      'rules.quizTotal': increment(1),
-    })
+    await updateDoc(doc(db, "events", eventId), {
+      "rules.quizTotal": increment(1),
+    });
 
     setEvents((prev) =>
       prev.map((event) =>
@@ -204,43 +204,43 @@ export const EventProvider = ({ children }) => {
                 quizTotal: (event.rules.quizTotal || 0) + 1,
               },
             }
-          : event
-      )
-    )
-    const newDocRef = doc(collection(db, 'events', eventId, 'questions'))
+          : event,
+      ),
+    );
 
-    const questionId = newDocRef.id
+    const questionsRef = collection(db, "events", eventId, "questions");
+    const existingQuestionsSnap = await getDocs(
+      query(questionsRef, orderBy("order", "asc")),
+    );
+    const nextOrder =
+      existingQuestionsSnap.docs.reduce((maxOrder, questionDoc) => {
+        const currentOrder = Number(questionDoc.data()?.order || 0);
+        return Math.max(maxOrder, currentOrder);
+      }, 0) + 1;
+
+    const newDocRef = doc(questionsRef);
+    const questionId = newDocRef.id;
 
     const newQuestion = {
       ...questionData,
       id: questionId,
-    }
+      order: nextOrder,
+    };
 
-    setQuestions((prev) => [...prev, newQuestion])
+    setQuestions((prev) => [...prev, newQuestion]);
 
     try {
-      const docRef = await setDoc(newDocRef, newQuestion)
-      setEvents((prev) =>
-        prev.map((question) =>
-          question === newQuestion
-            ? { ...newQuestion, id: docRef.id }
-            : question
-        )
-      )
-
-      return questionId
+      await setDoc(newDocRef, newQuestion);
+      return questionId;
     } catch (err) {
       setQuestions((prev) =>
-        prev.filter((question) => question !== questionData)
-      )
-
-      setError('Failed to add question')
-
-      console.error('Error adding question:', err)
-
-      throw err
+        prev.filter((question) => question.id !== questionId),
+      );
+      setError("Failed to add question");
+      console.error("Error adding question:", err);
+      throw err;
     }
-  }, [])
+  }, []);
 
   // this without update locale state for update ui without more fetch request
 
@@ -272,31 +272,42 @@ export const EventProvider = ({ children }) => {
 
   const handlePasteQuestions = async (eventId) => {
     try {
-      const text = await navigator.clipboard.readText()
-      const parsed = JSON.parse(text) // array of questions
+      const text = await navigator.clipboard.readText();
+      const parsed = JSON.parse(text); // array of questions
 
-      const batch = writeBatch(db)
-      const questionsRef = collection(db, 'events', eventId, 'questions')
+      const batch = writeBatch(db);
+      const questionsRef = collection(db, "events", eventId, "questions");
+      const existingQuestionsSnap = await getDocs(
+        query(questionsRef, orderBy("order", "asc")),
+      );
+      const currentMaxOrder = existingQuestionsSnap.docs.reduce(
+        (maxOrder, questionDoc) => {
+          const questionOrder = Number(questionDoc.data()?.order || 0);
+          return Math.max(maxOrder, questionOrder);
+        },
+        0,
+      );
 
-      const now = Timestamp.fromDate(new Date())
+      const now = Timestamp.fromDate(new Date());
 
-      const newQuestions = parsed.map((q) => {
-        const newDoc = doc(questionsRef)
+      const newQuestions = parsed.map((q, index) => {
+        const newDoc = doc(questionsRef);
         const newQuestion = {
           ...q,
           id: newDoc.id,
           createdAt: now,
-        }
-        batch.set(newDoc, newQuestion)
-        return newQuestion
-      })
+          order: currentMaxOrder + index + 1,
+        };
+        batch.set(newDoc, newQuestion);
+        return newQuestion;
+      });
 
-      await batch.commit() // 🚀 request واحد
-      await updateDoc(doc(db, 'events', eventId), {
-        'rules.quizTotal': increment(newQuestions.length),
-      })
+      await batch.commit(); // 🚀 request واحد
+      await updateDoc(doc(db, "events", eventId), {
+        "rules.quizTotal": increment(newQuestions.length),
+      });
       // ✅ Update local questions state
-      setQuestions((prev) => [...prev, ...newQuestions])
+      setQuestions((prev) => [...prev, ...newQuestions]);
 
       // ✅ Update events state → quizTotal
       setEvents((prev) =>
@@ -309,16 +320,16 @@ export const EventProvider = ({ children }) => {
                   quizTotal: (ev.rules.quizTotal || 0) + newQuestions.length,
                 },
               }
-            : ev
-        )
-      )
+            : ev,
+        ),
+      );
 
-      toast.success(`${newQuestions.length} question(s) added!`)
+      toast.success(`${newQuestions.length} question(s) added!`);
     } catch (err) {
-      console.error('Paste failed:', err)
-      toast.error('Paste failed: ' + err.message)
+      console.error("Paste failed:", err);
+      toast.error("Paste failed: " + err.message);
     }
-  }
+  };
 
   const updateQuestion = useCallback(
     async (eventId, questionId, questionData) => {
@@ -327,67 +338,108 @@ export const EventProvider = ({ children }) => {
           prev.map((question) =>
             question.id === questionId
               ? { ...question, ...questionData }
-              : question
-          )
-        )
+              : question,
+          ),
+        );
 
-        const questionRef = doc(db, 'events', eventId, 'questions', questionId)
-        await updateDoc(questionRef, questionData)
+        const questionRef = doc(db, "events", eventId, "questions", questionId);
+        await updateDoc(questionRef, questionData);
       } catch (err) {
-        fetchQuestions(eventId)
-        setError('Failed to update question')
-        console.error('Error updating question:', err)
-        throw err
+        fetchQuestions(eventId);
+        setError("Failed to update question");
+        console.error("Error updating question:", err);
+        throw err;
       }
     },
-    [fetchQuestions]
-  )
+    [fetchQuestions],
+  );
 
-  const deleteQuestion = useCallback(async (eventId, questionId) => {
-    await updateDoc(doc(db, 'events', eventId), {
-      'rules.quizTotal': increment(-1),
-    })
+  const deleteQuestion = useCallback(
+    async (eventId, questionId) => {
+      await updateDoc(doc(db, "events", eventId), {
+        "rules.quizTotal": increment(-1),
+      });
 
-    setEvents((prev) =>
-      prev.map((event) =>
-        event.id === eventId
-          ? {
-              ...event,
-              rules: {
-                ...event.rules,
-                quizTotal: (event.rules.quizTotal || 0) - 1,
-              },
-            }
-          : event
-      )
-    )
-    try {
-      setQuestions((prev) =>
-        prev.filter((question) => question.id !== questionId)
-      )
+      setEvents((prev) =>
+        prev.map((event) =>
+          event.id === eventId
+            ? {
+                ...event,
+                rules: {
+                  ...event.rules,
+                  quizTotal: (event.rules.quizTotal || 0) - 1,
+                },
+              }
+            : event,
+        ),
+      );
 
-      const questionRef = doc(db, 'events', eventId, 'questions', questionId)
-      await deleteDoc(questionRef)
-    } catch (err) {
-      setError('Failed to delete question')
-      console.error('Error deleting question:', err)
-      throw err
-    }
-  }, [])
+      const previousQuestions = questions;
+
+      try {
+        const questionRef = doc(db, "events", eventId, "questions", questionId);
+        await deleteDoc(questionRef);
+
+        const remainingQuestions = previousQuestions.filter(
+          (question) => question.id !== questionId,
+        );
+
+        const hasOrderField = remainingQuestions.some(
+          (question) => typeof question.order === "number",
+        );
+
+        if (!hasOrderField) {
+          setQuestions(remainingQuestions);
+          return;
+        }
+
+        const sortedRemaining = [...remainingQuestions].sort(
+          (a, b) => (a.order || 0) - (b.order || 0),
+        );
+
+        const reindexedQuestions = sortedRemaining.map((question, index) => ({
+          ...question,
+          order: index + 1,
+        }));
+
+        setQuestions(reindexedQuestions);
+
+        const batch = writeBatch(db);
+        reindexedQuestions.forEach((question) => {
+          const reorderedQuestionRef = doc(
+            db,
+            "events",
+            eventId,
+            "questions",
+            question.id,
+          );
+          batch.update(reorderedQuestionRef, { order: question.order });
+        });
+
+        await batch.commit();
+      } catch (err) {
+        setQuestions(previousQuestions);
+        setError("Failed to delete question");
+        console.error("Error deleting question:", err);
+        throw err;
+      }
+    },
+    [questions],
+  );
 
   const fetchUsersWithEvents = useCallback(async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const snap = await getDocs(collectionGroup(db, 'user_events'))
+      const snap = await getDocs(collectionGroup(db, "user_events"));
 
-      const usersMap = new Map(users.map((u) => [String(u.id ?? ''), u]))
+      const usersMap = new Map(users.map((u) => [String(u.id ?? ""), u]));
 
-      const merged = []
+      const merged = [];
       snap.docs.forEach((eventDoc) => {
-        const parentUserRef = eventDoc.ref.parent.parent
-        if (!parentUserRef?.id) return
-        const user = usersMap.get(parentUserRef.id)
-        if (!user) return
+        const parentUserRef = eventDoc.ref.parent.parent;
+        if (!parentUserRef?.id) return;
+        const user = usersMap.get(parentUserRef.id);
+        if (!user) return;
 
         merged.push({
           userData: {
@@ -399,22 +451,41 @@ export const EventProvider = ({ children }) => {
             eventId: eventDoc.id,
             ...eventDoc.data(),
           },
-        })
-      })
+        });
+      });
 
-      setUsersWithEvents(merged)
+      setUsersWithEvents(merged);
     } catch (err) {
-      console.error('fetchUsersWithEvents error:', err)
-      setUsersWithEvents([])
+      console.error("fetchUsersWithEvents error:", err);
+      setUsersWithEvents([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [users])
+  }, [users]);
 
   useEffect(() => {
-    fetchEvents()
-    fetchUsersWithEvents()
-  }, [fetchEvents, fetchUsersWithEvents])
+    fetchEvents();
+    fetchUsersWithEvents();
+  }, [fetchEvents, fetchUsersWithEvents]);
+
+  const updateQuestionsOrder = useCallback(
+    async (eventId, reorderedQuestions) => {
+      const batch = writeBatch(db);
+      try {
+        setQuestions(reorderedQuestions);
+        reorderedQuestions.forEach((q) => {
+          const qRef = doc(db, "events", eventId, "questions", q.id);
+          batch.update(qRef, { order: q.order });
+        });
+        await batch.commit();
+      } catch (err) {
+        fetchQuestions(eventId);
+        console.error("Error reordering questions:", err);
+        throw err;
+      }
+    },
+    [fetchQuestions],
+  );
 
   const value = {
     events,
@@ -433,13 +504,16 @@ export const EventProvider = ({ children }) => {
     handlePasteQuestions,
     updateQuestion,
     deleteQuestion,
-  }
+    updateQuestionsOrder,
+  };
 
-  return <EventContext.Provider value={value}>{children}</EventContext.Provider>
-}
+  return (
+    <EventContext.Provider value={value}>{children}</EventContext.Provider>
+  );
+};
 
 EventProvider.propTypes = {
   children: PropTypes.node.isRequired,
-}
+};
 
-export default EventContext
+export default EventContext;

@@ -13,9 +13,7 @@ export function getEventSchema(activeTab, basicSubType) {
         .union([z.instanceof(File), z.string().url(), z.string().length(0)])
         .optional(),
       ...(!(activeTab == "basic" && basicSubType == "welcome") && {
-        startAt: z.coerce
-          .date()
-          .min(new Date(), { message: "Start date must be in the future" }),
+        startAt: z.coerce.date(),
         endAt: z.coerce.date(),
       }),
       type: z.enum([

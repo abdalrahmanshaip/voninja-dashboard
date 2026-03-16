@@ -463,6 +463,52 @@ export const EventProvider = ({ children }) => {
     }
   }, [users]);
 
+  const fetchLeaderboard = useCallback(
+    async (eventId) => {
+      try {
+        const leaderboardRef = collection(db, "events", eventId, "leaderboard");
+        const snap = await getDocs(leaderboardRef);
+        const usersMap = new Map(users.map((u) => [String(u.id ?? ""), u]));
+
+        const entries = snap.docs.map((d) => {
+          const data = d.data();
+          const uid = data.uid || d.id;
+          const user = usersMap.get(String(uid));
+          return {
+            uid,
+            name: data.name || user?.username || uid,
+            avatar: data.avatar || user?.avatar || "",
+            score: data.score ?? 0,
+            correctAnswers: data.correctAnswers ?? 0,
+            answerCount: data.answerCount ?? 0,
+            lastAnsweredAt: data.lastAnsweredAt || null,
+            // full user profile for display
+            userData: {
+              username: user?.username || data.name || uid,
+              email: user?.email || "",
+              phoneNumber: user?.phoneNumber || "",
+              avatar: user?.avatar || data.avatar || "",
+            },
+          };
+        });
+
+        // Sort by score desc, then by lastAnsweredAt asc (earlier = better tiebreak)
+        entries.sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          const aTime = a.lastAnsweredAt?.seconds ?? Infinity;
+          const bTime = b.lastAnsweredAt?.seconds ?? Infinity;
+          return aTime - bTime;
+        });
+
+        return entries;
+      } catch (err) {
+        console.error("fetchLeaderboard error:", err);
+        return [];
+      }
+    },
+    [users],
+  );
+
   useEffect(() => {
     fetchEvents();
     fetchUsersWithEvents();
@@ -505,6 +551,7 @@ export const EventProvider = ({ children }) => {
     updateQuestion,
     deleteQuestion,
     updateQuestionsOrder,
+    fetchLeaderboard,
   };
 
   return (

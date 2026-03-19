@@ -286,7 +286,7 @@ const SharedEventForm = ({ event, activeTab, onClose }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   First Prize
@@ -306,19 +306,38 @@ const SharedEventForm = ({ event, activeTab, onClose }) => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Second/Third Prize
+                  Second Prize
                 </label>
                 <input
                   type="number"
                   min="0"
                   className="mt-1 input"
-                  {...register("rules.secondThirdPrize", {
+                  {...register("rules.secondPrize", {
                     valueAsNumber: true,
                   })}
                 />
-                {errors.rules?.secondThirdPrize && (
+                {errors.rules?.secondPrize && (
                   <p className="mt-1 text-sm text-red-600">
-                    {errors.rules.secondThirdPrize.message}
+                    {errors.rules.secondPrize.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Third Prize
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  className="mt-1 input"
+                  {...register("rules.thirdPrize", {
+                    valueAsNumber: true,
+                  })}
+                />
+                {errors.rules?.thirdPrize && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.rules.thirdPrize.message}
                   </p>
                 )}
               </div>

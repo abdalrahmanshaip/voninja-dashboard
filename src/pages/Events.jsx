@@ -1,5 +1,7 @@
 import {
   ArrowDownUp,
+  Bell,
+  CalendarClock,
   FileQuestionMark,
   Minus,
   PencilOff,
@@ -13,8 +15,10 @@ import ConfirmDialog from "../components/common/ConfirmDialog";
 import Modal from "../components/common/Modal";
 import Table from "../components/common/Table";
 import EventDetails from "../components/Events/EventDetails";
+import NotificationModal from "../components/Events/NotificationModal";
 import ParticipantDetailModal from "../components/Events/ParticipantDetailModal";
 import ReorderEvents from "../components/Events/ReorderEvents";
+import ScheduledNotifications from "../components/Events/ScheduledNotifications";
 import SharedEventForm from "../components/Events/SharedEventForm";
 import { useEvents } from "../context/EventContext";
 import { normalizeToDate } from "../utils/dateFormat";
@@ -30,6 +34,8 @@ const Events = () => {
   const [reorderModalOpen, setReorderModalOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [isScheduledModalOpen, setIsScheduledModalOpen] = useState(false);
 
   const filteredEvents = events.filter((event) => {
     switch (activeTab) {
@@ -107,6 +113,8 @@ const Events = () => {
                 <div>Golden every: {row.rules.goldenEvery} questions</div>
                 <div>Golden: {row.rules.goldenQuestionPoints} pts</div>
                 <div>1st Prize: {row.rules.firstPrize}</div>
+                <div>2nd Prize: {row.rules.secondPrize}</div>
+                <div>3rd Prize: {row.rules.thirdPrize}</div>
               </div>
             );
           default:
@@ -226,6 +234,32 @@ const Events = () => {
         >
           <FileQuestionMark size={20} strokeWidth={2} />
         </button>
+      )}
+      {event.type === "leaderboard_quiz" && (
+        <>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedEvent(event);
+              setIsNotificationModalOpen(true);
+            }}
+            className="text-amber-600 hover:text-amber-800 focus:outline-none"
+            title="Send Notification"
+          >
+            <Bell size={20} strokeWidth={2} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedEvent(event);
+              setIsScheduledModalOpen(true);
+            }}
+            className="text-teal-600 hover:text-teal-800 focus:outline-none"
+            title="View Scheduled Notifications"
+          >
+            <CalendarClock size={20} strokeWidth={2} />
+          </button>
+        </>
       )}
       <button
         onClick={(e) => {
@@ -389,6 +423,27 @@ const Events = () => {
         cancelText="Cancel"
         type="danger"
       />
+      <Modal
+        isOpen={isNotificationModalOpen}
+        onClose={() => setIsNotificationModalOpen(false)}
+        title="Send Notification"
+        size="lg"
+      >
+        {selectedEvent && (
+          <NotificationModal
+            event={selectedEvent}
+            onClose={() => setIsNotificationModalOpen(false)}
+          />
+        )}
+      </Modal>
+      <Modal
+        isOpen={isScheduledModalOpen}
+        onClose={() => setIsScheduledModalOpen(false)}
+        title="Scheduled Notifications"
+        size="xl"
+      >
+        {selectedEvent && <ScheduledNotifications event={selectedEvent} />}
+      </Modal>
     </>
   );
 };

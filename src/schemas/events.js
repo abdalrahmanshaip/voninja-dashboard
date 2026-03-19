@@ -54,10 +54,14 @@ export function getEventSchema(activeTab, basicSubType) {
               .min(1, "Ad multiplier must be at least 1"),
             pageSize: z.number().int().min(1, "Page size must be at least 1"),
             firstPrize: z.number().int().min(0, "First prize must be positive"),
-            secondThirdPrize: z
+            secondPrize: z
               .number()
               .int()
-              .min(0, "Second/Third prize must be positive"),
+              .min(0, "Second prize must be positive"),
+            thirdPrize: z
+              .number()
+              .int()
+              .min(0, "Third prize must be positive"),
             fourthTenthPrize: z
               .number()
               .int()

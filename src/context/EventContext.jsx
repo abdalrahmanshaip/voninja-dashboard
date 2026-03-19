@@ -533,6 +533,46 @@ export const EventProvider = ({ children }) => {
     [fetchQuestions],
   );
 
+  // ─── Notification Jobs ───────────────────────────────────────────────────────
+
+  const createNotificationJob = useCallback(async (eventId, jobData) => {
+    try {
+      const jobsRef = collection(db, "events", eventId, "notification_jobs");
+      const newJob = {
+        ...jobData,
+        status: "pending",
+        createdAt: Timestamp.fromDate(new Date()),
+      };
+      const docRef = await addDoc(jobsRef, newJob);
+      return { id: docRef.id, ...newJob };
+    } catch (err) {
+      console.error("Error creating notification job:", err);
+      throw err;
+    }
+  }, []);
+
+  const fetchNotificationJobs = useCallback(async (eventId) => {
+    try {
+      const jobsRef = collection(db, "events", eventId, "notification_jobs");
+      const jobsQuery = query(jobsRef, orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(jobsQuery);
+      return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    } catch (err) {
+      console.error("Error fetching notification jobs:", err);
+      return [];
+    }
+  }, []);
+
+  const deleteNotificationJob = useCallback(async (eventId, jobId) => {
+    try {
+      const jobRef = doc(db, "events", eventId, "notification_jobs", jobId);
+      await deleteDoc(jobRef);
+    } catch (err) {
+      console.error("Error deleting notification job:", err);
+      throw err;
+    }
+  }, []);
+
   const value = {
     events,
     questions,
@@ -552,6 +592,9 @@ export const EventProvider = ({ children }) => {
     deleteQuestion,
     updateQuestionsOrder,
     fetchLeaderboard,
+    createNotificationJob,
+    fetchNotificationJobs,
+    deleteNotificationJob,
   };
 
   return (

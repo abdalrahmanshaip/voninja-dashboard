@@ -78,9 +78,12 @@ export const useCreateEvent = (activeTab, basicSubType, event, onClose) => {
           firstPrize:
             event?.rules?.firstPrize ||
             LEADERBOARD_QUIZ_DEFAULT_RULES.firstPrize,
-          secondThirdPrize:
-            event?.rules?.secondThirdPrize ||
-            LEADERBOARD_QUIZ_DEFAULT_RULES.secondThirdPrize,
+          secondPrize:
+            event?.rules?.secondPrize ||
+            LEADERBOARD_QUIZ_DEFAULT_RULES.secondPrize,
+          thirdPrize:
+            event?.rules?.thirdPrize ||
+            LEADERBOARD_QUIZ_DEFAULT_RULES.thirdPrize,
           fourthTenthPrize:
             event?.rules?.fourthTenthPrize ||
             LEADERBOARD_QUIZ_DEFAULT_RULES.fourthTenthPrize,

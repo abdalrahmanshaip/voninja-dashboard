@@ -7,7 +7,8 @@ export const LEADERBOARD_QUIZ_DEFAULT_RULES = {
   rewardedAdMultiplier: 2,
   pageSize: 100,
   firstPrize: 10000,
-  secondThirdPrize: 5000,
+  secondPrize: 5000,
+  thirdPrize: 3000,
   fourthTenthPrize: 2000,
 };
 

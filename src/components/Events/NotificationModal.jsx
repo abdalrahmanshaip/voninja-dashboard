@@ -1,54 +1,23 @@
-import { Bell, CalendarClock, Search, Send } from "lucide-react";
+import { CalendarClock } from "lucide-react";
 import PropTypes from "prop-types";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Timestamp } from "firebase/firestore";
 import { useEvents } from "../../context/EventContext";
-import { useUsers } from "../../context/UserContext";
+import { sendTopicNotification } from "../../utils/fcmService";
 import LoadingSpinner from "../common/LoadingSpinner";
 
 const NotificationModal = ({ event, onClose }) => {
   const { createNotificationJob } = useEvents();
-  const { users } = useUsers();
 
-  const [activeTab, setActiveTab] = useState("topic"); // "topic" | "users"
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledAt, setScheduledAt] = useState("");
-  const [selectedUserIds, setSelectedUserIds] = useState([]);
-  const [userSearch, setUserSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ─── User search filtering ────────────────────────────────────────────────
-  const filteredUsers = useMemo(() => {
-    if (!userSearch.trim()) return users;
-    const q = userSearch.toLowerCase();
-    return users.filter(
-      (u) =>
-        u.username?.toLowerCase().includes(q) ||
-        u.email?.toLowerCase().includes(q) ||
-        u.phoneNumber?.includes(userSearch),
-    );
-  }, [users, userSearch]);
+  const topic = event.notificationTopic || "leaderboard";
 
-  const toggleUser = (userId) => {
-    setSelectedUserIds((prev) =>
-      prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId],
-    );
-  };
-
-  const selectAll = () => {
-    setSelectedUserIds(filteredUsers.map((u) => u.id));
-  };
-
-  const deselectAll = () => {
-    setSelectedUserIds([]);
-  };
-
-  // ─── Submit handler ────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -60,10 +29,6 @@ const NotificationModal = ({ event, onClose }) => {
       toast.error("Body is required");
       return;
     }
-    if (activeTab === "users" && selectedUserIds.length === 0) {
-      toast.error("Please select at least one user");
-      return;
-    }
     if (isScheduled && !scheduledAt) {
       toast.error("Please pick a scheduled date/time");
       return;
@@ -72,27 +37,39 @@ const NotificationModal = ({ event, onClose }) => {
     setIsSubmitting(true);
 
     try {
-      const jobData = {
-        title: title.trim(),
-        body: body.trim(),
-        type: activeTab === "topic" ? "topic" : "users",
-        topic: activeTab === "topic" ? (event.notificationTopic || "leaderboard") : null,
-        userIds: activeTab === "users" ? selectedUserIds : [],
-        scheduledAt: isScheduled
-          ? Timestamp.fromDate(new Date(scheduledAt))
-          : Timestamp.fromDate(new Date()),
-      };
+      if (!isScheduled) {
+        // ── Send Now: call FCM V1 API directly ────────────────────────────
+        await sendTopicNotification(topic, title.trim(), body.trim(), event.id);
 
-      await createNotificationJob(event.id, jobData);
+        await createNotificationJob(event.id, {
+          title: title.trim(),
+          body: body.trim(),
+          type: "topic",
+          topic: topic,
+          userIds: [],
+          scheduledAt: Timestamp.fromDate(new Date()),
+          status: "sent",
+        });
 
-      toast.success(
-        isScheduled
-          ? "Notification scheduled successfully!"
-          : "Notification job created!",
-      );
+        toast.success("Notification sent successfully!");
+      } else {
+        // ── Schedule: save to Firestore only ──────────────────────────────
+        await createNotificationJob(event.id, {
+          title: title.trim(),
+          body: body.trim(),
+          type: "topic",
+          topic: topic,
+          userIds: [],
+          scheduledAt: Timestamp.fromDate(new Date(scheduledAt)),
+        });
+
+        toast.success("Notification scheduled successfully!");
+      }
+
       onClose();
-    } catch {
-      toast.error("Failed to create notification job");
+    } catch (err) {
+      console.error("Notification error:", err);
+      toast.error(err?.message || "Failed to send notification");
     } finally {
       setIsSubmitting(false);
     }
@@ -100,43 +77,11 @@ const NotificationModal = ({ event, onClose }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Tabs */}
-      <div className="flex border-b border-gray-200">
-        <button
-          type="button"
-          onClick={() => setActiveTab("topic")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === "topic"
-              ? "border-indigo-500 text-indigo-600"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          <Bell size={16} />
-          Topic Notification
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("users")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === "users"
-              ? "border-indigo-500 text-indigo-600"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          <Send size={16} />
-          Specific Users
-        </button>
-      </div>
-
       {/* Topic info */}
-      {activeTab === "topic" && (
-        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 text-sm text-indigo-700">
-          Sending to topic:{" "}
-          <span className="font-semibold">
-            {event.notificationTopic || "leaderboard"}
-          </span>
-        </div>
-      )}
+      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 text-sm text-indigo-700">
+        Sending to topic:{" "}
+        <span className="font-semibold">{topic}</span>
+      </div>
 
       {/* Title */}
       <div>
@@ -164,78 +109,6 @@ const NotificationModal = ({ event, onClose }) => {
           onChange={(e) => setBody(e.target.value)}
         />
       </div>
-
-      {/* User selection (only for "users" tab) */}
-      {activeTab === "users" && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Users ({selectedUserIds.length} selected)
-          </label>
-
-          {/* Search */}
-          <div className="relative mb-2">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={userSearch}
-              onChange={(e) => setUserSearch(e.target.value)}
-              className="input w-full ps-10"
-            />
-          </div>
-
-          {/* Select/Deselect all */}
-          <div className="flex gap-2 mb-2">
-            <button
-              type="button"
-              className="text-xs text-indigo-600 hover:underline"
-              onClick={selectAll}
-            >
-              Select all ({filteredUsers.length})
-            </button>
-            <button
-              type="button"
-              className="text-xs text-gray-500 hover:underline"
-              onClick={deselectAll}
-            >
-              Deselect all
-            </button>
-          </div>
-
-          {/* User list */}
-          <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
-            {filteredUsers.length === 0 ? (
-              <p className="text-center text-gray-400 py-4 text-sm">
-                No users found
-              </p>
-            ) : (
-              filteredUsers.map((user) => (
-                <label
-                  key={user.id}
-                  className={`flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors ${
-                    selectedUserIds.includes(user.id) ? "bg-indigo-50" : ""
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedUserIds.includes(user.id)}
-                    onChange={() => toggleUser(user.id)}
-                    className="h-4 w-4 text-indigo-600 rounded border-gray-300"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {user.username || "Unknown"}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      {user.email || user.phoneNumber || ""}
-                    </p>
-                  </div>
-                </label>
-              ))
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Schedule toggle */}
       <div className="space-y-3">

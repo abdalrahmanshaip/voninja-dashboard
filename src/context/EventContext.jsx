@@ -119,19 +119,16 @@ export const EventProvider = ({ children }) => {
       try {
         const eventRef = doc(db, "events", eventId);
 
-        const eventToDelete = events.find((e) => e.id === eventId);
-
         setEvents((prev) => prev.filter((event) => event.id !== eventId));
 
         const batch = writeBatch(db);
 
-        if (eventToDelete?.type === "quiz") {
-          const questionsRef = collection(db, "events", eventId, "questions");
-          const questionsSnap = await getDocs(questionsRef);
-
-          questionsSnap.forEach((qDoc) => {
-            batch.delete(qDoc.ref);
-          });
+        // Delete all subcollections
+        const subcollections = ["questions", "leaderboard", "notification_jobs"];
+        for (const sub of subcollections) {
+          const subRef = collection(db, "events", eventId, sub);
+          const snap = await getDocs(subRef);
+          snap.forEach((d) => batch.delete(d.ref));
         }
 
         batch.delete(eventRef);
@@ -144,7 +141,7 @@ export const EventProvider = ({ children }) => {
         throw err;
       }
     },
-    [events, fetchEvents],
+    [fetchEvents],
   );
 
   const updateEventsOrder = useCallback(
@@ -539,8 +536,8 @@ export const EventProvider = ({ children }) => {
     try {
       const jobsRef = collection(db, "events", eventId, "notification_jobs");
       const newJob = {
-        ...jobData,
         status: "pending",
+        ...jobData,
         createdAt: Timestamp.fromDate(new Date()),
       };
       const docRef = await addDoc(jobsRef, newJob);

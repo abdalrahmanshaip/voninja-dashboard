@@ -1,4 +1,4 @@
-import { Box, CalendarCheck2, Users } from 'lucide-react'
+import { Bell, Box, CalendarCheck2, Users } from 'lucide-react'
 import { useState } from 'react'
 import {
   FaBars,
@@ -12,10 +12,13 @@ import {
 import { IoLibrary } from 'react-icons/io5'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Modal from '../components/common/Modal'
+import SendNotificationModal from '../components/Notifications/SendNotificationModal'
 
 const DashboardLayout = () => {
   const { user, logout } = useAuth()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen)
@@ -112,6 +115,22 @@ const DashboardLayout = () => {
                 </li>
               ))}
             </ul>
+
+            {/* Notification Button */}
+            <div className='mt-4 pt-4 border-t border-voninja-light'>
+              <button
+                onClick={() => {
+                  setIsNotificationModalOpen(true)
+                  closeSidebar()
+                }}
+                className='flex items-center w-full px-4 py-3 text-sm rounded-lg transition-colors duration-150 text-gray-100 hover:bg-voninja-light'
+              >
+                <span className='mr-3'>
+                  <Bell className='w-5 h-5' />
+                </span>
+                <span>Send Notification</span>
+              </button>
+            </div>
           </nav>
 
           <div className='p-4 border-t border-voninja-light'>
@@ -180,6 +199,18 @@ const DashboardLayout = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* Send Notification Modal */}
+      <Modal
+        isOpen={isNotificationModalOpen}
+        onClose={() => setIsNotificationModalOpen(false)}
+        title="Send Notification"
+        size="md"
+      >
+        <SendNotificationModal
+          onClose={() => setIsNotificationModalOpen(false)}
+        />
+      </Modal>
     </div>
   )
 }

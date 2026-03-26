@@ -145,6 +145,39 @@ export async function sendTopicNotification(topic, title, body, eventId) {
       data: {
         type: "event",
         eventId: eventId || "",
+        click_action: "FLUTTER_NOTIFICATION_CLICK",
+      },
+      // ── Android-specific configuration ─────────────────────────────────
+      android: {
+        priority: "high",
+        notification: {
+          title: title,
+          body: body,
+          sound: "default",
+          default_sound: true,
+          notification_priority: "PRIORITY_HIGH",
+          channel_id: "high_importance_channel",
+          icon: "ic_notification",
+        },
+      },
+      // ── iOS (APNs) specific configuration ──────────────────────────────
+      apns: {
+        headers: {
+          "apns-priority": "10",
+          "apns-push-type": "alert",
+        },
+        payload: {
+          aps: {
+            alert: {
+              title: title,
+              body: body,
+            },
+            sound: "default",
+            badge: 1,
+            "content-available": 1,
+            "mutable-content": 1,
+          },
+        },
       },
     },
   };

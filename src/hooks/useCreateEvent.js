@@ -120,6 +120,9 @@ export const useCreateEvent = (activeTab, basicSubType, event, onClose) => {
         order: event?.order,
         imageUrl: url,
         createdAt: event ? event?.createdAt : Timestamp.fromDate(new Date()),
+        ...(data.type === LEADERBOARD_QUIZ_TYPE && {
+          notificationTopic: "leaderboard",
+        }),
       };
       if (event) {
         await updateEvent(event.id, formData);

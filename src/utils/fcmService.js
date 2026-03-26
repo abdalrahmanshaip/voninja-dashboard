@@ -182,6 +182,8 @@ export async function sendTopicNotification(topic, title, body, eventId) {
     },
   };
 
+  console.log("📤 FCM Request Payload:", JSON.stringify(message, null, 2));
+
   const response = await fetch(FCM_URL, {
     method: "POST",
     headers: {
@@ -191,10 +193,136 @@ export async function sendTopicNotification(topic, title, body, eventId) {
     body: JSON.stringify(message),
   });
 
+  const responseText = await response.text();
+  console.log("📥 FCM Response Status:", response.status);
+  console.log("📥 FCM Response Body:", responseText);
+
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`FCM send failed: ${error}`);
+    throw new Error(`FCM send failed: ${responseText}`);
   }
 
-  return response.json();
+  const result = JSON.parse(responseText);
+  console.log("✅ FCM Message Name:", result.name);
+  return result;
+}
+
+// ─── Send to a specific device token (for testing) ───────────────────────────
+
+/**
+ * Send a notification to a specific device FCM token.
+ * Use this to test if the notification pipeline works end-to-end
+ * before troubleshooting topic subscriptions.
+ *
+ * @param {string} token - The device FCM token
+ * @param {string} title - Notification title
+ * @param {string} body - Notification body
+ * @returns {Promise<object>} FCM response
+ */
+export async function sendTokenNotification(token, title, body) {
+  const accessToken = await getAccessToken();
+
+  const message = {
+    message: {
+      token: token,
+      notification: {
+        title: title,
+        body: body,
+      },
+      data: {
+        type: "test",
+        click_action: "FLUTTER_NOTIFICATION_CLICK",
+      },
+      android: {
+        priority: "high",
+        notification: {
+          title: title,
+          body: body,
+          sound: "default",
+          default_sound: true,
+          notification_priority: "PRIORITY_HIGH",
+          channel_id: "high_importance_channel",
+        },
+      },
+      apns: {
+        headers: {
+          "apns-priority": "10",
+          "apns-push-type": "alert",
+        },
+        payload: {
+          aps: {
+            alert: { title: title, body: body },
+            sound: "default",
+            badge: 1,
+            "content-available": 1,
+          },
+        },
+      },
+    },
+  };
+
+  console.log("📤 FCM Token Send Payload:", JSON.stringify(message, null, 2));
+
+  const response = await fetch(FCM_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(message),
+  });
+
+  const responseText = await response.text();
+  console.log("📥 FCM Token Response:", response.status, responseText);
+
+  if (!response.ok) {
+    throw new Error(`FCM token send failed: ${responseText}`);
+  }
+
+  return JSON.parse(responseText);
+}
+
+// ─── Validate a topic message without sending ────────────────────────────────
+
+/**
+ * Dry-run validation: check if the FCM payload is valid without sending.
+ * FCM returns 200 if valid, error details if not.
+ *
+ * @param {string} topic - Topic name
+ * @param {string} title - Notification title
+ * @param {string} body - Notification body
+ * @returns {Promise<object>} Validation result
+ */
+export async function validateTopicMessage(topic, title, body) {
+  const accessToken = await getAccessToken();
+
+  const message = {
+    validate_only: true,
+    message: {
+      topic: topic,
+      notification: {
+        title: title,
+        body: body,
+      },
+    },
+  };
+
+  console.log("🔍 FCM Validate Payload:", JSON.stringify(message, null, 2));
+
+  const response = await fetch(FCM_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(message),
+  });
+
+  const responseText = await response.text();
+  console.log("🔍 FCM Validate Response:", response.status, responseText);
+
+  if (!response.ok) {
+    throw new Error(`FCM validation failed: ${responseText}`);
+  }
+
+  return JSON.parse(responseText);
 }

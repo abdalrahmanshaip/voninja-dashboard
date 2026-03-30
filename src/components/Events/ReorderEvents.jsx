@@ -59,9 +59,9 @@ const ReorderEvents = ({ events, onClose }) => {
   }
 
     const isChanged = useMemo(() => {
-    if (items.length !== events.length) return true
-    return items.some((item, idx) => item.id !== events[idx].id)
-  }, [items, events])
+    if (items.length !== nonExpiredEvents.length) return true
+    return items.some((item, idx) => item.id !== nonExpiredEvents[idx].id)
+  }, [items, nonExpiredEvents])
 
   return (
     <div className='text-black'>
@@ -70,7 +70,7 @@ const ReorderEvents = ({ events, onClose }) => {
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={items}
+          items={items.map((e) => e.id)}
           strategy={verticalListSortingStrategy}
         >
           {items.map((event) => (

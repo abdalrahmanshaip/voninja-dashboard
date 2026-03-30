@@ -13,7 +13,6 @@ import ReorderQuestions from "./ReorderQuestions";
 const EventDetails = ({ event }) => {
   const {
     fetchQuestions,
-    setQuestions,
     questions,
     handlePasteQuestions,
     deleteQuestion,
@@ -27,12 +26,10 @@ const EventDetails = ({ event }) => {
   const [isReorderOpen, setIsReorderOpen] = useState(false);
 
   useEffect(() => {
-    const pushQuestionsToState = async () => {
-      const data = await fetchQuestions(event?.id);
-      setQuestions(data);
-    };
-    pushQuestionsToState();
-  }, [event?.id, fetchQuestions, setQuestions]);
+    if (event?.id) {
+      fetchQuestions(event.id);
+    }
+  }, [event?.id, fetchQuestions]);
 
   const handleDeleteQuestion = (question) => {
     setQuestionToDelete(question);

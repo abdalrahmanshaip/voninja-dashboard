@@ -149,7 +149,18 @@ export const EventProvider = ({ children }) => {
       const batch = writeBatch(db);
 
       try {
-        setEvents(reorderedEvents);
+        // Build a map of reordered event IDs to their new order
+        const reorderedMap = new Map(
+          reorderedEvents.map((event) => [event.id, event]),
+        );
+
+        // Merge: update reordered events, keep all others untouched, then re-sort
+        setEvents((prev) => {
+          const merged = prev.map((event) =>
+            reorderedMap.has(event.id) ? reorderedMap.get(event.id) : event,
+          );
+          return merged.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        });
 
         reorderedEvents.forEach((event) => {
           const eventRef = doc(db, "events", event.id);
@@ -171,6 +182,7 @@ export const EventProvider = ({ children }) => {
     try {
       const questionsQuery = query(
         collection(db, "events", eventId, "questions"),
+        orderBy("order", "asc"),
       );
       const snapshot = await getDocs(questionsQuery);
       const questionsData = snapshot.docs.map((doc) => ({

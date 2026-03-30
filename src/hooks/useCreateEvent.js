@@ -10,6 +10,7 @@ import {
 } from "../schemas/leaderboardQuiz";
 import { uploadImage } from "../utils/UploadImage";
 import { useEvents } from "../context/EventContext";
+import { generateTopicSlug } from "../utils/topicSlug";
 import { toast } from "sonner";
 
 export const useCreateEvent = (activeTab, basicSubType, event, onClose) => {
@@ -121,7 +122,8 @@ export const useCreateEvent = (activeTab, basicSubType, event, onClose) => {
         imageUrl: url,
         createdAt: event ? event?.createdAt : Timestamp.fromDate(new Date()),
         ...(data.type === LEADERBOARD_QUIZ_TYPE && {
-          notificationTopic: "leaderboard",
+          notificationTopic:
+            event?.notificationTopic || generateTopicSlug(data.title),
         }),
       };
       if (event) {
